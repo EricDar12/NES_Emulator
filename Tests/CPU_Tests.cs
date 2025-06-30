@@ -8,34 +8,76 @@ namespace NES_Emulator.Tests
 {
     internal class CPU_Tests
     {
-        private static void AssertEquals(byte expected, byte actual, string message)
+        public static void RunAllCPUTests()
         {
-            if (expected != actual) {
-                Console.WriteLine($"[FAIL] {message}: Expected {expected}, Got Actual {actual}");
-            }
-            else {
-                Console.WriteLine($"[PASS] {message}");
-            }
+            TestStatusFlags();
+            TestAddrImmediate();
+            TestAddrZeroPage();
         }
 
         public static void TestStatusFlags()
         {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
 
-            NES_CPU _cpu = new NES_CPU();
+            Unit_Tests.AssertEquals(0b00000000, cpu._status, "Status Flags Set To Zero");
 
-            AssertEquals(0b00000000, _cpu._status, "Inital Values Zero");
+            cpu.SetFlag(NES_CPU.StatusFlags.Negative, true);
+            cpu.SetFlag(NES_CPU.StatusFlags.Zero, true);
+            cpu.SetFlag(NES_CPU.StatusFlags.Carry, true);
+            cpu.SetFlag(NES_CPU.StatusFlags.Decimal, true);
+            cpu.SetFlag(NES_CPU.StatusFlags.Break, true);
+            cpu.SetFlag(NES_CPU.StatusFlags.Overflow, true);
+            cpu.SetFlag(NES_CPU.StatusFlags.InterruptDisable, true);
+            cpu.SetFlag(NES_CPU.StatusFlags.Unused, true);
 
-            _cpu.SetFlag(NES_CPU.StatusFlags.Negative, true);
-            _cpu.SetFlag(NES_CPU.StatusFlags.Zero, true);
-            _cpu.SetFlag(NES_CPU.StatusFlags.Carry, true);
+            Unit_Tests.AssertEquals(0b11111111, cpu._status, "Status Flags Set To One");
 
-            AssertEquals(0b10000011, _cpu._status, "Carry Zero & Negative Set");
+            cpu.SetFlag(NES_CPU.StatusFlags.Negative, false);
+            cpu.SetFlag(NES_CPU.StatusFlags.Zero, false);
+            cpu.SetFlag(NES_CPU.StatusFlags.Carry, false);
+            cpu.SetFlag(NES_CPU.StatusFlags.Decimal, false);
+            cpu.SetFlag(NES_CPU.StatusFlags.Break, false);
+            cpu.SetFlag(NES_CPU.StatusFlags.Overflow, false);
+            cpu.SetFlag(NES_CPU.StatusFlags.InterruptDisable, false);
+            cpu.SetFlag(NES_CPU.StatusFlags.Unused, false);
 
-            _cpu.SetFlag(NES_CPU.StatusFlags.Negative, false);
-            _cpu.SetFlag(NES_CPU.StatusFlags.Zero, false);
-            _cpu.SetFlag(NES_CPU.StatusFlags.Carry, false);
+            Unit_Tests.AssertEquals(0b00000000, cpu._status, "Status Flags Reset");
+        }
 
-            AssertEquals(0b00000000, _cpu._status, "Reset Values");
+        public static void TestAddrImmediate()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            cpu._program_counter = 0x0100;
+
+            bus.WriteByte(0x0100, 0x44);
+            bus.WriteByte(0x0101, 0x34);
+
+            ushort addr = cpu.Addr_Immediate();
+
+            Unit_Tests.AssertEquals(0x0100, addr, "Immediate Address Returns Current PC Value");
+            Unit_Tests.AssertEquals(0x44, bus.ReadByte(addr), "Immediate Returns The Correct Byte");
+            Unit_Tests.AssertEquals(0x0101, cpu._program_counter, "Immediate Correctly Advances PC By One");
+        }
+
+        public static void TestAddrZeroPage()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            cpu._program_counter = 0x0100;
+
+            bus.WriteByte(0x0044, 0xA9);
+            bus.WriteByte(0x0100, 0x44);
+            bus.WriteByte(0x0101, 0xFF);
+
+            ushort addr = cpu.Addr_ZeroPage();
+
+            Unit_Tests.AssertEquals(0x0044, addr, "Zero Page Returns Correct Address");
+            Unit_Tests.AssertEquals(0xA9, bus.ReadByte(addr), "Zero Page Returns Corect Byte");
+            Unit_Tests.AssertEquals(0x0101, cpu._program_counter, "Zero Page Correctly Advances PC By One");
         }
 
     }

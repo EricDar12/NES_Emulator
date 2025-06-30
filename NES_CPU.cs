@@ -30,8 +30,10 @@ namespace NES_Emulator
 
         public ushort Addr_ZeroPage()
         {
-            return _bus.ReadByte(_program_counter++);
+            return (ushort) _bus.ReadByte(_program_counter++);
         }
+
+
         #endregion
 
         [Flags]

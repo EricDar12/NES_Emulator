@@ -6,9 +6,8 @@ namespace NES_Emulator
     {
         static void Main(string[] args)
         {
-
-            CPU_Tests.TestStatusFlags();
-
+            CPU_Tests.RunAllCPUTests();
+            BUS_Tests.RunAllBUSTests();
         }
     }
 }

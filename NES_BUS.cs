@@ -12,7 +12,7 @@ namespace NES_Emulator
 
         public byte ReadByte(ushort addr)
         {
-            if (addr >= 0x0000 || addr <= 0xFFFF) {
+            if (addr >= 0x0000 && addr < _memory.Length) {
                 return _memory[addr];
             }
             return 0;
@@ -20,7 +20,7 @@ namespace NES_Emulator
 
         public void WriteByte(ushort addr, byte data)
         {
-            if (addr >= 0x0000 || addr <= 0xFFFF) {
+            if (addr >= 0x0000 && addr < _memory.Length) {
                 _memory[addr] = data;
             }
         }
