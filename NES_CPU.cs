@@ -33,6 +33,17 @@ namespace NES_Emulator
             return (ushort) _bus.ReadByte(_program_counter++);
         }
 
+        public ushort Addr_ZeroPageX()
+        {
+            ushort addr = _bus.ReadByte(_program_counter++);
+            return (byte) (addr + _register_x); // Byte math ensures rollover
+        }
+
+        public ushort Addr_ZeroPageY()
+        {
+            ushort addr = _bus.ReadByte(_program_counter++);
+            return (byte)(addr + _register_y);
+        }
 
         #endregion
 
