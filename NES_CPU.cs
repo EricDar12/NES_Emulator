@@ -23,6 +23,7 @@ namespace NES_Emulator
         }
 
         #region ##### Addressing Modes #####
+        // TODO handle page crossing to conditionally add cycles at some point
         public ushort Addr_Immediate()
         {
             return _program_counter++;
@@ -43,6 +44,48 @@ namespace NES_Emulator
         {
             ushort addr = _bus.ReadByte(_program_counter++);
             return (byte)(addr + _register_y);
+        }
+        
+        public ushort Addr_Absolute()
+        {
+            byte lo = _bus.ReadByte(_program_counter++);
+            return (ushort) ((_bus.ReadByte(_program_counter++) << 8) | lo);
+        }
+
+        public ushort Addr_AbsoluteX()
+        {
+            byte lo = _bus.ReadByte(_program_counter++);
+            byte hi = _bus.ReadByte(_program_counter++);
+
+            ushort baseAddr = (ushort)((hi << 8 | lo));
+            ushort finalAddr = (ushort)((hi << 8 | lo) + _register_x);
+
+            if (IsPageCrossed(baseAddr, finalAddr)) {
+                // Page has been crossed
+            }
+
+            return finalAddr;
+        }
+
+        public ushort Addr_AbsoluteY()
+        {
+            byte lo = _bus.ReadByte(_program_counter++);
+            byte hi = _bus.ReadByte(_program_counter++);
+
+            ushort baseAddr = (ushort)((hi << 8 | lo));
+            ushort finalAddr = (ushort)((hi << 8 | lo) + _register_y);
+
+
+            if (IsPageCrossed(baseAddr, finalAddr)) {
+                // Page has been crossed
+            }
+
+            return finalAddr;
+        }
+
+        public bool IsPageCrossed(ushort baseAddr, ushort finalAddr)
+        {
+            return (baseAddr & 0xFF00) != (finalAddr & 0xFF00);
         }
 
         #endregion
