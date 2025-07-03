@@ -43,7 +43,7 @@ namespace NES_Emulator
         public ushort Addr_ZeroPageY()
         {
             ushort addr = _bus.ReadByte(_program_counter++);
-            return (byte)(addr + _register_y);
+            return (byte) (addr + _register_y);
         }
         
         public ushort Addr_Absolute()
@@ -81,6 +81,26 @@ namespace NES_Emulator
             }
 
             return finalAddr;
+        }
+
+        public ushort Addr_Indirect()
+        {
+            byte ptr_lo = _bus.ReadByte(_program_counter++);
+            byte ptr_hi = _bus.ReadByte(_program_counter++);
+
+            ushort ptr = (ushort) ((ptr_hi << 8) | ptr_lo);
+
+            byte lo = _bus.ReadByte(ptr);
+            byte hi;
+
+            // 6502 Page Wrapping Bug
+            if ((ptr & 0x00FF) == 0x00FF) {
+                hi = _bus.ReadByte((ushort) (ptr & 0xFF00));
+            }
+            else {
+                hi = _bus.ReadByte((ushort) (ptr + 1));
+            }
+            return (ushort) ((hi << 8) | lo);
         }
 
         public bool IsPageCrossed(ushort baseAddr, ushort finalAddr)
