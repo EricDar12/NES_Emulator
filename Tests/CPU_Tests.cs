@@ -18,6 +18,9 @@ namespace NES_Emulator.Tests
             TestAddrAbsolute();
             TestAddrAbsoluteX();
             TestAddrAbsoluteY();
+            TestAddrIndirect();
+            TestAddrIndirectX();
+            TestAddrIndirectY();
         }
 
         public static void TestStatusFlags()
@@ -172,6 +175,63 @@ namespace NES_Emulator.Tests
             Unit_Tests.AssertEquals(0x209, addr, "Absolute Y Returns Correct Address");
             Unit_Tests.AssertEquals(0x0B, bus.ReadByte(addr), "Absolute Y Returns Correct Byte");
             Unit_Tests.AssertEquals(0x0102, cpu._program_counter, "Absolute Y Correcly Advances PC By Two");
+        }
+
+        public static void TestAddrIndirect()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            cpu._program_counter = 0x0200;
+            bus.WriteByte(0x0200, 0xFF);
+            bus.WriteByte(0x0201, 0x03);
+            bus.WriteByte(0x03FF, 0x07);
+            bus.WriteByte(0x0300, 0x07);
+            bus.WriteByte(0x0707, 0x01);
+
+            ushort addr = cpu.Addr_Indirect();
+
+            Unit_Tests.AssertEquals(0x0707, addr, "Indirect Returns Correct Address");
+            Unit_Tests.AssertEquals(0x01, bus.ReadByte(addr), "Indirect Returns Correct Byte");
+            Unit_Tests.AssertEquals(0x0202, cpu._program_counter, "Indirect Correctly Advances PC By Two");
+        }
+
+        public static void TestAddrIndirectX()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            cpu._program_counter = 0x0100;
+            cpu._register_x = 0x0005;
+            bus.WriteByte(0x0100, 0x0A);
+            bus.WriteByte(0x000F, 0x06);
+            bus.WriteByte(0x0010, 0x05);
+            bus.WriteByte(0x0506, 0x01);
+
+            ushort addr = cpu.Addr_IndirectX();
+
+            Unit_Tests.AssertEquals(0x0506, addr, "Indirect X Returns Correct Address");
+            Unit_Tests.AssertEquals(0x01, bus.ReadByte(addr), "Indirect X Returns Correct Byte");
+            Unit_Tests.AssertEquals(0x0101, cpu._program_counter, "Indirect X Correctly Advances PC By One");
+        }
+
+        public static void TestAddrIndirectY()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            cpu._program_counter = 0x0200;
+            cpu._register_y = 0x07;
+            bus.WriteByte(0x0200, 0x09);
+            bus.WriteByte(0x0009, 0x05);
+            bus.WriteByte(0x000A, 0x03);
+            bus.WriteByte(0x030C, 0x09);
+
+            ushort addr = cpu.Addr_IndirectY();
+
+            Unit_Tests.AssertEquals(0x030C, addr, "Indirect Y Returns Correct Address");
+            Unit_Tests.AssertEquals(0x09, bus.ReadByte(addr), "Indirect Y Returns Correct Byte");
+            Unit_Tests.AssertEquals(0x0201, cpu._program_counter, "Indirect Y Correctly Advances PC By One");
         }
     }
 }

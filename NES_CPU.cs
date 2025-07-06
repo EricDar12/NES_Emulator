@@ -94,13 +94,41 @@ namespace NES_Emulator
             byte hi;
 
             // 6502 Page Wrapping Bug
-            if ((ptr & 0x00FF) == 0x00FF) {
+            if (ptr_lo == 0xFF) {
                 hi = _bus.ReadByte((ushort) (ptr & 0xFF00));
-            }
-            else {
+            } else {
                 hi = _bus.ReadByte((ushort) (ptr + 1));
             }
+
             return (ushort) ((hi << 8) | lo);
+        }
+
+        public ushort Addr_IndirectX()
+        {
+            byte b = _bus.ReadByte(_program_counter++);
+
+            ushort lo = _bus.ReadByte((ushort)((b + _register_x) & 0x00FF));
+            ushort hi = _bus.ReadByte((ushort)((b + _register_x + 1) & 0x00FF));
+
+            return (ushort) ((hi << 8) | lo);
+        }
+
+        public ushort Addr_IndirectY()
+        {
+            byte b = _bus.ReadByte(_program_counter++);
+
+            ushort lo = _bus.ReadByte((ushort)((b) & 0x00FF));
+            ushort hi = _bus.ReadByte((ushort)((b + 1) & 0x00FF));
+
+            ushort baseAddr = (ushort) ((hi << 8) | lo);
+
+            ushort finalAddr = (ushort) (baseAddr + _register_y);
+
+            if (IsPageCrossed(baseAddr, finalAddr)) {
+                // Page Has Been Crossed
+            }
+
+            return finalAddr;
         }
 
         public bool IsPageCrossed(ushort baseAddr, ushort finalAddr)

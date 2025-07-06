@@ -15,6 +15,7 @@ namespace NES_Emulator
             if (addr >= 0x0000 && addr < _memory.Length) {
                 return _memory[addr];
             }
+            Console.WriteLine("Out Of Bounds Read");
             return 0;
         }
 
