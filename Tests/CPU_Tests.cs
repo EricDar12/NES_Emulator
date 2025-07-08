@@ -53,6 +53,7 @@ namespace NES_Emulator.Tests
             Unit_Tests.AssertEquals(0b00000000, cpu._status, "Status Flags Reset");
         }
 
+        #region ### Addressing Mode Tests ####
         public static void TestAddrImmediate()
         {
             NES_BUS bus = new NES_BUS();
@@ -233,5 +234,6 @@ namespace NES_Emulator.Tests
             Unit_Tests.AssertEquals(0x09, bus.ReadByte(addr), "Indirect Y Returns Correct Byte");
             Unit_Tests.AssertEquals(0x0201, cpu._program_counter, "Indirect Y Correctly Advances PC By One");
         }
+        #endregion
     }
 }

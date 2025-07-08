@@ -8,14 +8,14 @@ namespace NES_Emulator
 {
     internal class NES_CPU
     {
-        public byte _accumulator;
-        public byte _register_x;
-        public byte _register_y;
-        public ushort _program_counter;
-        public byte _status;
-        public byte _stack_pointer;
-        public UInt32 _master_cycle = 0;
-        public NES_BUS _bus;
+        internal byte _accumulator;
+        internal byte _register_x;
+        internal byte _register_y;
+        internal ushort _program_counter;
+        internal byte _status;
+        internal byte _stack_pointer;
+        internal UInt32 _master_cycle = 0;
+        internal NES_BUS _bus;
 
         public NES_CPU(NES_BUS bus)
         {
@@ -23,7 +23,7 @@ namespace NES_Emulator
         }
 
         #region ##### Addressing Modes #####
-        // TODO handle page crossing to conditionally add cycles at some point
+
         public ushort Addr_Immediate()
         {
             return _program_counter++;
@@ -37,7 +37,7 @@ namespace NES_Emulator
         public ushort Addr_ZeroPageX()
         {
             ushort addr = _bus.ReadByte(_program_counter++);
-            return (byte) (addr + _register_x); // Byte math ensures rollover
+            return (byte) (addr + _register_x); // Byte math ensures rollover within the zero page
         }
 
         public ushort Addr_ZeroPageY()
@@ -61,7 +61,7 @@ namespace NES_Emulator
             ushort finalAddr = (ushort)((hi << 8 | lo) + _register_x);
 
             if (IsPageCrossed(baseAddr, finalAddr)) {
-                // Page has been crossed
+
             }
 
             return finalAddr;
@@ -77,7 +77,7 @@ namespace NES_Emulator
 
 
             if (IsPageCrossed(baseAddr, finalAddr)) {
-                // Page has been crossed
+
             }
 
             return finalAddr;
@@ -121,11 +121,10 @@ namespace NES_Emulator
             ushort hi = _bus.ReadByte((ushort)((b + 1) & 0x00FF));
 
             ushort baseAddr = (ushort) ((hi << 8) | lo);
-
             ushort finalAddr = (ushort) (baseAddr + _register_y);
 
             if (IsPageCrossed(baseAddr, finalAddr)) {
-                // Page Has Been Crossed
+
             }
 
             return finalAddr;
@@ -133,13 +132,14 @@ namespace NES_Emulator
 
         public bool IsPageCrossed(ushort baseAddr, ushort finalAddr)
         {
+            // Page crossing results in one additional clock cycle
             return (baseAddr & 0xFF00) != (finalAddr & 0xFF00);
         }
 
         #endregion
 
         [Flags]
-        public enum StatusFlags : byte
+        internal enum StatusFlags : byte
         {
             Carry = 1 << 0,
             Zero = 1 << 1,
