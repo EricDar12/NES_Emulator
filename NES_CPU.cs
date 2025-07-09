@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Security;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -31,25 +32,25 @@ namespace NES_Emulator
 
         public ushort Addr_ZeroPage()
         {
-            return (ushort) _bus.ReadByte(_program_counter++);
+            return (ushort)_bus.ReadByte(_program_counter++);
         }
 
         public ushort Addr_ZeroPageX()
         {
             ushort addr = _bus.ReadByte(_program_counter++);
-            return (byte) (addr + _register_x); // Byte math ensures rollover within the zero page
+            return (byte)(addr + _register_x); // Byte math ensures rollover within the zero page
         }
 
         public ushort Addr_ZeroPageY()
         {
             ushort addr = _bus.ReadByte(_program_counter++);
-            return (byte) (addr + _register_y);
+            return (byte)(addr + _register_y);
         }
-        
+
         public ushort Addr_Absolute()
         {
             byte lo = _bus.ReadByte(_program_counter++);
-            return (ushort) ((_bus.ReadByte(_program_counter++) << 8) | lo);
+            return (ushort)((_bus.ReadByte(_program_counter++) << 8) | lo);
         }
 
         public ushort Addr_AbsoluteX()
@@ -88,19 +89,20 @@ namespace NES_Emulator
             byte ptr_lo = _bus.ReadByte(_program_counter++);
             byte ptr_hi = _bus.ReadByte(_program_counter++);
 
-            ushort ptr = (ushort) ((ptr_hi << 8) | ptr_lo);
+            ushort ptr = (ushort)((ptr_hi << 8) | ptr_lo);
 
             byte lo = _bus.ReadByte(ptr);
             byte hi;
 
             // 6502 Page Wrapping Bug
             if (ptr_lo == 0xFF) {
-                hi = _bus.ReadByte((ushort) (ptr & 0xFF00));
+                // If we are on the final byte of the page, wrap back to the 0th byte of the same page
+                hi = _bus.ReadByte((ushort)(ptr & 0xFF00));
             } else {
-                hi = _bus.ReadByte((ushort) (ptr + 1));
+                hi = _bus.ReadByte((ushort)(ptr + 1));
             }
 
-            return (ushort) ((hi << 8) | lo);
+            return (ushort)((hi << 8) | lo);
         }
 
         public ushort Addr_IndirectX()
@@ -110,7 +112,7 @@ namespace NES_Emulator
             ushort lo = _bus.ReadByte((ushort)((b + _register_x) & 0x00FF));
             ushort hi = _bus.ReadByte((ushort)((b + _register_x + 1) & 0x00FF));
 
-            return (ushort) ((hi << 8) | lo);
+            return (ushort)((hi << 8) | lo);
         }
 
         public ushort Addr_IndirectY()
@@ -120,8 +122,8 @@ namespace NES_Emulator
             ushort lo = _bus.ReadByte((ushort)((b) & 0x00FF));
             ushort hi = _bus.ReadByte((ushort)((b + 1) & 0x00FF));
 
-            ushort baseAddr = (ushort) ((hi << 8) | lo);
-            ushort finalAddr = (ushort) (baseAddr + _register_y);
+            ushort baseAddr = (ushort)((hi << 8) | lo);
+            ushort finalAddr = (ushort)(baseAddr + _register_y);
 
             if (IsPageCrossed(baseAddr, finalAddr)) {
 
@@ -130,11 +132,23 @@ namespace NES_Emulator
             return finalAddr;
         }
 
-        public bool IsPageCrossed(ushort baseAddr, ushort finalAddr)
+        public ushort Addr_Relative()
         {
-            // Page crossing results in one additional clock cycle
-            return (baseAddr & 0xFF00) != (finalAddr & 0xFF00);
+            sbyte offset = (sbyte)_bus.ReadByte(_program_counter++);
+            ushort baseAddr = _program_counter;
+            ushort finalAddr = (ushort)((short)_program_counter + offset);
+
+            if (IsPageCrossed(baseAddr, finalAddr)) {
+
+            }
+
+            return finalAddr;
         }
+        #endregion
+
+        #region ### CPU Instructions ###
+
+
 
         #endregion
 
@@ -149,6 +163,12 @@ namespace NES_Emulator
             Unused = 1 << 5,
             Overflow = 1 << 6,
             Negative = 1 << 7
+        }
+
+        public bool IsPageCrossed(ushort baseAddr, ushort finalAddr)
+        {
+            // Page crossing results in one additional clock cycle
+            return (baseAddr & 0xFF00) != (finalAddr & 0xFF00);
         }
 
         public bool IsFlagSet(StatusFlags flag)

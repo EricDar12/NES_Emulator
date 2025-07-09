@@ -21,6 +21,7 @@ namespace NES_Emulator.Tests
             TestAddrIndirect();
             TestAddrIndirectX();
             TestAddrIndirectY();
+            TestAddrRelative();
         }
 
         public static void TestStatusFlags()
@@ -233,6 +234,22 @@ namespace NES_Emulator.Tests
             Unit_Tests.AssertEquals(0x030C, addr, "Indirect Y Returns Correct Address");
             Unit_Tests.AssertEquals(0x09, bus.ReadByte(addr), "Indirect Y Returns Correct Byte");
             Unit_Tests.AssertEquals(0x0201, cpu._program_counter, "Indirect Y Correctly Advances PC By One");
+        }
+
+        public static void TestAddrRelative()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            cpu._program_counter = 0x0100;
+            bus.WriteByte(0x0100, 0x0A);
+            bus.WriteByte(0x010B, 0xFF);
+
+            ushort addr = cpu.Addr_Relative();  
+
+            Unit_Tests.AssertEquals(0x010B, addr, "Relative Returns Correct Address");
+            Unit_Tests.AssertEquals(0xFF, bus.ReadByte(addr), "Relative Returns Correct Byte");
+            Unit_Tests.AssertEquals(0x0101, cpu._program_counter, "Relative Correctly Advances PC By One");
         }
         #endregion
     }
