@@ -146,9 +146,39 @@ namespace NES_Emulator
         }
         #endregion
 
-        #region ### CPU Instructions ###
+        #region ##### CPU Instructions #####
 
+        // TODO
+        #endregion
 
+        #region ##### Stack Operations #####
+
+        public void PushByte(byte data)
+        {
+            ushort addr = (ushort) (0x0100 + _stack_pointer);
+            _bus.WriteByte(addr, data);
+            _stack_pointer--;
+        }
+
+        public byte PopByte()
+        {
+            _stack_pointer++;
+            ushort addr = (ushort) (0x0100 + _stack_pointer);
+            return _bus.ReadByte(addr);
+        }
+
+        public void PushWord(ushort data)
+        {
+            PushByte((byte) (data >> 8));           
+            PushByte((byte) data);
+        }
+
+        public ushort PopWord() 
+        {
+            byte lo = PopByte();
+            byte hi = PopByte();
+            return (ushort) ((hi << 8) | lo);
+        }
 
         #endregion
 

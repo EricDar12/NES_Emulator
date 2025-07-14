@@ -22,6 +22,10 @@ namespace NES_Emulator.Tests
             TestAddrIndirectX();
             TestAddrIndirectY();
             TestAddrRelative();
+            TestPushByte();
+            TestPopByte();
+            TestPushWord();
+            TestPopWord();
         }
 
         public static void TestStatusFlags()
@@ -54,7 +58,73 @@ namespace NES_Emulator.Tests
             Unit_Tests.AssertEquals(0b00000000, cpu._status, "Status Flags Reset");
         }
 
-        #region ### Addressing Mode Tests ####
+        #region ##### Stack Tests ##### 
+
+        public static void TestPushByte()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            cpu._stack_pointer = 0xFD;
+            ushort expectedAddress = (ushort)(0x0100 + cpu._stack_pointer);
+
+            cpu.PushByte(0x0A);
+
+            Unit_Tests.AssertEquals(0x01FD, expectedAddress, "Expected Address Is Correct");
+            Unit_Tests.AssertEquals(0x0A, bus.ReadByte(expectedAddress), "PushByte Correctly Pushes Bytes To The Stack");
+            Unit_Tests.AssertEquals(0xFC, cpu._stack_pointer, "PushByte Correctly Decrements Stack Pointer");
+        }
+
+        public static void TestPopByte()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            cpu._stack_pointer = 0xFF;
+
+            ushort wrappeAddress = 0x0100;
+            bus.WriteByte(wrappeAddress, 0x0A);
+
+            byte b = cpu.PopByte();
+
+            Unit_Tests.AssertEquals(0x00, cpu._stack_pointer, "Pop Byte Wraps Stack Pointer From 0xFF to 0x00");
+            Unit_Tests.AssertEquals(0x0A, b, "PopByte Correct Pops From Wrapped Address");
+        }
+
+        public static void TestPushWord()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            cpu._stack_pointer = 0xFD;
+            ushort testValue = 0x1234;
+
+            cpu.PushWord(testValue);
+
+            Unit_Tests.AssertEquals(0x12, bus.ReadByte(0x01FD), "PushWord Pushes High Byte Correctly");
+            Unit_Tests.AssertEquals(0x34, bus.ReadByte(0x01FC), "PushWord Pushes Low Byte Correctly");
+            Unit_Tests.AssertEquals(0xFB, cpu._stack_pointer, "PushWord Correctly Decrements Stack Pointer");
+        }
+
+        public static void TestPopWord()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            cpu._stack_pointer = 0xFB;
+
+            bus.WriteByte(0x01FC, 0x34);
+            bus.WriteByte(0x01FD, 0x12);
+
+            ushort result = cpu.PopWord();
+
+            Unit_Tests.AssertEquals(0x1234, result, "PopWord Pops Correctly From Stack");
+            Unit_Tests.AssertEquals(0xFD, cpu._stack_pointer, "PopWord Correctly Increments Stack Pointer");
+        }
+
+        #endregion
+
+        #region ##### Addressing Mode Tests #####
         public static void TestAddrImmediate()
         {
             NES_BUS bus = new NES_BUS();

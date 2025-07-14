@@ -8,6 +8,7 @@ namespace NES_Emulator
 {
     internal class NES_BUS
     {
+
         internal byte[] _memory = new byte[2048]; // 2KB of RAM
 
         public byte ReadByte(ushort addr)
