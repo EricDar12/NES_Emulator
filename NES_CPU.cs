@@ -59,11 +59,9 @@ namespace NES_Emulator
             byte hi = _bus.ReadByte(_program_counter++);
 
             ushort baseAddr = (ushort)((hi << 8 | lo));
-            ushort finalAddr = (ushort)((hi << 8 | lo) + _register_x);
+            ushort finalAddr = (ushort)(baseAddr + _register_x);
 
-            if (IsPageCrossed(baseAddr, finalAddr)) {
-
-            }
+            IsPageCrossed(baseAddr, finalAddr);
 
             return finalAddr;
         }
@@ -74,12 +72,9 @@ namespace NES_Emulator
             byte hi = _bus.ReadByte(_program_counter++);
 
             ushort baseAddr = (ushort)((hi << 8 | lo));
-            ushort finalAddr = (ushort)((hi << 8 | lo) + _register_y);
+            ushort finalAddr = (ushort)(baseAddr + _register_y);
 
-
-            if (IsPageCrossed(baseAddr, finalAddr)) {
-
-            }
+            IsPageCrossed(baseAddr, finalAddr);
 
             return finalAddr;
         }
@@ -125,9 +120,7 @@ namespace NES_Emulator
             ushort baseAddr = (ushort)((hi << 8) | lo);
             ushort finalAddr = (ushort)(baseAddr + _register_y);
 
-            if (IsPageCrossed(baseAddr, finalAddr)) {
-
-            }
+            IsPageCrossed(baseAddr, finalAddr);
 
             return finalAddr;
         }
@@ -138,17 +131,10 @@ namespace NES_Emulator
             ushort baseAddr = _program_counter;
             ushort finalAddr = (ushort)((short)_program_counter + offset);
 
-            if (IsPageCrossed(baseAddr, finalAddr)) {
-
-            }
+            IsPageCrossed(baseAddr, finalAddr);
 
             return finalAddr;
         }
-        #endregion
-
-        #region ##### CPU Instructions #####
-
-        // TODO
         #endregion
 
         #region ##### Stack Operations #####
@@ -182,6 +168,64 @@ namespace NES_Emulator
 
         #endregion
 
+        #region ##### CPU Instruction #####
+
+        public void LDA(ushort addr, byte cycles)
+        {
+            _accumulator = _bus.ReadByte(addr);
+            SetFlag(StatusFlags.Zero, _accumulator == 0);
+            SetFlag(StatusFlags.Negative, (_accumulator & 0x80) != 0);
+            _master_cycle += cycles;
+        }
+
+        #region ##### Instruction Variants #####
+        void LDA_Immediate() => LDA(Addr_Immediate(), 2); // A9
+        void LDA_ZeroPage() => LDA(Addr_ZeroPage(), 3); // A5
+        void LDA_ZeroPageX() => LDA(Addr_ZeroPageX(), 4); // B5
+        void LDA_Absolute() => LDA(Addr_Absolute(), 4); // AD
+        void LDA_AbsoluteX() => LDA(Addr_AbsoluteX(), 4); // BD
+        void LDA_AbsoluteY() => LDA(Addr_AbsoluteY(), 4); // B9
+        void LDA_IndirectX() => LDA(Addr_IndirectX(), 4); // A1
+        void LDA_IndirectY() => LDA(Addr_IndirectY(), 4); // B1
+
+        #endregion
+
+        #endregion
+
+        public void FetchAndDecode()
+        {
+            byte opcode = _bus.ReadByte(_program_counter);
+
+            switch (opcode) {
+                case 0xA9:
+                    LDA_Immediate();
+                    break;
+                case 0xA5:
+                    LDA_ZeroPage();
+                    break;
+                case 0xB5:
+                    LDA_ZeroPageX();
+                    break;
+                case 0xAD:
+                    LDA_Absolute();
+                    break;
+                case 0xBD:
+                    LDA_AbsoluteX();
+                    break;
+                case 0xB9:
+                    LDA_AbsoluteY();
+                    break;
+                case 0xA1:
+                    LDA_IndirectX();
+                    break;
+                case 0xB1:
+                    LDA_IndirectY();
+                    break;
+                default:
+                    break;
+            }
+        }
+
         [Flags]
         internal enum StatusFlags : byte
         {
@@ -194,11 +238,13 @@ namespace NES_Emulator
             Overflow = 1 << 6,
             Negative = 1 << 7
         }
-
-        public bool IsPageCrossed(ushort baseAddr, ushort finalAddr)
+        public void IsPageCrossed(ushort baseAddr, ushort finalAddr)
         {
             // Page crossing results in one additional clock cycle
-            return (baseAddr & 0xFF00) != (finalAddr & 0xFF00);
+            if ((baseAddr & 0xFF00) != (finalAddr & 0xFF00))
+            {
+                _master_cycle += 1;
+            }
         }
 
         public bool IsFlagSet(StatusFlags flag)
