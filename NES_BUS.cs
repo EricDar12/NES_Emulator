@@ -9,11 +9,11 @@ namespace NES_Emulator
     internal class NES_BUS
     {
 
-        internal byte[] _memory = new byte[2048]; // 2KB of RAM
+        internal byte[] _memory = new byte[65536]; // 2KB of RAM
 
         public byte ReadByte(ushort addr)
         {
-            if (addr >= 0x0000 && addr < _memory.Length) {
+            if (addr >= 0x0000 && addr <= _memory.Length) {
                 return _memory[addr];
             }
             Console.WriteLine($"Out Of Bounds Read At: {addr}");
@@ -22,7 +22,7 @@ namespace NES_Emulator
 
         public void WriteByte(ushort addr, byte data)
         {
-            if (addr >= 0x0000 && addr < _memory.Length) {
+            if (addr >= 0x0000 && addr <= _memory.Length) {
                 _memory[addr] = data;
             }
             else Console.WriteLine($"Out Of Bounds Write At: {addr}");

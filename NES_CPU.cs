@@ -178,6 +178,27 @@ namespace NES_Emulator
             _master_cycle += cycles;
         }
 
+        public void STA(ushort addr, byte cycles)
+        {
+
+        }
+
+        public void BRK()
+        {
+            _program_counter += 2;
+
+            PushWord(_program_counter);
+            SetFlag(StatusFlags.Break, true);
+            SetFlag(StatusFlags.InterruptDisable, true);
+            PushByte((byte) (_status | 0b0011_0000));
+
+            byte lo = _bus.ReadByte(0xFFFE);
+            byte hi = _bus.ReadByte(0xFFFF);
+
+            _program_counter = (ushort) ((hi << 8) | lo);
+            _master_cycle += 7;
+        }
+
         #region ##### Instruction Variants #####
         void LDA_Immediate() => LDA(Addr_Immediate(), 2); // A9
         void LDA_ZeroPage() => LDA(Addr_ZeroPage(), 3); // A5
@@ -185,44 +206,41 @@ namespace NES_Emulator
         void LDA_Absolute() => LDA(Addr_Absolute(), 4); // AD
         void LDA_AbsoluteX() => LDA(Addr_AbsoluteX(), 4); // BD
         void LDA_AbsoluteY() => LDA(Addr_AbsoluteY(), 4); // B9
-        void LDA_IndirectX() => LDA(Addr_IndirectX(), 4); // A1
-        void LDA_IndirectY() => LDA(Addr_IndirectY(), 4); // B1
+        void LDA_IndirectX() => LDA(Addr_IndirectX(), 6); // A1
+        void LDA_IndirectY() => LDA(Addr_IndirectY(), 5); // B1
 
         #endregion
 
         #endregion
+
+        public void Step()
+        {
+            byte opcode = _bus.ReadByte(_program_counter++);
+            switch (opcode)
+            {
+                case 0xA9: LDA_Immediate(); break;
+                case 0xA5: LDA_ZeroPage(); break;
+                case 0xB5: LDA_ZeroPageX(); break;
+                case 0xAD: LDA_Absolute(); break;
+                case 0xBD: LDA_AbsoluteX(); break;
+                case 0xB9: LDA_AbsoluteY(); break;
+                case 0xA1: LDA_IndirectX(); break;
+                case 0xB1: LDA_IndirectY(); break;
+                default: Console.WriteLine($"No Match For Opcode {opcode}"); break;
+            }
+        }
 
         public void FetchAndDecode()
         {
-            byte opcode = _bus.ReadByte(_program_counter);
-
-            switch (opcode) {
-                case 0xA9:
-                    LDA_Immediate();
+            while (true)
+            {
+                if (_bus.ReadByte(_program_counter) == 0x00)
+                {
+                    BRK();
+                    Console.WriteLine("Break Reached");
                     break;
-                case 0xA5:
-                    LDA_ZeroPage();
-                    break;
-                case 0xB5:
-                    LDA_ZeroPageX();
-                    break;
-                case 0xAD:
-                    LDA_Absolute();
-                    break;
-                case 0xBD:
-                    LDA_AbsoluteX();
-                    break;
-                case 0xB9:
-                    LDA_AbsoluteY();
-                    break;
-                case 0xA1:
-                    LDA_IndirectX();
-                    break;
-                case 0xB1:
-                    LDA_IndirectY();
-                    break;
-                default:
-                    break;
+                }
+                Step();
             }
         }
 
@@ -238,14 +256,6 @@ namespace NES_Emulator
             Overflow = 1 << 6,
             Negative = 1 << 7
         }
-        public void IsPageCrossed(ushort baseAddr, ushort finalAddr)
-        {
-            // Page crossing results in one additional clock cycle
-            if ((baseAddr & 0xFF00) != (finalAddr & 0xFF00))
-            {
-                _master_cycle += 1;
-            }
-        }
 
         public bool IsFlagSet(StatusFlags flag)
         {
@@ -260,6 +270,49 @@ namespace NES_Emulator
             else {
                 _status &= (byte)~flag;
             }
+        }
+
+        public void IsPageCrossed(ushort baseAddr, ushort finalAddr)
+        {
+            if ((baseAddr & 0xFF00) != (finalAddr & 0xFF00))
+            {
+                _master_cycle += 1;
+            }
+        }
+
+        public void LoadAndRun(byte[] program)
+        {
+            LoadProgram(program);
+            Reset();
+            FetchAndDecode();
+        }
+
+        public void Reset()
+        {
+            // TODO Store these as const data somewhere rather than magic numbers
+            _stack_pointer = 0xFD;
+            _accumulator = 0x00;
+            _register_x = 0x00;
+            _status = 0b0010_0000;
+            _program_counter = 0xFFFC;
+            _master_cycle = 8;
+
+            // Read reset vector at FFFC - FFFD
+            byte lo = _bus.ReadByte(0xFFFC);
+            byte hi = _bus.ReadByte(0xFFFD);
+
+            _program_counter = (ushort) ((hi << 8) | lo);
+        }
+
+        public void LoadProgram(byte[] program, ushort loadAddress = 0x0600)
+        {
+            for (int i = 0; i < program.Length; i++)
+            {
+                _bus.WriteByte((ushort)(loadAddress + i), program[i]);
+            }
+
+            _bus.WriteByte(0xFFFC, (byte)loadAddress);
+            _bus.WriteByte(0xFFFD, (byte)(loadAddress >> 8));
         }
     }
 }

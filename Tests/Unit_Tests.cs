@@ -27,5 +27,16 @@ namespace NES_Emulator.Tests
                 Console.WriteLine($"[PASS] {message}");
             }
         }
+        public static void AssertEquals(bool expected, bool actual, string message)
+        {
+            if (expected != actual)
+            {
+                Console.WriteLine($"[FAIL] {message}: Expected {expected}, Got Actual {actual}");
+            }
+            else
+            {
+                Console.WriteLine($"[PASS] {message}");
+            }
+        }
     }
 }

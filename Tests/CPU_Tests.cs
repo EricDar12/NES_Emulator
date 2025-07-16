@@ -8,9 +8,9 @@ namespace NES_Emulator.Tests
 {
     internal class CPU_Tests
     {
-        public static void RunAllCPUTests()
+        public static void RunAllAddressTests()
         {
-            TestStatusFlags();
+            TestStatusRegister(); // Should go elsewhere
             TestAddrImmediate();
             TestAddrZeroPage();
             TestAddrZeroPageX();
@@ -22,13 +22,24 @@ namespace NES_Emulator.Tests
             TestAddrIndirectX();
             TestAddrIndirectY();
             TestAddrRelative();
+        }
+
+        public static void RunAllStackTests()
+        {
             TestPushByte();
             TestPopByte();
             TestPushWord();
             TestPopWord();
         }
 
-        public static void TestStatusFlags()
+        public static void RunAll_LDA_Tests()
+        {
+            TestLDA();
+        }
+
+        #region ##### Misc Tests #####
+
+        public static void TestStatusRegister()
         {
             NES_BUS bus = new NES_BUS();
             NES_CPU cpu = new NES_CPU(bus);
@@ -57,6 +68,25 @@ namespace NES_Emulator.Tests
 
             Unit_Tests.AssertEquals(0b00000000, cpu._status, "Status Flags Reset");
         }
+
+        #endregion
+
+        #region ##### Instruction Tests #####
+
+        public static void TestLDA()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            cpu.LoadAndRun(new byte[] {0xA9, 0x65, 0x00});
+
+            Unit_Tests.AssertEquals(0x65, cpu._accumulator, "LDA Imm Loads Correct Value Into A");
+            Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Zero), "Zero Flag Is Not Set");
+            Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Negative), "Negative Flag Is Not Set");
+            Unit_Tests.AssertEquals(17, (ushort) cpu._master_cycle, "Reset + LDA imm + BRK Uses 17 Cycles");
+        }
+
+        #endregion
 
         #region ##### Stack Tests ##### 
 
