@@ -32,9 +32,15 @@ namespace NES_Emulator.Tests
             TestPopWord();
         }
 
+        // Will likely add more tests for instructions, just easier to encapsulate them in their own methods
         public static void RunAll_LDA_Tests()
         {
             TestLDA();
+        }
+
+        public static void RunAll_STA_Tests()
+        {
+            TestSTA();
         }
 
         #region ##### Misc Tests #####
@@ -78,6 +84,7 @@ namespace NES_Emulator.Tests
             NES_BUS bus = new NES_BUS();
             NES_CPU cpu = new NES_CPU(bus);
 
+            // Load accumulator with 65, BRK
             cpu.LoadAndRun(new byte[] {0xA9, 0x65, 0x00});
 
             Unit_Tests.AssertEquals(0x65, cpu._accumulator, "LDA Imm Loads Correct Value Into A");
@@ -87,6 +94,19 @@ namespace NES_Emulator.Tests
 
             Unit_Tests.AssertEquals(0b0011_0100, cpu.PopByte(), "Status Register Pushed & Popped Correctly");
             Unit_Tests.AssertEquals(0x0604, cpu.PopWord(), "Return Address Pushed & Popped Correctlty");
+
+        }
+
+        public static void TestSTA()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            // Load accumulator with FF, store accumulator in at 000F, BRK
+            cpu.LoadAndRun(new byte[] {0xA9, 0xFF, 0x85, 0x0F, 0x00});
+
+            Unit_Tests.AssertEquals(0xFF, bus.ReadByte(0x000F), "STA Stores Value In Memory Correctly");
+            Unit_Tests.AssertEquals(20, (ushort) cpu._master_cycle, "Reset + LDA imm + STA imm + BRK Uses 20 Cycles");
 
         }
 

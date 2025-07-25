@@ -180,7 +180,8 @@ namespace NES_Emulator
 
         public void STA(ushort addr, byte cycles)
         {
-
+            _bus.WriteByte(addr, _accumulator);
+            _master_cycle += cycles;
         }
 
         public void BRK()
@@ -189,7 +190,7 @@ namespace NES_Emulator
 
             PushWord(_program_counter);
 
-            Console.WriteLine($"Addr Pushed To Stack {_program_counter}"); 
+            Console.WriteLine($"DEBUG:Addr Pushed To Stack {_program_counter}"); 
 
             SetFlag(StatusFlags.Break, true);
             SetFlag(StatusFlags.InterruptDisable, true);
@@ -203,6 +204,7 @@ namespace NES_Emulator
         }
 
         #region ##### Instruction Variants #####
+
         void LDA_Immediate() => LDA(Addr_Immediate(), 2); // A9
         void LDA_ZeroPage() => LDA(Addr_ZeroPage(), 3); // A5
         void LDA_ZeroPageX() => LDA(Addr_ZeroPageX(), 4); // B5
@@ -211,6 +213,14 @@ namespace NES_Emulator
         void LDA_AbsoluteY() => LDA(Addr_AbsoluteY(), 4); // B9
         void LDA_IndirectX() => LDA(Addr_IndirectX(), 6); // A1
         void LDA_IndirectY() => LDA(Addr_IndirectY(), 5); // B1
+
+        void STA_ZeroPage() => STA(Addr_ZeroPage(), 3); // 85
+        void STA_ZeroPageX() => STA(Addr_ZeroPageX(), 4); // 95
+        void STA_Absolute() => STA(Addr_Absolute(), 4); // 8D
+        void STA_AbsoluteX() => STA(Addr_AbsoluteX(), 5); // 9D
+        void STA_AbsoluteY() => STA(Addr_AbsoluteY(), 5); // 99
+        void STA_IndirectX() => STA(Addr_IndirectX(), 6); // 81
+        void STA_IndirectY() => STA(Addr_IndirectY(), 6); // 91
 
         #endregion
 
@@ -221,6 +231,8 @@ namespace NES_Emulator
             byte opcode = _bus.ReadByte(_program_counter++);
             switch (opcode)
             {
+
+                // LDA Instructions
                 case 0xA9: LDA_Immediate(); break;
                 case 0xA5: LDA_ZeroPage(); break;
                 case 0xB5: LDA_ZeroPageX(); break;
@@ -229,6 +241,16 @@ namespace NES_Emulator
                 case 0xB9: LDA_AbsoluteY(); break;
                 case 0xA1: LDA_IndirectX(); break;
                 case 0xB1: LDA_IndirectY(); break;
+
+                // STA Instructions
+                case 0x85: STA_ZeroPage(); break;
+                case 0x95: STA_ZeroPageX(); break;
+                case 0x8D: STA_Absolute(); break;
+                case 0x9D: STA_AbsoluteX(); break;
+                case 0x99: STA_AbsoluteY(); break;
+                case 0x81: STA_IndirectX(); break;
+                case 0x91: STA_IndirectY(); break;
+
                 default: Console.WriteLine($"No Match For Opcode {opcode}"); break;
             }
         }
