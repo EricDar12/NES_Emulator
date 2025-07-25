@@ -155,15 +155,15 @@ namespace NES_Emulator
 
         public void PushWord(ushort data)
         {
-            PushByte((byte) (data >> 8));           
+            PushByte((byte)(data >> 8));
             PushByte((byte) data);
         }
 
         public ushort PopWord() 
         {
-            byte lo = PopByte();
+            byte lo = PopByte();    
             byte hi = PopByte();
-            return (ushort) ((hi << 8) | lo);
+            return (ushort)((hi << 8) | lo);
         }
 
         #endregion
@@ -188,6 +188,9 @@ namespace NES_Emulator
             _program_counter += 2;
 
             PushWord(_program_counter);
+
+            Console.WriteLine($"Addr Pushed To Stack {_program_counter}"); 
+
             SetFlag(StatusFlags.Break, true);
             SetFlag(StatusFlags.InterruptDisable, true);
             PushByte((byte) (_status | 0b0011_0000));

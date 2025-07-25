@@ -84,6 +84,10 @@ namespace NES_Emulator.Tests
             Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Zero), "Zero Flag Is Not Set");
             Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Negative), "Negative Flag Is Not Set");
             Unit_Tests.AssertEquals(17, (ushort) cpu._master_cycle, "Reset + LDA imm + BRK Uses 17 Cycles");
+
+            Unit_Tests.AssertEquals(0b0011_0100, cpu.PopByte(), "Status Register Pushed & Popped Correctly");
+            Unit_Tests.AssertEquals(0x0604, cpu.PopWord(), "Return Address Pushed & Popped Correctlty");
+
         }
 
         #endregion
@@ -112,13 +116,12 @@ namespace NES_Emulator.Tests
 
             cpu._stack_pointer = 0xFF;
 
-            ushort wrappeAddress = 0x0100;
-            bus.WriteByte(wrappeAddress, 0x0A);
+            bus.WriteByte(0x0100, 0x0A);
 
-            byte b = cpu.PopByte();
+            byte b = cpu.PopByte(); // FF + 1 = 00 Due to Wrap
 
             Unit_Tests.AssertEquals(0x00, cpu._stack_pointer, "Pop Byte Wraps Stack Pointer From 0xFF to 0x00");
-            Unit_Tests.AssertEquals(0x0A, b, "PopByte Correct Pops From Wrapped Address");
+            Unit_Tests.AssertEquals(0x0A, b, "PopByte Correctly Pops From Wrapped Address");
         }
 
         public static void TestPushWord()
