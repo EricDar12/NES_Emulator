@@ -32,50 +32,17 @@ namespace NES_Emulator.Tests
             TestPopWord();
         }
 
-        // Will likely add more tests for instructions, just easier to encapsulate them in their own methods
-        public static void RunAll_LDA_Tests()
+        public static void RunAllInstructionTests()
         {
             TestLDA();
-        }
-
-        public static void RunAll_STA_Tests()
-        {
             TestSTA();
+            TestLDX();
+            TestSTX();
+            TestLDY();
+            TestLDY_Absolute();
+            TestSTY();
+            TestSTY_Absolute();
         }
-
-        #region ##### Misc Tests #####
-
-        public static void TestStatusRegister()
-        {
-            NES_BUS bus = new NES_BUS();
-            NES_CPU cpu = new NES_CPU(bus);
-
-            Unit_Tests.AssertEquals(0b00000000, cpu._status, "Status Flags Set To Zero");
-
-            cpu.SetFlag(NES_CPU.StatusFlags.Negative, true);
-            cpu.SetFlag(NES_CPU.StatusFlags.Zero, true);
-            cpu.SetFlag(NES_CPU.StatusFlags.Carry, true);
-            cpu.SetFlag(NES_CPU.StatusFlags.Decimal, true);
-            cpu.SetFlag(NES_CPU.StatusFlags.Break, true);
-            cpu.SetFlag(NES_CPU.StatusFlags.Overflow, true);
-            cpu.SetFlag(NES_CPU.StatusFlags.InterruptDisable, true);
-            cpu.SetFlag(NES_CPU.StatusFlags.Unused, true);
-
-            Unit_Tests.AssertEquals(0b11111111, cpu._status, "Status Flags Set To One");
-
-            cpu.SetFlag(NES_CPU.StatusFlags.Negative, false);
-            cpu.SetFlag(NES_CPU.StatusFlags.Zero, false);
-            cpu.SetFlag(NES_CPU.StatusFlags.Carry, false);
-            cpu.SetFlag(NES_CPU.StatusFlags.Decimal, false);
-            cpu.SetFlag(NES_CPU.StatusFlags.Break, false);
-            cpu.SetFlag(NES_CPU.StatusFlags.Overflow, false);
-            cpu.SetFlag(NES_CPU.StatusFlags.InterruptDisable, false);
-            cpu.SetFlag(NES_CPU.StatusFlags.Unused, false);
-
-            Unit_Tests.AssertEquals(0b00000000, cpu._status, "Status Flags Reset");
-        }
-
-        #endregion
 
         #region ##### Instruction Tests #####
 
@@ -92,7 +59,8 @@ namespace NES_Emulator.Tests
             Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Negative), "Negative Flag Is Not Set");
             Unit_Tests.AssertEquals(17, (ushort) cpu._master_cycle, "Reset + LDA imm + BRK Uses 17 Cycles");
 
-            Unit_Tests.AssertEquals(0b0011_0100, cpu.PopByte(), "Status Register Pushed & Popped Correctly");
+            Unit_Tests.AssertEquals(0b0011_0000, cpu.PopByte(), "Status Register Pushed & Popped Correctly");
+            Unit_Tests.AssertEquals(0b0010_0100, cpu._status, "Value Stored In Status Register Is Correct");
             Unit_Tests.AssertEquals(0x0604, cpu.PopWord(), "Return Address Pushed & Popped Correctlty");
 
         }
@@ -102,12 +70,80 @@ namespace NES_Emulator.Tests
             NES_BUS bus = new NES_BUS();
             NES_CPU cpu = new NES_CPU(bus);
 
-            // Load accumulator with FF, store accumulator in at 000F, BRK
+            // LDA FF, STA Zero Page with offset 0F, BRK
             cpu.LoadAndRun(new byte[] {0xA9, 0xFF, 0x85, 0x0F, 0x00});
 
             Unit_Tests.AssertEquals(0xFF, bus.ReadByte(0x000F), "STA Stores Value In Memory Correctly");
             Unit_Tests.AssertEquals(20, (ushort) cpu._master_cycle, "Reset + LDA imm + STA imm + BRK Uses 20 Cycles");
 
+        }
+
+        public static void TestLDX()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            bus.WriteByte(0x000B, 0xA1);
+
+            // LDY 0B, LDX zpy, BRK 
+            cpu.LoadAndRun(new byte[] {0xA0, 0x0B, 0xB6, 0x00});
+
+            Unit_Tests.AssertEquals(0xA1, cpu._register_x, "LDX Loads Correct Value From Zero Page (Offset By Y)");
+            Unit_Tests.AssertEquals(21, (ushort)cpu._master_cycle, "Reset + LDY imm + LDX zpy + BRK Uses 21 Cycles");
+        }
+
+        public static void TestSTX()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            // STX Zero Page set by immediate offset 0xF1, BRK
+            cpu.LoadAndRun(new byte[] {0xA2, 0xAA, 0x86, 0xF1, 0x00});
+
+            Unit_Tests.AssertEquals(0xAA, bus.ReadByte(0x00F1), "Register X Correctly Stored In Memory");
+            Unit_Tests.AssertEquals(20, (ushort)cpu._master_cycle, "Reset + LDX + STX zpy + BRK uses 20 cycles");
+        }
+
+        public static void TestLDY()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+            bus.WriteByte(0x0085, 0x42);
+            // LDX #$05, LDY $80,X, BRK (LDY Zero Page X addressing)
+            cpu.LoadAndRun(new byte[] { 0xA2, 0x05, 0xB4, 0x80, 0x00 });
+            Unit_Tests.AssertEquals(0x42, cpu._register_y, "LDY Loads Correct Value From Zero Page (Offset By X)");
+            Unit_Tests.AssertEquals(21, (ushort)cpu._master_cycle, "Reset + LDX imm + LDY zpx + BRK Uses 21 Cycles");
+        }
+
+        public static void TestSTY()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+            // LDY #$BB, LDX #$10, STY $20,X, BRK (STY Zero Page X addressing)
+            cpu.LoadAndRun(new byte[] { 0xA0, 0xBB, 0xA2, 0x10, 0x94, 0x20, 0x00 });
+            Unit_Tests.AssertEquals(0xBB, bus.ReadByte(0x0030), "Register Y Correctly Stored In Memory (ZP,X)");
+            Unit_Tests.AssertEquals(23, (ushort)cpu._master_cycle, "Reset + LDY imm + LDX imm + STY zpx + BRK uses 23 cycles");
+        }
+
+        public static void TestLDY_Absolute()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+            bus.WriteByte(0x1234, 0x7F);
+            // LDY $1234, BRK (LDY Absolute addressing)
+            cpu.LoadAndRun(new byte[] { 0xAC, 0x34, 0x12, 0x00 });
+            Unit_Tests.AssertEquals(0x7F, cpu._register_y, "LDY Loads Correct Value From Absolute Address");
+            Unit_Tests.AssertEquals(19, (ushort)cpu._master_cycle, "Reset + LDY abs + BRK Uses 19 Cycles");
+        }
+
+        public static void TestSTY_Absolute()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+            // LDY #$CC, STY $ABCD, BRK (STY Absolute addressing)
+            cpu.LoadAndRun(new byte[] { 0xA0, 0xCC, 0x8C, 0xCD, 0xAB, 0x00 });
+            Unit_Tests.AssertEquals(0xCC, bus.ReadByte(0xABCD), "Register Y Correctly Stored At Absolute Address");
+            Unit_Tests.AssertEquals(21, (ushort)cpu._master_cycle, "Reset + LDY imm + STY abs + BRK uses 21 cycles");
         }
 
         #endregion
@@ -373,6 +409,37 @@ namespace NES_Emulator.Tests
             Unit_Tests.AssertEquals(0x010B, addr, "Relative Returns Correct Address");
             Unit_Tests.AssertEquals(0xFF, bus.ReadByte(addr), "Relative Returns Correct Byte");
             Unit_Tests.AssertEquals(0x0101, cpu._program_counter, "Relative Correctly Advances PC By One");
+        }
+        #endregion
+
+        #region ##### Misc Tests #####
+
+        public static void TestStatusRegister()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            Unit_Tests.AssertEquals(0b0010_0000, cpu._status, "Status Flags Set To Default (Bit 5 On)");
+
+            cpu.SetFlag(NES_CPU.StatusFlags.Negative, true);
+            cpu.SetFlag(NES_CPU.StatusFlags.Zero, true);
+            cpu.SetFlag(NES_CPU.StatusFlags.Carry, true);
+            cpu.SetFlag(NES_CPU.StatusFlags.Decimal, true);
+            cpu.SetFlag(NES_CPU.StatusFlags.Break, true);
+            cpu.SetFlag(NES_CPU.StatusFlags.Overflow, true);
+            cpu.SetFlag(NES_CPU.StatusFlags.InterruptDisable, true);
+
+            Unit_Tests.AssertEquals(0b11111111, cpu._status, "Status Flags Set To One");
+
+            cpu.SetFlag(NES_CPU.StatusFlags.Negative, false);
+            cpu.SetFlag(NES_CPU.StatusFlags.Zero, false);
+            cpu.SetFlag(NES_CPU.StatusFlags.Carry, false);
+            cpu.SetFlag(NES_CPU.StatusFlags.Decimal, false);
+            cpu.SetFlag(NES_CPU.StatusFlags.Break, false);
+            cpu.SetFlag(NES_CPU.StatusFlags.Overflow, false);
+            cpu.SetFlag(NES_CPU.StatusFlags.InterruptDisable, false);
+
+            Unit_Tests.AssertEquals(0b0010_0000, cpu._status, "Status Flags Reset To Default (Bit 5 On)");
         }
         #endregion
     }
