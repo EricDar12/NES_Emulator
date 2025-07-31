@@ -42,6 +42,10 @@ namespace NES_Emulator.Tests
             TestLDY_Absolute();
             TestSTY();
             TestSTY_Absolute();
+            TestTAX();
+            TestTXA();
+            TestTAY();
+            TestTYA();
         }
 
         #region ##### Instruction Tests #####
@@ -108,11 +112,12 @@ namespace NES_Emulator.Tests
         {
             NES_BUS bus = new NES_BUS();
             NES_CPU cpu = new NES_CPU(bus);
-            bus.WriteByte(0x0085, 0x42);
+            bus.WriteByte(0x0085, 0x00);
             // LDX #$05, LDY $80,X, BRK (LDY Zero Page X addressing)
             cpu.LoadAndRun(new byte[] { 0xA2, 0x05, 0xB4, 0x80, 0x00 });
-            Unit_Tests.AssertEquals(0x42, cpu._register_y, "LDY Loads Correct Value From Zero Page (Offset By X)");
+            Unit_Tests.AssertEquals(0x00, cpu._register_y, "LDY Loads Correct Value From Zero Page (Offset By X)");
             Unit_Tests.AssertEquals(21, (ushort)cpu._master_cycle, "Reset + LDX imm + LDY zpx + BRK Uses 21 Cycles");
+            Unit_Tests.AssertEquals(true, cpu.IsFlagSet(NES_CPU.StatusFlags.Zero), "Zero Flag Set Correctly");
         }
 
         public static void TestSTY()
@@ -144,6 +149,58 @@ namespace NES_Emulator.Tests
             cpu.LoadAndRun(new byte[] { 0xA0, 0xCC, 0x8C, 0xCD, 0xAB, 0x00 });
             Unit_Tests.AssertEquals(0xCC, bus.ReadByte(0xABCD), "Register Y Correctly Stored At Absolute Address");
             Unit_Tests.AssertEquals(21, (ushort)cpu._master_cycle, "Reset + LDY imm + STY abs + BRK uses 21 cycles");
+        }
+
+        public static void TestTAX()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+            // LDA #$42, TAX, BRK
+            cpu.LoadAndRun(new byte[] { 0xA9, 0x42, 0xAA, 0x00 });
+            Unit_Tests.AssertEquals(0x42, cpu._register_x, "TAX Transfers Accumulator Value To X Register");
+            Unit_Tests.AssertEquals(0x42, cpu._accumulator, "TAX Does Not Modify Accumulator");
+            Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Zero), "TAX Zero Flag Not Set For Non-Zero Value");
+            Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Negative), "TAX Negative Flag Not Set For Positive Value");
+            Unit_Tests.AssertEquals(19, (ushort)cpu._master_cycle, "Reset + LDA imm + TAX + BRK Uses 19 Cycles");
+        }
+
+        public static void TestTXA()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+            // LDX #$55, TXA, BRK
+            cpu.LoadAndRun(new byte[] { 0xA2, 0x55, 0x8A, 0x00 });
+            Unit_Tests.AssertEquals(0x55, cpu._accumulator, "TXA Transfers X Register Value To Accumulator");
+            Unit_Tests.AssertEquals(0x55, cpu._register_x, "TXA Does Not Modify X Register");
+            Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Zero), "TXA Zero Flag Not Set For Non-Zero Value");
+            Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Negative), "TXA Negative Flag Not Set For Positive Value");
+            Unit_Tests.AssertEquals(19, (ushort)cpu._master_cycle, "Reset + LDX imm + TXA + BRK Uses 19 Cycles");
+        }
+
+        public static void TestTAY()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+            // LDA #$33, TAY, BRK
+            cpu.LoadAndRun(new byte[] { 0xA9, 0x33, 0xA8, 0x00 });
+            Unit_Tests.AssertEquals(0x33, cpu._register_y, "TAY Transfers Accumulator Value To Y Register");
+            Unit_Tests.AssertEquals(0x33, cpu._accumulator, "TAY Does Not Modify Accumulator");
+            Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Zero), "TAY Zero Flag Not Set For Non-Zero Value");
+            Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Negative), "TAY Negative Flag Not Set For Positive Value");
+            Unit_Tests.AssertEquals(19, (ushort)cpu._master_cycle, "Reset + LDA imm + TAY + BRK Uses 19 Cycles");
+        }
+
+        public static void TestTYA()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+            // LDY #$FF, TYA, BRK
+            cpu.LoadAndRun(new byte[] { 0xA0, 0xFF, 0x98, 0x00 });
+            Unit_Tests.AssertEquals(0xFF, cpu._accumulator, "TYA Transfers Y Register Value To Accumulator");
+            Unit_Tests.AssertEquals(0xFF, cpu._register_y, "TYA Does Not Modify Y Register");
+            Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Zero), "TYA Zero Flag Not Set For Non-Zero Value");
+            Unit_Tests.AssertEquals(true, cpu.IsFlagSet(NES_CPU.StatusFlags.Negative), "TYA Negative Flag Set For Negative Value");
+            Unit_Tests.AssertEquals(19, (ushort)cpu._master_cycle, "Reset + LDY imm + TYA + BRK Uses 19 Cycles");
         }
 
         #endregion

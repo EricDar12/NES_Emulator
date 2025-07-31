@@ -173,8 +173,7 @@ namespace NES_Emulator
         public void LDA(ushort addr, byte cycles)
         {
             _accumulator = _bus.ReadByte(addr);
-            SetFlag(StatusFlags.Zero, _accumulator == 0);
-            SetFlag(StatusFlags.Negative, (_accumulator & 0x80) != 0);
+            SetNegativeAndZeroFlags(_accumulator);
             _master_cycle += cycles;
         }
 
@@ -187,8 +186,7 @@ namespace NES_Emulator
         public void LDX(ushort addr, byte cycles)
         {
             _register_x = _bus.ReadByte(addr);
-            SetFlag(StatusFlags.Zero, _register_x == 0);
-            SetFlag(StatusFlags.Negative, (_register_x & 0x80) != 0);
+            SetNegativeAndZeroFlags(_register_x);
             _master_cycle += cycles;
         }
 
@@ -201,14 +199,41 @@ namespace NES_Emulator
         public void LDY(ushort addr, byte cycles)
         {
             _register_y = _bus.ReadByte(addr);
-            SetFlag(StatusFlags.Zero, _register_y == 0);
-            SetFlag(StatusFlags.Negative, (_register_y & 0x80) != 0);
+            SetNegativeAndZeroFlags(_register_y);
             _master_cycle += cycles;
         }
 
         public void STY(ushort addr, byte cycles)
         {
             _bus.WriteByte(addr, _register_y);
+            _master_cycle += cycles;
+        }
+
+        public void TAX(byte cycles = 2)
+        {
+            _register_x = _accumulator;
+            SetNegativeAndZeroFlags(_register_x);
+            _master_cycle += cycles;
+        }
+
+        public void TXA(byte cycles = 2)
+        {
+            _accumulator = _register_x;
+            SetNegativeAndZeroFlags(_accumulator);
+            _master_cycle += cycles;
+        }
+
+        public void TAY(byte cycles = 2)
+        {
+            _register_y = _accumulator;
+            SetNegativeAndZeroFlags(_register_y);
+            _master_cycle += cycles;
+        }
+
+        public void TYA(byte cycles = 2)
+        {
+            _accumulator = _register_y;
+            SetNegativeAndZeroFlags(_accumulator);
             _master_cycle += cycles;
         }
 
@@ -323,6 +348,12 @@ namespace NES_Emulator
                 case 0x94: STY_ZeroPageX(); break;
                 case 0x8C: STY_Absolute(); break;
 
+                // Transfer Instructions
+                case 0xAA: TAX(); break;
+                case 0x8A: TXA(); break;
+                case 0xA8: TAY(); break;
+                case 0x98: TYA(); break;
+
                 default: Console.WriteLine($"No Match For Opcode {opcode}"); break;
             }
         }
@@ -367,6 +398,12 @@ namespace NES_Emulator
             else {
                 _status &= (byte)~flag;
             }
+        }
+
+        public void SetNegativeAndZeroFlags(byte register)
+        {
+            SetFlag(StatusFlags.Zero, register == 0);
+            SetFlag(StatusFlags.Negative, (register & 0x80) != 0);
         }
 
         public void IsPageCrossed(ushort baseAddr, ushort finalAddr)
