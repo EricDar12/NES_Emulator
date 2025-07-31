@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -46,6 +47,12 @@ namespace NES_Emulator.Tests
             TestTXA();
             TestTAY();
             TestTYA();
+            TestINX();
+            TestDEX();
+            TestINY();
+            TestDEY();
+            TestCLC();
+            TestSEC();  
         }
 
         #region ##### Instruction Tests #####
@@ -201,6 +208,92 @@ namespace NES_Emulator.Tests
             Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Zero), "TYA Zero Flag Not Set For Non-Zero Value");
             Unit_Tests.AssertEquals(true, cpu.IsFlagSet(NES_CPU.StatusFlags.Negative), "TYA Negative Flag Set For Negative Value");
             Unit_Tests.AssertEquals(19, (ushort)cpu._master_cycle, "Reset + LDY imm + TYA + BRK Uses 19 Cycles");
+        }
+
+        public static void TestINX()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            byte regX = 0x7E;
+
+            // LDX #$A0, INX, BRK 
+            cpu.LoadAndRun(new byte[] { 0xA2, regX, 0xE8, 0x00 });
+
+            Unit_Tests.AssertEquals((byte) (regX + 1), cpu._register_x, "INX Increments X Register By 1");
+            Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Zero), "INX Zero Flag Not Set For Non-Zero Value");
+            Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Negative), "INX Negative Flag Not Set For Positive Value");
+            Unit_Tests.AssertEquals(19, (ushort)cpu._master_cycle, "Reset + LDX + INX + BRK Uses 19 Cycles");
+        }
+
+        public static void TestDEX()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            byte regX = 0x00;
+
+            // LDX #$00, DEX, BRK
+            cpu.LoadAndRun(new byte[] { 0xA2, regX, 0xCA, 0x00 });
+
+            Unit_Tests.AssertEquals((byte)(regX - 1), cpu._register_x, "DEX Decrements And Rolls Over To FF");
+            Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Zero), "DEX Zero Flag Not Set For Non-Zero Value");
+            Unit_Tests.AssertEquals(true, cpu.IsFlagSet(NES_CPU.StatusFlags.Negative), "DEX Negative Flag Set For Negative Value");
+            Unit_Tests.AssertEquals(19, (ushort)cpu._master_cycle, "Reset + LDX + DEX + BRK Uses 19 Cycles");
+        }
+
+        public static void TestINY()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            byte regY = 0x0A;
+
+            // LDY #$0A, INY, BRK 
+            cpu.LoadAndRun(new byte[] { 0xA0, regY, 0xC8, 0x00 });
+
+            Unit_Tests.AssertEquals((byte)(regY + 1), cpu._register_y, "INY Increments Y Register By 1");
+            Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Zero), "INY Zero Flag Not Set For Non-Zero Value");
+            Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Negative), "INY Negative Flag Not Set For Positive Value");
+            Unit_Tests.AssertEquals(19, (ushort)cpu._master_cycle, "Reset + LDY + INY + BRK Uses 19 Cycles");
+        }
+
+        public static void TestDEY()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            byte regY = 0x01;
+
+            // LDY #$09, DEY, BRK
+            cpu.LoadAndRun(new byte[] { 0xA0, regY, 0x88, 0x00 });
+
+            Unit_Tests.AssertEquals((byte)(regY - 1), cpu._register_x, "DEY Decrements Correctly");
+            Unit_Tests.AssertEquals(true, cpu.IsFlagSet(NES_CPU.StatusFlags.Zero), "DEY Zero Flag Set For Zero Value");
+            Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Negative), "DEY Negative Flag Not Set For Positive Value");
+            Unit_Tests.AssertEquals(19, (ushort)cpu._master_cycle, "Reset + LDY + DEY + BRK Uses 19 Cycles");
+        }
+
+        public static void TestCLC()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            // SEC, CLC, BRK
+            cpu.LoadAndRun(new byte[] { 0x38, 0x18, 0x00 });
+            Unit_Tests.AssertEquals(false, cpu.IsFlagSet(NES_CPU.StatusFlags.Carry), "CLC Clears Carry Flag");
+            Unit_Tests.AssertEquals(19, (ushort)cpu._master_cycle, "Reset + SEC + CLC + BRK Uses 19 Cycles");
+        }
+
+        public static void TestSEC()
+        {
+            NES_BUS bus = new NES_BUS();
+            NES_CPU cpu = new NES_CPU(bus);
+
+            // SEC, BRK
+            cpu.LoadAndRun(new byte[] { 0x38, 0x00 });
+            Unit_Tests.AssertEquals(true, cpu.IsFlagSet(NES_CPU.StatusFlags.Carry), "SEC Sets Carry Flag");
+            Unit_Tests.AssertEquals(17, (ushort)cpu._master_cycle, "Reset + SEC + BRK Uses 17 Cycles");
         }
 
         #endregion

@@ -237,6 +237,46 @@ namespace NES_Emulator
             _master_cycle += cycles;
         }
 
+        public void INX(byte cycles = 2)
+        {
+            _register_x += 1;
+            SetNegativeAndZeroFlags(_register_x);
+            _master_cycle += cycles;
+        }
+
+        public void INY(byte cycles = 2)
+        {
+            _register_y += 1;
+            SetNegativeAndZeroFlags(_register_y);
+            _master_cycle += cycles;
+        }   
+
+        public void DEX(byte cycles = 2)
+        {
+            _register_x -= 1;
+            SetNegativeAndZeroFlags(_register_x);
+            _master_cycle += cycles;
+        }
+
+        public void DEY(byte cycles = 2)
+        {
+            _register_y -= 1;
+            SetNegativeAndZeroFlags(_register_y);
+            _master_cycle += cycles;
+        }
+
+        public void CLC(byte cycles = 2)
+        {
+            SetFlag(StatusFlags.Carry, false);
+            _master_cycle += cycles;
+        }
+
+        public void SEC(byte cycles = 2)
+        {
+            SetFlag(StatusFlags.Carry, true);
+            _master_cycle += cycles;
+        }
+
         public void BRK()
         {
             _program_counter += 2;
@@ -353,6 +393,16 @@ namespace NES_Emulator
                 case 0x8A: TXA(); break;
                 case 0xA8: TAY(); break;
                 case 0x98: TYA(); break;
+
+                // Increment & Decrement Instructions
+                case 0xE8: INX(); break;
+                case 0xCA: DEX(); break;
+                case 0xC8: INY(); break;
+                case 0x88: DEY(); break;
+
+                // Flag Instructions
+                case 0x18: CLC(); break;
+                case 0x38: SEC(); break;
 
                 default: Console.WriteLine($"No Match For Opcode {opcode}"); break;
             }
