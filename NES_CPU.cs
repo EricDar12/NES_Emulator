@@ -7,16 +7,16 @@ using System.Threading.Tasks;
 
 namespace NES_Emulator
 {
-    internal class NES_CPU
+    public class NES_CPU
     {
-        internal byte _accumulator;
-        internal byte _register_x;
-        internal byte _register_y;
-        internal ushort _program_counter;
-        internal byte _status = 0b0010_0000;
-        internal byte _stack_pointer;
-        internal UInt32 _master_cycle = 0;
-        internal NES_BUS _bus;
+        public byte _accumulator;
+        public byte _register_x;
+        public byte _register_y;
+        public ushort _program_counter;
+        public byte _status = 0b0010_0000;
+        public byte _stack_pointer;
+        public UInt32 _master_cycle = 0;
+        public NES_BUS _bus;
 
         public NES_CPU(NES_BUS bus)
         {
@@ -127,9 +127,10 @@ namespace NES_Emulator
 
         public ushort Addr_Relative()
         {
-            sbyte offset = (sbyte)_bus.ReadByte(_program_counter++);
+
+            sbyte offset = (sbyte) _bus.ReadByte(_program_counter++);
             ushort baseAddr = _program_counter;
-            ushort finalAddr = (ushort)((short)_program_counter + offset);
+            ushort finalAddr = (ushort) (baseAddr + offset);
 
             IsPageCrossed(baseAddr, finalAddr);
 
@@ -423,7 +424,7 @@ namespace NES_Emulator
         }
 
         [Flags]
-        internal enum StatusFlags : byte
+        public enum StatusFlags : byte
         {
             Carry = 1 << 0,
             Zero = 1 << 1,

@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace NES_Emulator
 {
-    internal class NES_BUS
+    public class NES_BUS
     {
 
-        internal byte[] _memory = new byte[65536]; // 2KB of RAM
+        private byte[] _memory = new byte[65536]; // 2KB of RAM
 
         public byte ReadByte(ushort addr)
         {

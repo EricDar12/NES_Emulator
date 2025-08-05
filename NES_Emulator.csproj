@@ -7,4 +7,14 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="NES_Emulator.Tests\**" />
+    <EmbeddedResource Remove="NES_Emulator.Tests\**" />
+    <None Remove="NES_Emulator.Tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.extensibility.core" Version="2.9.3" />
+  </ItemGroup>
+
 </Project>
