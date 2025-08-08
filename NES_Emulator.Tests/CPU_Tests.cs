@@ -359,6 +359,44 @@ public class CPU_Tests
         Assert.Equal(17, (ushort)cpu._master_cycle);
     }
 
+    [Fact]
+    public void TestJMP_ABS()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        // JMP Target
+        bus.WriteByte(0x0107, 0xA9); 
+        bus.WriteByte(0x0108, 0x0C); 
+        bus.WriteByte(0x0109, 0x00);
+
+        // JMP ABS, 0x0107, LDA IMM, BRK
+        cpu.LoadAndRun(new byte[] { 0x4C, 0x07, 0x01 });
+
+        Assert.Equal(0x0C, cpu._accumulator);
+        Assert.Equal(20, (ushort) cpu._master_cycle);
+    }
+
+    [Fact]
+    public void TestJMP_Indirect()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        // JMP Target
+        bus.WriteByte(0x0209, 0x0C);
+        bus.WriteByte(0x020A, 0x03);
+        bus.WriteByte(0x030C, 0xA9);
+        bus.WriteByte(0x030D, 0x01);
+        bus.WriteByte(0x030E, 0x00);
+
+        cpu.LoadAndRun(new byte[] {0x6C, 0x09, 0x02});
+
+        Assert.Equal(0x01, cpu._accumulator);
+        Assert.Equal(22, (ushort) cpu._master_cycle);
+
+    }
+
     #endregion
     #region ##### Addressing Mode Tests #####
 

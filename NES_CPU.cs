@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Security;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -137,7 +138,6 @@ namespace NES_Emulator
             return finalAddr;
         }
         #endregion
-
         #region ##### Stack Operations #####
 
         public void PushByte(byte data)
@@ -168,7 +168,6 @@ namespace NES_Emulator
         }
 
         #endregion
-
         #region ##### CPU Instruction #####
 
         public void LDA(ushort addr, byte cycles)
@@ -278,6 +277,12 @@ namespace NES_Emulator
             _master_cycle += cycles;
         }
 
+        public void JMP(ushort addr, byte cycles)
+        {
+            _program_counter = addr;
+            _master_cycle += cycles;
+        }
+
         public void BRK()
         {
             _program_counter += 2;
@@ -296,7 +301,6 @@ namespace NES_Emulator
             _program_counter = (ushort) ((hi << 8) | lo);
             _master_cycle += 7;
         }
-
         #region ##### Instruction Variants #####
 
         void LDA_Immediate() => LDA(Addr_Immediate(), 2); // A9
@@ -336,8 +340,10 @@ namespace NES_Emulator
         void STY_ZeroPageX() => STY(Addr_ZeroPageX(), 4); // 94
         void STY_Absolute() => STY(Addr_Absolute(), 4); // 8C
 
-        #endregion
+        void JMP_Absolute() => JMP(Addr_Absolute(), 3); // 4C
+        void JMP_Indirect() => JMP(Addr_Indirect(), 5); // 6C
 
+        #endregion
         #endregion
 
         public void Step()
@@ -395,15 +401,19 @@ namespace NES_Emulator
                 case 0xA8: TAY(); break;
                 case 0x98: TYA(); break;
 
-                // Increment & Decrement Instructions
+                // Arithmetic Operations
                 case 0xE8: INX(); break;
                 case 0xCA: DEX(); break;
                 case 0xC8: INY(); break;
                 case 0x88: DEY(); break;
 
-                // Flag Instructions
+                // Flag Operations
                 case 0x18: CLC(); break;
                 case 0x38: SEC(); break;
+
+                // Program Control & Branching
+                case 0x4C: JMP_Absolute(); break;
+                case 0x6C: JMP_Indirect(); break;
 
                 default: Console.WriteLine($"No Match For Opcode {opcode}"); break;
             }
