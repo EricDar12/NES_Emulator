@@ -390,11 +390,26 @@ public class CPU_Tests
         bus.WriteByte(0x030D, 0x01);
         bus.WriteByte(0x030E, 0x00);
 
-        cpu.LoadAndRun(new byte[] {0x6C, 0x09, 0x02});
+        cpu.LoadAndRun(new byte[] { 0x6C, 0x09, 0x02 });
 
         Assert.Equal(0x01, cpu._accumulator);
         Assert.Equal(22, (ushort) cpu._master_cycle);
+    }
 
+    [Fact]
+    public void TestJSR_Absolute()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        bus.WriteByte(0x030D, 0x00);
+
+        cpu.LoadAndRun(new byte[] { 0x20, 0x0D, 0x03 });
+
+        Assert.Equal(0b0011_0000, cpu.PopByte()); // SR Pushed To Stack
+        Assert.Equal(0x030F, cpu.PopWord()); // BRK Address Pushed To Stack
+        Assert.Equal(0x0602, cpu.PopWord()); // JSR Address Pushed To Stack
+        Assert.Equal(21, (ushort) cpu._master_cycle);
     }
 
     #endregion

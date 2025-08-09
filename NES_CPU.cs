@@ -283,11 +283,17 @@ namespace NES_Emulator
             _master_cycle += cycles;
         }
 
+        public void JSR(ushort addr,  byte cycles)
+        {
+            PushWord((ushort)(_program_counter - 1));
+            _program_counter = addr;
+            _master_cycle += cycles;
+        }
+
         public void BRK()
         {
-            _program_counter += 2;
 
-            PushWord(_program_counter);
+            PushWord((ushort)(_program_counter + 2));
 
             Console.WriteLine($"DEBUG:Addr Pushed To Stack {_program_counter}");
 
@@ -342,6 +348,7 @@ namespace NES_Emulator
 
         void JMP_Absolute() => JMP(Addr_Absolute(), 3); // 4C
         void JMP_Indirect() => JMP(Addr_Indirect(), 5); // 6C
+        void JSR_Absolute() => JSR(Addr_Absolute(), 6); // 20
 
         #endregion
         #endregion
@@ -414,6 +421,7 @@ namespace NES_Emulator
                 // Program Control & Branching
                 case 0x4C: JMP_Absolute(); break;
                 case 0x6C: JMP_Indirect(); break;
+                case 0x20: JSR_Absolute(); break;
 
                 default: Console.WriteLine($"No Match For Opcode {opcode}"); break;
             }
