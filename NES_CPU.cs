@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Net.Security;
 using System.Security.Cryptography;
@@ -128,13 +129,9 @@ namespace NES_Emulator
 
         public ushort Addr_Relative()
         {
-
             sbyte offset = (sbyte) _bus.ReadByte(_program_counter++);
             ushort baseAddr = _program_counter;
             ushort finalAddr = (ushort) (baseAddr + offset);
-
-            IsPageCrossed(baseAddr, finalAddr);
-
             return finalAddr;
         }
         #endregion
@@ -290,9 +287,27 @@ namespace NES_Emulator
             _master_cycle += cycles;
         }
 
+        public void RTS(byte cycles = 6)
+        {
+            ushort addr = PopWord();
+            _program_counter = (ushort) (addr + 1);
+            _master_cycle += cycles;
+        }
+
+        public void BEQ(ushort addr, byte cycles)
+        {
+            if (!IsFlagSet(StatusFlags.Zero))
+            {
+                _master_cycle += cycles;
+                return;
+            }
+            IsPageCrossed(_program_counter, addr); // If branch taken & page crossed
+            _program_counter = addr;
+            _master_cycle += (ushort) (cycles + 1);
+        }
+
         public void BRK()
         {
-
             PushWord((ushort)(_program_counter + 2));
 
             Console.WriteLine($"DEBUG:Addr Pushed To Stack {_program_counter}");
@@ -350,6 +365,8 @@ namespace NES_Emulator
         void JMP_Indirect() => JMP(Addr_Indirect(), 5); // 6C
         void JSR_Absolute() => JSR(Addr_Absolute(), 6); // 20
 
+        void BEQ_Relative() => BEQ(Addr_Relative(), 2); // F0
+
         #endregion
         #endregion
 
@@ -358,7 +375,6 @@ namespace NES_Emulator
             byte opcode = _bus.ReadByte(_program_counter++);
             switch (opcode)
             {
-
                 // LDA Instructions
                 case 0xA9: LDA_Immediate(); break;
                 case 0xA5: LDA_ZeroPage(); break;
@@ -422,6 +438,11 @@ namespace NES_Emulator
                 case 0x4C: JMP_Absolute(); break;
                 case 0x6C: JMP_Indirect(); break;
                 case 0x20: JSR_Absolute(); break;
+                case 0x60: RTS(); break;
+                case 0xF0: BEQ_Relative(); break;
+
+                // NOP Variants (eventually)
+                case 0xEA: _master_cycle += 2; break;
 
                 default: Console.WriteLine($"No Match For Opcode {opcode}"); break;
             }

@@ -412,6 +412,41 @@ public class CPU_Tests
         Assert.Equal(21, (ushort) cpu._master_cycle);
     }
 
+    [Fact]
+    public void TestRTS()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        bus.WriteByte(0x0107, 0xA9); // LDA FF
+        bus.WriteByte(0x0108, 0x0F);
+        bus.WriteByte(0x0109, 0x60); // RTS, BRK
+
+        cpu.LoadAndRun(new byte[] { 0x20, 0x07, 0x01, 0x00 });
+
+        Assert.Equal(0x0F, cpu._accumulator);
+        Assert.Equal(0b0011_0000, cpu.PopByte());
+        Assert.Equal(0x0605, cpu.PopWord()); // BRK Reached
+    }
+
+    [Fact]
+    public void TestBEQ()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        // Branch Target
+        bus.WriteByte(0x0584, 0xA9);
+        bus.WriteByte(0x0585, 0x0A);
+        bus.WriteByte(0x0586, 0x00);
+
+        // LDA #0, BEQ 0x0604 - 0x0080, BRK
+        cpu.LoadAndRun(new byte[] { 0xA9, 0x00, 0xF0, 0x80 });
+
+        Assert.Equal(0x0A, cpu._accumulator);
+        Assert.Equal(23, (ushort) cpu._master_cycle);
+    }
+
     #endregion
     #region ##### Addressing Mode Tests #####
 
