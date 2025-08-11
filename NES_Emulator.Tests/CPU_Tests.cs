@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using System.Buffers;
+using Xunit;
 
 namespace NES_Emulator.Tests;
 public class CPU_Tests
@@ -366,15 +367,15 @@ public class CPU_Tests
         NES_CPU cpu = new NES_CPU(bus);
 
         // JMP Target
-        bus.WriteByte(0x0107, 0xA9); 
-        bus.WriteByte(0x0108, 0x0C); 
+        bus.WriteByte(0x0107, 0xA9);
+        bus.WriteByte(0x0108, 0x0C);
         bus.WriteByte(0x0109, 0x00);
 
         // JMP ABS, 0x0107, LDA IMM, BRK
         cpu.LoadAndRun(new byte[] { 0x4C, 0x07, 0x01 });
 
         Assert.Equal(0x0C, cpu._accumulator);
-        Assert.Equal(20, (ushort) cpu._master_cycle);
+        Assert.Equal(20, (ushort)cpu._master_cycle);
     }
 
     [Fact]
@@ -393,7 +394,7 @@ public class CPU_Tests
         cpu.LoadAndRun(new byte[] { 0x6C, 0x09, 0x02 });
 
         Assert.Equal(0x01, cpu._accumulator);
-        Assert.Equal(22, (ushort) cpu._master_cycle);
+        Assert.Equal(22, (ushort)cpu._master_cycle);
     }
 
     [Fact]
@@ -409,7 +410,7 @@ public class CPU_Tests
         Assert.Equal(0b0011_0000, cpu.PopByte()); // SR Pushed To Stack
         Assert.Equal(0x030F, cpu.PopWord()); // BRK Address Pushed To Stack
         Assert.Equal(0x0602, cpu.PopWord()); // JSR Address Pushed To Stack
-        Assert.Equal(21, (ushort) cpu._master_cycle);
+        Assert.Equal(21, (ushort)cpu._master_cycle);
     }
 
     [Fact]
@@ -440,12 +441,108 @@ public class CPU_Tests
         bus.WriteByte(0x0585, 0x0A);
         bus.WriteByte(0x0586, 0x00);
 
-        // LDA #0, BEQ 0x0604 - 0x0080, BRK
+        // LDA #0, BEQ 0x0604 - 0x80, BRK
         cpu.LoadAndRun(new byte[] { 0xA9, 0x00, 0xF0, 0x80 });
 
         Assert.Equal(0x0A, cpu._accumulator);
-        Assert.Equal(23, (ushort) cpu._master_cycle);
+        Assert.Equal(23, (ushort)cpu._master_cycle);
     }
+
+    [Fact]
+    public void TestBNE()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        // Branch Target
+        bus.WriteByte(0x0683, 0xA9);
+        bus.WriteByte(0x0684, 0x0C);
+        bus.WriteByte(0x0685, 0x00);
+
+        // LDA #01, BNE 0x0604 + 0x07F, LDA #0C, BRK
+        cpu.LoadAndRun(new byte[] { 0xA9, 0x01, 0xD0, 0x7F });
+
+        Assert.Equal(0x0C, cpu._accumulator);
+        Assert.Equal(22, (ushort)cpu._master_cycle);
+    }
+
+    [Fact]
+    public void TestBCC()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        // Branch Target
+        bus.WriteByte(0x05F9, 0xA9);
+        bus.WriteByte(0x05FA, 0x0B);
+        bus.WriteByte(0x05FB, 0x00);
+
+        // CLC, BCC 0x0603 - 0x0A, LDA #0B, BRK
+        cpu.LoadAndRun(new byte[] { 0x18, 0x90, 0xF6 });
+
+        Assert.Equal(0x0B, cpu._accumulator);
+        Assert.Equal(23, (ushort) cpu._master_cycle);
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
+    }
+
+    [Fact]
+    public void TestBCS()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        // Branch Target
+        bus.WriteByte(0x060D, 0xA9);
+        bus.WriteByte(0x060E, 0x0B);
+        bus.WriteByte(0x060F, 0x00);
+
+        // SEC, BCS 0x0603 + 0x0A, LDA #0B, BRK
+        cpu.LoadAndRun(new byte[] { 0x38, 0xB0, 0x0A });
+
+        Assert.Equal(0x0B, cpu._accumulator);
+        Assert.Equal(22, (ushort)cpu._master_cycle);
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
+    }
+
+    [Fact]
+    public void TestBPL()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        // Branch Target
+        bus.WriteByte(0x0618, 0xA0);
+        bus.WriteByte(0x0619, 0x0C);
+        bus.WriteByte(0x061A, 0x00);
+
+        // LDA #7F, BPL 0x0604 + 0x14, LDY #0C, BRK 
+        cpu.LoadAndRun(new byte[] { 0xA9, 0x7F, 0x10, 0x14 });
+
+        Assert.Equal(0x0C, cpu._register_y);
+        Assert.Equal(22, (ushort)cpu._master_cycle);
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+    }
+
+    [Fact]
+    public void TestBMI()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        // Branch Target
+        bus.WriteByte(0x0584, 0xA2);
+        bus.WriteByte(0x0585, 0x0C);
+        bus.WriteByte(0x0586, 0x00);
+
+        // LDA #F4, BMI 0x0604 + 0x14, LDY #0C, BRK 
+        cpu.LoadAndRun(new byte[] { 0xA9, 0xF4, 0x30, 0x80 });
+
+        Assert.Equal(0x0C, cpu._register_x);
+        Assert.Equal(23, (ushort)cpu._master_cycle);
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+    }
+
+
 
     #endregion
     #region ##### Addressing Mode Tests #####

@@ -301,9 +301,69 @@ namespace NES_Emulator
                 _master_cycle += cycles;
                 return;
             }
-            IsPageCrossed(_program_counter, addr); // If branch taken & page crossed
+            IsPageCrossed(_program_counter, addr);
             _program_counter = addr;
             _master_cycle += (ushort) (cycles + 1);
+        }
+
+        public void BNE(ushort addr, byte cycles)
+        {
+            if (IsFlagSet(StatusFlags.Zero))
+            {
+                _master_cycle += cycles;
+                return;
+            }
+            IsPageCrossed(_program_counter, addr);
+            _program_counter = addr;
+            _master_cycle += (ushort) (cycles + 1);
+        }
+
+        public void BCC(ushort addr, byte cycles)
+        {
+            if (IsFlagSet(StatusFlags.Carry))
+            {
+                _master_cycle += cycles;
+                return;
+            }
+            IsPageCrossed(_program_counter, addr);
+            _program_counter = addr;
+            _master_cycle += (ushort) (cycles + 1);
+        }
+
+        public void BCS(ushort addr, byte cycles)
+        {
+            if (!IsFlagSet(StatusFlags.Carry))
+            {
+                _master_cycle += cycles;
+                return;
+            }
+            IsPageCrossed(_program_counter, addr);
+            _program_counter = addr;
+            _master_cycle += (ushort)(cycles + 1);
+        }
+
+        public void BPL(ushort addr, byte cycles)
+        {
+            if (IsFlagSet(StatusFlags.Negative))
+            {
+                _master_cycle += cycles;
+                return;
+            }
+            IsPageCrossed(_program_counter, addr);
+            _program_counter = addr;
+            _master_cycle += (ushort)(cycles + 1);
+        }
+
+        public void BMI(ushort addr, byte cycles)
+        {
+            if (!IsFlagSet(StatusFlags.Negative))
+            {
+                _master_cycle += cycles;
+                return;
+            }
+            IsPageCrossed(_program_counter, addr);
+            _program_counter = addr;
+            _master_cycle += (ushort)(cycles + 1);
         }
 
         public void BRK()
@@ -323,7 +383,6 @@ namespace NES_Emulator
             _master_cycle += 7;
         }
         #region ##### Instruction Variants #####
-
         void LDA_Immediate() => LDA(Addr_Immediate(), 2); // A9
         void LDA_ZeroPage() => LDA(Addr_ZeroPage(), 3); // A5
         void LDA_ZeroPageX() => LDA(Addr_ZeroPageX(), 4); // B5
@@ -366,6 +425,11 @@ namespace NES_Emulator
         void JSR_Absolute() => JSR(Addr_Absolute(), 6); // 20
 
         void BEQ_Relative() => BEQ(Addr_Relative(), 2); // F0
+        void BNE_Relative() => BNE(Addr_Relative(), 2); // D0
+        void BCC_Relative() => BCC(Addr_Relative(), 2); // 90
+        void BCS_Relative() => BCS(Addr_Relative(), 2); // B0
+        void BPL_Relative() => BPL(Addr_Relative(), 2); // 10
+        void BMI_Relative() => BMI(Addr_Relative(), 2); // 30
 
         #endregion
         #endregion
@@ -440,8 +504,13 @@ namespace NES_Emulator
                 case 0x20: JSR_Absolute(); break;
                 case 0x60: RTS(); break;
                 case 0xF0: BEQ_Relative(); break;
+                case 0xD0: BNE_Relative(); break;
+                case 0x90: BCC_Relative(); break;
+                case 0xB0: BCS_Relative(); break;
+                case 0x10: BPL_Relative(); break;
+                case 0x30: BMI_Relative(); break;
 
-                // NOP Variants (eventually)
+                // NOP Variants (more eventually)
                 case 0xEA: _master_cycle += 2; break;
 
                 default: Console.WriteLine($"No Match For Opcode {opcode}"); break;
