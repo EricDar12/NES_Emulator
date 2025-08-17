@@ -542,11 +542,17 @@ public class CPU_Tests
         Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
     }
 
+    [Fact]
+    public void TestADC()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
 
+        //TODO
 
+    }
     #endregion
     #region ##### Addressing Mode Tests #####
-
     [Fact]
     public void AddrImmediate_ReturnsCurrentPCValueAndAdvancesPC()
     {
@@ -748,5 +754,4 @@ public class CPU_Tests
         Assert.Equal(0x010C, addr);
     }
 }
-
 #endregion

@@ -366,6 +366,31 @@ namespace NES_Emulator
             _master_cycle += (ushort)(cycles + 1);
         }
 
+        public void CMP(ushort addr, byte cycles)
+        {
+
+        }
+
+        public void CPX(ushort addr, byte cycles)
+        {
+
+        }
+
+        public void CPY(ushort addr, byte cycles)
+        {
+
+        }
+
+        public void ADC(ushort addr, byte cycles)
+        {
+            byte operand = _bus.ReadByte(addr);
+            ushort result = (ushort) (_accumulator + operand + (IsFlagSet(StatusFlags.Carry) ? 1 : 0));
+            SetNegativeAndZeroFlags((byte) result);
+            SetOverflowAndCarryFlags(result, operand);
+            _accumulator = (byte) result;
+            _master_cycle += cycles;
+        }
+
         public void BRK()
         {
             PushWord((ushort)(_program_counter + 2));
@@ -559,10 +584,17 @@ namespace NES_Emulator
             }
         }
 
-        public void SetNegativeAndZeroFlags(byte register)
+        public void SetNegativeAndZeroFlags(byte value)
         {
-            SetFlag(StatusFlags.Zero, register == 0);
-            SetFlag(StatusFlags.Negative, (register & 0x80) != 0);
+            SetFlag(StatusFlags.Zero, value == 0);
+            SetFlag(StatusFlags.Negative, (value & 0x80) != 0);
+        }
+
+        public void SetOverflowAndCarryFlags(ushort result, byte operand)
+        {
+            SetFlag(StatusFlags.Carry, result > 255);
+            bool overflow = ((~(_accumulator ^ operand) & (_accumulator ^ result)) & 0x80) != 0;
+            SetFlag(StatusFlags.Overflow, overflow);
         }
 
         public void IsPageCrossed(ushort baseAddr, ushort finalAddr)
