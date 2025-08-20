@@ -391,6 +391,11 @@ namespace NES_Emulator
             _master_cycle += cycles;
         }
 
+        public void SBC(ushort addr, byte cycles)
+        {
+
+        }
+
         public void BRK()
         {
             PushWord((ushort)(_program_counter + 2));
@@ -456,6 +461,15 @@ namespace NES_Emulator
         void BPL_Relative() => BPL(Addr_Relative(), 2); // 10
         void BMI_Relative() => BMI(Addr_Relative(), 2); // 30
 
+        void ADC_Immediate() => ADC(Addr_Immediate(), 2); // 69
+        void ADC_ZeroPage() => ADC(Addr_ZeroPage(), 3); // 65 
+        void ADC_ZeroPageX() => ADC(Addr_ZeroPageX(), 4); // 75
+        void ADC_Absolute() => ADC(Addr_Absolute(), 4); // 6D
+        void ADC_AbsoluteX() => ADC(Addr_AbsoluteX(), 4); // 7D
+        void ADC_AbsoluteY() => ADC(Addr_AbsoluteY(), 4); // 79
+        void ADC_IndirectX() => ADC(Addr_IndirectX(), 6); // 61
+        void ADC_IndirectY() => ADC(Addr_IndirectY(), 5); // 71
+
         #endregion
         #endregion
 
@@ -518,6 +532,14 @@ namespace NES_Emulator
                 case 0xCA: DEX(); break;
                 case 0xC8: INY(); break;
                 case 0x88: DEY(); break;
+                case 0x69: ADC_Immediate(); break;
+                case 0x65: ADC_ZeroPage(); break;
+                case 0x75: ADC_ZeroPageX(); break;
+                case 0x6D: ADC_Absolute(); break;
+                case 0x7D: ADC_AbsoluteX(); break;
+                case 0x79: ADC_AbsoluteY(); break;
+                case 0x61: ADC_IndirectX(); break;
+                case 0x71: ADC_IndirectY(); break;
 
                 // Flag Operations
                 case 0x18: CLC(); break;

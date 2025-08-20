@@ -548,9 +548,53 @@ public class CPU_Tests
         NES_BUS bus = new NES_BUS();
         NES_CPU cpu = new NES_CPU(bus);
 
-        //TODO
+        // IndirectX Target
+        bus.WriteByte(0x004E, 0x41);
+        bus.WriteByte(0x004F, 0x02);
 
+        // Pointer Address
+        bus.WriteByte(0x0241, 0x0A);
+
+        // LDA #0A, LDX #44, ADC (Ind X) 0A, BRK
+        cpu.LoadAndRun(new byte[] { 0xA9, 0x0A, 0xA2, 0x44, 0x61, 0x0A, 0x00 });
+
+        Assert.Equal(0x14, cpu._accumulator);
+        Assert.Equal(25, (ushort) cpu._master_cycle);
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Overflow));
     }
+
+    [Fact]
+    public void TestADCCarryAndOverflow()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        // LDA #-128, ADC Imm # -128 + -1 = -129 (overflow set)
+        // 1000 0000 + 1111 1111 = 1 0111 1111 (msb discarded, result is 127) 
+        cpu.LoadAndRun(new byte[] { 0xA9, 0x80, 0x69, 0xFF, });
+
+        Assert.Equal(0x7F, cpu._accumulator);
+        Assert.Equal(19, (ushort)cpu._master_cycle);
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Overflow));
+    }
+
+    [Fact]
+    public void TestADCOverflowNoCarry()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        // LDA #127, ADC #1
+        cpu.LoadAndRun(new byte[] { 0xA9, 0x7F, 0x69, 0x01 });
+
+        Assert.Equal(0x80, cpu._accumulator); // -128 in signed
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Overflow));
+    }
+
+
     #endregion
     #region ##### Addressing Mode Tests #####
     [Fact]
