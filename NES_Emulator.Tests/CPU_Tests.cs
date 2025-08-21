@@ -565,14 +565,14 @@ public class CPU_Tests
     }
 
     [Fact]
-    public void TestADCCarryAndOverflow()
+    public void TestADC_CarryAndOverflow()
     {
         NES_BUS bus = new NES_BUS();
         NES_CPU cpu = new NES_CPU(bus);
 
         // LDA #-128, ADC Imm # -128 + -1 = -129 (overflow set)
         // 1000 0000 + 1111 1111 = 1 0111 1111 (msb discarded, result is 127) 
-        cpu.LoadAndRun(new byte[] { 0xA9, 0x80, 0x69, 0xFF, });
+        cpu.LoadAndRun(new byte[] { 0xA9, 0x80, 0x69, 0xFF, 0x00 });
 
         Assert.Equal(0x7F, cpu._accumulator);
         Assert.Equal(19, (ushort)cpu._master_cycle);
@@ -581,20 +581,50 @@ public class CPU_Tests
     }
 
     [Fact]
-    public void TestADCOverflowNoCarry()
+    public void TestADC_OverflowNoCarry()
     {
         NES_BUS bus = new NES_BUS();
         NES_CPU cpu = new NES_CPU(bus);
 
         // LDA #127, ADC #1
-        cpu.LoadAndRun(new byte[] { 0xA9, 0x7F, 0x69, 0x01 });
+        cpu.LoadAndRun(new byte[] { 0xA9, 0x7F, 0x69, 0x01, 0x00});
 
         Assert.Equal(0x80, cpu._accumulator); // -128 in signed
+        Assert.Equal(19, (ushort) cpu._master_cycle);
         Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
         Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Overflow));
     }
 
+    [Fact]
+    public void TestSBC()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
 
+        // SEC, LDA #0, SBC #01
+        cpu.LoadAndRun(new byte[] { 0x38, 0xA9, 0x00, 0xE9, 0x01, 0x00});
+
+        Assert.Equal(0xFF, cpu._accumulator);
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
+        Assert.Equal(21, (ushort) cpu._master_cycle);
+    }
+
+    [Fact]
+    public void TestSBC_NoBorrow()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        // SEC, LDA #$05, SBC #$03, BRK
+        cpu.LoadAndRun(new byte[] { 0x38, 0xA9, 0x05, 0xE9, 0x03, 0x00 });
+
+        // 5 - 3 = 2
+        Assert.Equal(0x02, cpu._accumulator);
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));   // no borrow needed → carry set
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.Equal(21, (ushort)cpu._master_cycle);
+    }
     #endregion
     #region ##### Addressing Mode Tests #####
     [Fact]
