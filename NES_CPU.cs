@@ -371,17 +371,29 @@ namespace NES_Emulator
 
         public void CMP(ushort addr, byte cycles)
         {
-
+            byte operand = _bus.ReadByte(addr);
+            byte difference = (byte)(_accumulator - operand);
+            SetFlag(StatusFlags.Carry, (_accumulator >= operand));
+            SetNegativeAndZeroFlags(difference);
+            _master_cycle += cycles;
         }
 
         public void CPX(ushort addr, byte cycles)
         {
-
+            byte operand = _bus.ReadByte(addr);
+            byte difference = (byte)(_register_x - operand);
+            SetFlag(StatusFlags.Carry, (_register_x >= operand));
+            SetNegativeAndZeroFlags(difference);
+            _master_cycle += cycles;
         }
 
         public void CPY(ushort addr, byte cycles)
         {
-
+            byte operand = _bus.ReadByte(addr);
+            byte difference = (byte)(_register_y - operand);
+            SetFlag(StatusFlags.Carry, (_register_y >= operand));
+            SetNegativeAndZeroFlags(difference);
+            _master_cycle += cycles;
         }
 
         public void ADC(ushort addr, byte cycles)
@@ -403,6 +415,21 @@ namespace NES_Emulator
             SetOverflowAndCarryFlags(result, negatedOperand);
             _accumulator = (byte)result;
             _master_cycle += cycles;
+        }
+
+        public void AND(ushort addr, byte cycles)
+        {
+
+        }
+
+        public void ORA(ushort addr, byte cycles)
+        {
+
+        }
+
+        public void EOR(ushort addr, byte cycles)
+        {
+
         }
 
         public void BRK()
@@ -488,6 +515,23 @@ namespace NES_Emulator
         void SBC_IndirectX() => SBC(Addr_IndirectX(), 6); // E1
         void SBC_IndirectY() => SBC(Addr_IndirectY(), 5); // F1
 
+        void CMP_Immediate() => CMP(Addr_Immediate(), 2); // C9
+        void CMP_ZeroPage() => CMP(Addr_ZeroPage(), 3); // C5
+        void CMP_ZeroPageX() => CMP(Addr_ZeroPageX(), 4); // D5
+        void CMP_Absolute() => CMP(Addr_Absolute(), 4); // CD
+        void CMP_AbsoluteX() => CMP(Addr_AbsoluteX(), 4); // DD 
+        void CMP_AbsoluteY() => CMP(Addr_AbsoluteY(), 4); // D9
+        void CMP_IndirectX() => CMP(Addr_IndirectX(), 6); // C1
+        void CMP_IndirectY() => CMP(Addr_IndirectY(), 5); // D1
+
+        void CPX_Immediate() => CPX(Addr_Immediate(), 2); // E0
+        void CPX_ZeroPage() => CPX(Addr_ZeroPage(), 3); // E4
+        void CPX_Absolute() => CPX(Addr_Absolute(), 4); // EC
+
+        void CPY_Immediate() => CPY(Addr_Immediate(), 2); // C0
+        void CPY_ZeroPage() => CPY(Addr_ZeroPage(), 3); // C4
+        void CPY_Absolute() => CPY(Addr_Absolute(), 4); // CC
+
         #endregion
         #endregion
 
@@ -545,7 +589,7 @@ namespace NES_Emulator
                 case 0xA8: TAY(); break;
                 case 0x98: TYA(); break;
 
-                // Arithmetic Operations
+                // Arithmetic Instructions
                 case 0xE8: INX(); break;
                 case 0xCA: DEX(); break;
                 case 0xC8: INY(); break;
@@ -569,7 +613,24 @@ namespace NES_Emulator
                 case 0xE1: SBC_IndirectX(); break;
                 case 0xF1: SBC_IndirectY(); break;
 
-                // Flag Operations
+                case 0xC9: CMP_Immediate(); break;
+                case 0xC5: CMP_ZeroPage(); break;
+                case 0xD5: CMP_ZeroPageX(); break;
+                case 0xCD: CMP_Absolute(); break;
+                case 0xDD: CMP_AbsoluteX(); break;
+                case 0xD9: CMP_AbsoluteY(); break;
+                case 0xC1: CMP_IndirectX(); break;
+                case 0xD1: CMP_IndirectY(); break;
+
+                case 0xE0: CPX_Immediate(); break;
+                case 0xE4: CPX_ZeroPage(); break;
+                case 0xEC: CPX_Absolute(); break;
+
+                case 0xC0: CPY_Immediate(); break;
+                case 0xC4: CPY_ZeroPage(); break;
+                case 0xCC: CPY_Absolute(); break;
+
+                // Flag Instructions
                 case 0x18: CLC(); break;
                 case 0x38: SEC(); break;
 

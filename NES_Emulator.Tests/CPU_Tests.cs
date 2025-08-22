@@ -620,10 +620,58 @@ public class CPU_Tests
 
         // 5 - 3 = 2
         Assert.Equal(0x02, cpu._accumulator);
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));   // no borrow needed → carry set
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));   // no borrow needed, carry set
         Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
         Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
         Assert.Equal(21, (ushort)cpu._master_cycle);
+    }
+
+    [Fact]
+    public void TestCMP()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        // LDA #05, CMP Imm 05 - 03, BRK
+        cpu.LoadAndRun(new byte[] { 0xA9, 0x05, 0xC9, 0x03, 0x00 });
+
+        Assert.Equal(0x05, cpu._accumulator);
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.Equal(19, (ushort) cpu._master_cycle);
+    }
+
+    [Fact]
+    public void TestCPX()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        // LDX #0A, CPX Imm 10 - 10, BRK
+        cpu.LoadAndRun(new byte[] { 0xA2, 0x0A, 0xE0, 0x0A, 0x00 });
+
+        Assert.Equal(0x0A, cpu._register_x);
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.Equal(19, (ushort)cpu._master_cycle);
+    }
+
+    [Fact]
+    public void TestCPY()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        // LDY #0A, CPY Imm 10 - 12, BRK
+        cpu.LoadAndRun(new byte[] { 0xA0, 0x0A, 0xE0, 0x0C, 0x00 });
+
+        Assert.Equal(0x0A, cpu._register_y);
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.Equal(19, (ushort)cpu._master_cycle);
     }
     #endregion
     #region ##### Addressing Mode Tests #####
