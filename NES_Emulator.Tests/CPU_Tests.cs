@@ -673,6 +673,85 @@ public class CPU_Tests
         Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
         Assert.Equal(19, (ushort)cpu._master_cycle);
     }
+
+    [Fact]
+    public void TestAND()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        bus.WriteByte(0x000F, 0x09);
+
+        // LDA #05, LDX #0F, AND Zpx (5 AND 9), BRK 
+        cpu.LoadAndRun(new byte[] { 0xA9, 0x05, 0xA2, 0x0F, 0x35, 0x00});
+
+        Assert.Equal(0x01, cpu._accumulator);
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.Equal(23, (ushort) cpu._master_cycle);
+    }
+
+    [Fact]
+    public void TestORA()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        cpu.LoadAndRun(new byte[] { 0xA9, 0x0C, 0x09, 0xFF, 0x00 });
+
+        Assert.Equal(0xFF, cpu._accumulator);
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.Equal(19, (ushort)cpu._master_cycle);
+    }
+
+    [Fact]
+    public void TestEOR()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        cpu.LoadAndRun(new byte[] { 0xA9, 0x0C, 0x49, 0x0C, 0x00 });
+
+        Assert.Equal(0x00, cpu._accumulator);
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.Equal(19, (ushort)cpu._master_cycle);
+    }
+
+    [Fact]
+    public void TestASL_Implied()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        // LDA #82, ASL Implied, BRK
+        cpu.LoadAndRun(new byte[] { 0xA9, 0x82, 0x0A, 0x00 });
+
+        Assert.Equal(0x04, cpu._accumulator);
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.Equal(19, (ushort) cpu._master_cycle);
+    }
+
+    [Fact]
+    public void TestASL()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        bus.WriteByte(0x0007, 0x0C);
+
+        // ASL ZP (0000 + 7), LDY ZP (0000 + 7)
+        cpu.LoadAndRun(new byte[] { 0x06, 0x07, 0xA4, 0x07, 0x00 });
+
+        Assert.Equal(0x18, cpu._register_y);
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.Equal(23, (ushort) cpu._master_cycle);
+    }
     #endregion
     #region ##### Addressing Mode Tests #####
     [Fact]

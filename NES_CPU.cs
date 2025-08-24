@@ -419,15 +419,60 @@ namespace NES_Emulator
 
         public void AND(ushort addr, byte cycles)
         {
-
+            byte operand = _bus.ReadByte(addr);
+            _accumulator &= operand;
+            SetNegativeAndZeroFlags(_accumulator);
+            _master_cycle += cycles;
         }
 
         public void ORA(ushort addr, byte cycles)
         {
-
+            byte operand = _bus.ReadByte(addr);
+            _accumulator |= operand;
+            SetNegativeAndZeroFlags(_accumulator);
+            _master_cycle += cycles;
         }
 
         public void EOR(ushort addr, byte cycles)
+        {
+            byte operand = _bus.ReadByte(addr);
+            _accumulator ^= operand;
+            SetNegativeAndZeroFlags(_accumulator);
+            _master_cycle += cycles;
+        }
+
+        public void ASL(ushort addr, byte cycles, bool implied)
+        {
+
+            byte operand = implied ? _accumulator : _bus.ReadByte(addr);
+            byte result = (byte) (operand << 1);
+
+            if (implied)
+            {
+                _accumulator = result;
+            }
+            else
+            {
+                _bus.WriteByte(addr, operand); // The 6502 actually does this
+                _bus.WriteByte(addr, result);
+            }
+
+            SetFlag(StatusFlags.Carry, ((operand & 0x80) != 0));
+            SetNegativeAndZeroFlags(result);
+            _master_cycle += cycles;
+        }
+
+        public void LSR()
+        {
+
+        }
+
+        public void ROL()
+        {
+
+        }
+
+        public void ROR()
         {
 
         }
@@ -532,9 +577,41 @@ namespace NES_Emulator
         void CPY_ZeroPage() => CPY(Addr_ZeroPage(), 3); // C4
         void CPY_Absolute() => CPY(Addr_Absolute(), 4); // CC
 
-        #endregion
-        #endregion
+        void AND_Immediate() => AND(Addr_Immediate(), 2); // 29
+        void AND_ZeroPage() => AND(Addr_ZeroPage(), 3); // 25
+        void AND_ZeroPageX() => AND(Addr_ZeroPageX(), 4); // 35
+        void AND_Absolute() => AND(Addr_Absolute(), 4); // 2D
+        void AND_AbsoluteX() => AND(Addr_AbsoluteX(), 4); // 3D
+        void AND_AbsoluteY() => AND(Addr_AbsoluteY(), 4); // 39
+        void AND_IndirectX() => AND(Addr_IndirectX(), 6); // 21
+        void AND_IndirectY() => AND(Addr_IndirectY(), 5); // 31
 
+        void ORA_Immediate() => ORA(Addr_Immediate(), 2); // 09
+        void ORA_ZeroPage() => ORA(Addr_ZeroPage(), 3); // 05
+        void ORA_ZeroPageX() => ORA(Addr_ZeroPageX(), 4); // 15
+        void ORA_Absolute() => ORA(Addr_Absolute(), 4); // 0D
+        void ORA_AbsoluteX() => ORA(Addr_AbsoluteX(), 4); // 1D
+        void ORA_AbsoluteY() => ORA(Addr_AbsoluteY(), 4); // 19
+        void ORA_IndirectX() => ORA(Addr_IndirectX(), 6); // 01
+        void ORA_IndirectY() => ORA(Addr_IndirectY(), 5); // 11
+
+        void EOR_Immediate() => EOR(Addr_Immediate(), 2); // 49
+        void EOR_ZeroPage() => EOR(Addr_ZeroPage(), 3); // 45
+        void EOR_ZeroPageX() => EOR(Addr_ZeroPageX(), 4); // 55
+        void EOR_Absolute() => EOR(Addr_Absolute(), 4); // 4D
+        void EOR_AbsoluteX() => EOR(Addr_AbsoluteX(), 4); // 5D
+        void EOR_AbsoluteY() => EOR(Addr_AbsoluteY(), 4); // 59
+        void EOR_IndirectX() => EOR(Addr_IndirectX(), 6); // 41
+        void EOR_IndirectY() => EOR(Addr_IndirectY(), 5); // 51
+
+        void ASL_Implied() => ASL(0x0000, 2, true); // 0A
+        void ASL_ZeroPage() => ASL(Addr_ZeroPage(), 5, false); // 06
+        void ASL_ZeroPageX() => ASL(Addr_ZeroPageX(), 6, false); // 16
+        void ASL_Absolute() => ASL(Addr_Absolute(), 6, false); // 0E
+        void ASL_AbsoluteX() => ASL(Addr_AbsoluteX(), 7, false); // 1E
+
+        #endregion
+        #endregion
         public void Step()
         {
             byte opcode = _bus.ReadByte(_program_counter++);
@@ -629,6 +706,40 @@ namespace NES_Emulator
                 case 0xC0: CPY_Immediate(); break;
                 case 0xC4: CPY_ZeroPage(); break;
                 case 0xCC: CPY_Absolute(); break;
+
+                // Logical Instructions
+                case 0x29: AND_Immediate(); break;
+                case 0x25: AND_ZeroPage(); break;
+                case 0x35: AND_ZeroPageX(); break;
+                case 0x2D: AND_Absolute(); break;
+                case 0x3D: AND_AbsoluteX(); break;
+                case 0x39: AND_AbsoluteY(); break;
+                case 0x21: AND_IndirectX(); break;
+                case 0x31: AND_IndirectY(); break;
+
+                case 0x09: ORA_Immediate(); break;
+                case 0x05: ORA_ZeroPage(); break;
+                case 0x15: ORA_ZeroPageX(); break;
+                case 0x0D: ORA_Absolute(); break;
+                case 0x1D: ORA_AbsoluteX(); break;
+                case 0x19: ORA_AbsoluteY(); break;
+                case 0x01: ORA_IndirectX(); break;
+                case 0x11: ORA_IndirectY(); break;
+
+                case 0x49: EOR_Immediate(); break;
+                case 0x45: EOR_ZeroPage(); break;
+                case 0x55: EOR_ZeroPageX(); break;
+                case 0x4D: EOR_Absolute(); break;
+                case 0x5D: EOR_AbsoluteX(); break;
+                case 0x59: EOR_AbsoluteY(); break;
+                case 0x41: EOR_IndirectX(); break;
+                case 0x51: EOR_IndirectY(); break;
+
+                case 0x0A: ASL_Implied(); break;
+                case 0x06: ASL_ZeroPage(); break;
+                case 0x16: ASL_ZeroPageX(); break;
+                case 0x0E: ASL_Absolute(); break;
+                case 0x1E: ASL_AbsoluteX(); break;
 
                 // Flag Instructions
                 case 0x18: CLC(); break;
