@@ -752,6 +752,57 @@ public class CPU_Tests
         Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
         Assert.Equal(23, (ushort) cpu._master_cycle);
     }
+
+    [Fact]
+    public void TestLSR()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        // LDA #05, LSR 0101 > 0010, LSR 0010 > 0001 BRK
+        cpu.LoadAndRun(new byte[] { 0xA9, 0x05, 0x4A, 0x4A, 0x00 });
+
+        Assert.Equal(0x01, cpu._accumulator);
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.Equal(21, (ushort) cpu._master_cycle);
+    }
+
+    [Fact]
+    public void TestROL()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        // LDA #87, ROL 1000 0000 < 0000 0000, BRK
+        cpu.LoadAndRun(new byte[] { 0xA9, 0x80, 0x2A, 0x00 });
+
+        Assert.Equal(0x00, cpu._accumulator);
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.Equal(19, (ushort) cpu._master_cycle);
+    }
+
+    [Fact]
+    public void TestROR()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        bus.WriteByte(0x0007, 0x0E);
+
+        // LDA #80, ASL 80 < 00 (Carry out MSB), ROR ZP 0E > 87 (Carry into MSB), LDX ZP, BRK
+        cpu.LoadAndRun(new byte[] { 0xA9, 0x80, 0x0A, 0x66, 0x07, 0xA6, 0x07, 0x00 });
+
+        Assert.Equal(0x00, cpu._accumulator);
+        Assert.Equal(0x87, cpu._register_x);
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.Equal(27, (ushort)cpu._master_cycle);
+    }
     #endregion
     #region ##### Addressing Mode Tests #####
     [Fact]

@@ -445,7 +445,7 @@ namespace NES_Emulator
         {
 
             byte operand = implied ? _accumulator : _bus.ReadByte(addr);
-            byte result = (byte) (operand << 1);
+            byte result = (byte)(operand << 1);
 
             if (implied)
             {
@@ -453,7 +453,7 @@ namespace NES_Emulator
             }
             else
             {
-                _bus.WriteByte(addr, operand); // The 6502 actually does this
+                _bus.WriteByte(addr, operand); // The 6502 actually does this, lookup 6502 RMW
                 _bus.WriteByte(addr, result);
             }
 
@@ -462,19 +462,64 @@ namespace NES_Emulator
             _master_cycle += cycles;
         }
 
-        public void LSR()
+        public void LSR(ushort addr, byte cycles, bool implied)
         {
+            byte operand = implied ? _accumulator : _bus.ReadByte(addr);
+            byte result = (byte)(operand >> 1);
 
+            if (implied)
+            {
+                _accumulator = result;
+            }
+            else
+            {
+                _bus.WriteByte(addr, operand);
+                _bus.WriteByte(addr, result);
+            }
+
+            SetFlag(StatusFlags.Carry, ((operand & 0x01) != 0));
+            SetNegativeAndZeroFlags(result);
+            _master_cycle += cycles;
         }
 
-        public void ROL()
+        public void ROL(ushort addr, byte cycles, bool implied)
         {
+            byte carryBit = (byte) (IsFlagSet(StatusFlags.Carry) ? 1 : 0);
+            byte operand = implied ? _accumulator : _bus.ReadByte(addr);
+            byte result = (byte) ((operand << 1) | carryBit);
 
+            if (implied)
+            {
+                _accumulator = result;
+            }
+            else
+            {
+                _bus.WriteByte(addr, operand);
+                _bus.WriteByte(addr, result);
+            }
+            SetFlag(StatusFlags.Carry, ((operand & 0x80) != 0));
+            SetNegativeAndZeroFlags(result);
+            _master_cycle += cycles;
         }
 
-        public void ROR()
+        public void ROR(ushort addr, byte cycles, bool implied)
         {
+            byte carryBit = (byte)(IsFlagSet(StatusFlags.Carry) ? 1 : 0);
+            byte operand = implied ? _accumulator : _bus.ReadByte(addr);
+            byte result = (byte)((operand >> 1) | (carryBit << 7));
 
+            if (implied)
+            {
+                _accumulator = result;
+            }
+            else
+            {
+                _bus.WriteByte(addr, operand);
+                _bus.WriteByte(addr, result);
+            }
+            SetFlag(StatusFlags.Carry, ((operand & 0x01) != 0));
+            SetNegativeAndZeroFlags(result);
+            _master_cycle += cycles;
         }
 
         public void BRK()
@@ -610,6 +655,24 @@ namespace NES_Emulator
         void ASL_Absolute() => ASL(Addr_Absolute(), 6, false); // 0E
         void ASL_AbsoluteX() => ASL(Addr_AbsoluteX(), 7, false); // 1E
 
+        void LSR_Implied() => LSR(0x0000, 2, true); // 4A
+        void LSR_ZeroPage() => LSR(Addr_ZeroPage(), 5, false); // 46
+        void LSR_ZeroPageX() => LSR(Addr_ZeroPageX(), 6, false); // 56
+        void LSR_Absolute() => LSR(Addr_Absolute(), 6, false); // 4E
+        void LSR_AbsoluteX() => LSR(Addr_AbsoluteX(), 7, false); // 5E
+
+        void ROL_Implied() => ROL(0x0000, 2, true); // 2A
+        void ROL_ZeroPage() => ROL(Addr_ZeroPage(), 5, false); // 26
+        void ROL_ZeroPageX() => ROL(Addr_ZeroPageX(), 6, false); // 36
+        void ROL_Absolute() => ROL(Addr_Absolute(), 6, false); // 2E
+        void ROL_AbsoluteX() => ROL(Addr_AbsoluteX(), 7, false); // 3E
+
+        void ROR_Implied() => ROR(0x0000, 2, true); // 6A
+        void ROR_ZeroPage() => ROR(Addr_ZeroPage(), 5, false); // 66
+        void ROR_ZeroPageX() => ROR(Addr_ZeroPageX(), 6, false); // 76
+        void ROR_Absolute() => ROR(Addr_Absolute(), 6, false); // 6E
+        void ROR_AbsoluteX() => ROR(Addr_AbsoluteX(), 7, false); // 7E
+
         #endregion
         #endregion
         public void Step()
@@ -741,6 +804,24 @@ namespace NES_Emulator
                 case 0x0E: ASL_Absolute(); break;
                 case 0x1E: ASL_AbsoluteX(); break;
 
+                case 0x4A: LSR_Implied(); break;
+                case 0x46: LSR_ZeroPage(); break;
+                case 0x56: LSR_ZeroPageX(); break;
+                case 0x4E: LSR_Absolute(); break;
+                case 0x5E: LSR_AbsoluteX(); break;
+
+                case 0x2A: ROL_Implied(); break;
+                case 0x26: ROL_ZeroPage(); break;
+                case 0x36: ROL_ZeroPageX(); break;
+                case 0x2E: ROL_Absolute(); break;
+                case 0x3E: ROL_AbsoluteX(); break;
+
+                case 0x6A: ROR_Implied(); break;
+                case 0x66: ROR_ZeroPage(); break;
+                case 0x76: ROR_ZeroPageX(); break;
+                case 0x6E: ROR_Absolute(); break;
+                case 0x7E: ROR_AbsoluteX(); break;
+
                 // Flag Instructions
                 case 0x18: CLC(); break;
                 case 0x38: SEC(); break;
@@ -817,6 +898,7 @@ namespace NES_Emulator
         public void SetOverflowAndCarryFlags(ushort result, byte operand)
         {
             SetFlag(StatusFlags.Carry, result > 255);
+            // Two values of the same sign summing to a value of the opposite sign
             bool overflow = ((~(_accumulator ^ operand) & (_accumulator ^ result)) & 0x80) != 0;
             SetFlag(StatusFlags.Overflow, overflow);
         }
