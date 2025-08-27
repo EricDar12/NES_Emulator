@@ -522,6 +522,23 @@ namespace NES_Emulator
             _master_cycle += cycles;
         }
 
+        // TODO
+        // INC, DEC
+        // BIT
+        // PHA, PLA, PHP, PLP
+        // CLI, SEI, CLD, SED
+
+        public void RTI(byte cycles = 6)
+        {
+            byte statusOld = PopByte();
+
+            _status = (byte)(statusOld & 0b1110_1111);
+
+            _program_counter = PopWord();
+
+            _master_cycle += cycles;
+        }
+
         public void BRK()
         {
             PushWord((ushort)(_program_counter + 2));
@@ -672,6 +689,8 @@ namespace NES_Emulator
         void ROR_ZeroPageX() => ROR(Addr_ZeroPageX(), 6, false); // 76
         void ROR_Absolute() => ROR(Addr_Absolute(), 6, false); // 6E
         void ROR_AbsoluteX() => ROR(Addr_AbsoluteX(), 7, false); // 7E
+
+        void RTI_Implied() => RTI(); // 40
 
         #endregion
         #endregion
@@ -831,6 +850,7 @@ namespace NES_Emulator
                 case 0x6C: JMP_Indirect(); break;
                 case 0x20: JSR_Absolute(); break;
                 case 0x60: RTS(); break;
+                case 0x40: RTI_Implied(); break;
                 case 0xF0: BEQ_Relative(); break;
                 case 0xD0: BNE_Relative(); break;
                 case 0x90: BCC_Relative(); break;
@@ -857,6 +877,33 @@ namespace NES_Emulator
                 }
                 Step();
             }
+        }
+
+        public void IRQ()
+        {
+            if (!IsFlagSet(StatusFlags.InterruptDisable))
+            {
+                PushWord(_program_counter);
+
+                PushByte((byte)(_status | 0b0011_0000));
+                SetFlag(StatusFlags.InterruptDisable, true);
+
+                _program_counter = (ushort)((_bus.ReadByte(0xFFFE) | _bus.ReadByte(0xFFFF) << 8));
+
+                _master_cycle += 7;
+            }
+        }
+
+        public void NMI()
+        {
+            PushWord(_program_counter);
+
+            PushByte((byte)(_status | 0b0011_0000));
+            SetFlag(StatusFlags.InterruptDisable, true);
+
+            _program_counter = (ushort)((_bus.ReadByte(0xFFFA) | _bus.ReadByte(0xFFFB) << 8));
+
+            _master_cycle += 7;
         }
 
         [Flags]

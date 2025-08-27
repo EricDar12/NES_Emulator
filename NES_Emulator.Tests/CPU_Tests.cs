@@ -803,6 +803,39 @@ public class CPU_Tests
         Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
         Assert.Equal(27, (ushort)cpu._master_cycle);
     }
+
+    [Fact]
+    public void TestIRQ()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        cpu._program_counter = 0x0200;
+
+        // Write IRQ At Reset Vector
+        bus.WriteByte(0xFFFE, 0x00); 
+        bus.WriteByte(0xFFFF, 0x03);
+
+        // Program To Be Executed After RTI
+        bus.WriteByte(0x0200, 0xA2);    
+        bus.WriteByte(0x0201, 0x01);    
+        bus.WriteByte(0x0202, 0x00);    
+
+        // Service Routine
+        bus.WriteByte(0x0300, 0xA9); 
+        bus.WriteByte(0x0301, 0xFF);
+        bus.WriteByte(0x0302, 0x40);
+
+        // Set PC To 0x0300
+        cpu.IRQ(); 
+        cpu.FetchAndDecode();
+
+        Assert.Equal(0xFF, cpu._accumulator); // ISR Executed
+        Assert.Equal(0x01, cpu._register_x); // Return and continue execution
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Break));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.InterruptDisable));
+    }
     #endregion
     #region ##### Addressing Mode Tests #####
     [Fact]
