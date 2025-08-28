@@ -836,6 +836,63 @@ public class CPU_Tests
         Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
         Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.InterruptDisable));
     }
+
+    [Fact]
+    public void TestNMI()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        cpu._program_counter = 0x0200;
+        
+        // NMI Should Still Fire
+        cpu.SetFlag(NES_CPU.StatusFlags.InterruptDisable, true); 
+
+        // NMI Vector
+        bus.WriteByte(0xFFFA, 0x00);
+        bus.WriteByte(0xFFFB, 0x03);
+
+        // Reset Vector (For BRK)
+        bus.WriteByte(0xFFFE, 0x00);
+        bus.WriteByte(0xFFFF, 0x04);
+
+        // Service Routine
+        bus.WriteByte(0x0300, 0xA9);
+        bus.WriteByte(0x0301, 0x01);
+        bus.WriteByte(0x0302, 0x40);
+
+        // Program To Be Executed After RTI
+        bus.WriteByte(0x0200, 0xA0);
+        bus.WriteByte(0x0201, 0xFF);
+        bus.WriteByte(0x0203, 0x00);
+
+        // Set PC To 0x0300
+        cpu.NMI();
+        cpu.FetchAndDecode();
+
+        Assert.Equal(0x01, cpu._accumulator);
+        Assert.Equal(0xFF, cpu._register_y);
+        Assert.Equal(0x0400, cpu._program_counter);
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Break));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.InterruptDisable));
+    }
+
+    [Fact]
+    public void TestSEI_CLI_CLV()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        // No opcode exists to manually set overflow
+        cpu.SetFlag(NES_CPU.StatusFlags.Overflow, true);
+
+        cpu.LoadAndRun(new byte[] { 0x78, 0xB8, 0x00 });
+
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.InterruptDisable));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Overflow));
+        Assert.Equal(19, (ushort)cpu._master_cycle);
+    }
     #endregion
     #region ##### Addressing Mode Tests #####
     [Fact]

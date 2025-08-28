@@ -277,6 +277,24 @@ namespace NES_Emulator
             _master_cycle += cycles;
         }
 
+        public void CLI(byte cycles = 2)
+        {
+            SetFlag(StatusFlags.InterruptDisable, false);
+            _master_cycle += cycles;
+        }
+
+        public void SEI(byte cycles = 2)
+        {
+            SetFlag(StatusFlags.InterruptDisable, true);
+            _master_cycle += cycles;
+        }
+
+        public void CLV(byte cycles = 2)
+        {
+            SetFlag(StatusFlags.Overflow, false);
+            _master_cycle += cycles;
+        }
+
         public void JMP(ushort addr, byte cycles)
         {
             _program_counter = addr;
@@ -522,7 +540,7 @@ namespace NES_Emulator
             _master_cycle += cycles;
         }
 
-        // TODO
+        // TODO:
         // INC, DEC
         // BIT
         // PHA, PLA, PHP, PLP
@@ -844,6 +862,9 @@ namespace NES_Emulator
                 // Flag Instructions
                 case 0x18: CLC(); break;
                 case 0x38: SEC(); break;
+                case 0x58: CLI(); break;
+                case 0x78: SEI(); break;
+                case 0xB8: CLV(); break;
 
                 // Program Control & Branching
                 case 0x4C: JMP_Absolute(); break;
