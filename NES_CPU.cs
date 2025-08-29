@@ -471,10 +471,8 @@ namespace NES_Emulator
             }
             else
             {
-                _bus.WriteByte(addr, operand); // The 6502 actually does this, lookup 6502 RMW
                 _bus.WriteByte(addr, result);
             }
-
             SetFlag(StatusFlags.Carry, ((operand & 0x80) != 0));
             SetNegativeAndZeroFlags(result);
             _master_cycle += cycles;
@@ -491,10 +489,8 @@ namespace NES_Emulator
             }
             else
             {
-                _bus.WriteByte(addr, operand);
                 _bus.WriteByte(addr, result);
             }
-
             SetFlag(StatusFlags.Carry, ((operand & 0x01) != 0));
             SetNegativeAndZeroFlags(result);
             _master_cycle += cycles;
@@ -512,7 +508,6 @@ namespace NES_Emulator
             }
             else
             {
-                _bus.WriteByte(addr, operand);
                 _bus.WriteByte(addr, result);
             }
             SetFlag(StatusFlags.Carry, ((operand & 0x80) != 0));
@@ -532,7 +527,6 @@ namespace NES_Emulator
             }
             else
             {
-                _bus.WriteByte(addr, operand);
                 _bus.WriteByte(addr, result);
             }
             SetFlag(StatusFlags.Carry, ((operand & 0x01) != 0));
@@ -881,6 +875,7 @@ namespace NES_Emulator
 
                 // NOP Variants (more eventually)
                 case 0xEA: _master_cycle += 2; break;
+                case 0x04: _master_cycle += 3; break;
 
                 default: Console.WriteLine($"No Match For Opcode {opcode}"); break;
             }
