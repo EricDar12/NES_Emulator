@@ -401,12 +401,26 @@ namespace NES_Emulator
 
         public void BVC(ushort addr, byte cycles)
         {
-
+            if (IsFlagSet(StatusFlags.Overflow))
+            {
+                _master_cycle += cycles;
+                return;
+            }
+            IsPageCrossed(_program_counter, addr);
+            _program_counter = addr;
+            _master_cycle += (ushort)(cycles + 1);
         }
 
         public void BVS(ushort addr, byte cycles)
         {
-
+            if (!IsFlagSet(StatusFlags.Overflow))
+            {
+                _master_cycle += cycles;
+                return;
+            }
+            IsPageCrossed(_program_counter, addr);
+            _program_counter = addr;
+            _master_cycle += (ushort)(cycles + 1);
         }
 
         public void CMP(ushort addr, byte cycles)
@@ -571,7 +585,7 @@ namespace NES_Emulator
         // TODO:
         // INC, DEC
         // PHA, PLA, PHP, PLP
-        // BVS, BVC,
+        // TSX, TXS
 
         public void RTI(byte cycles = 6)
         {
@@ -648,6 +662,8 @@ namespace NES_Emulator
         void BCS_Relative() => BCS(Addr_Relative(), 2); // B0
         void BPL_Relative() => BPL(Addr_Relative(), 2); // 10
         void BMI_Relative() => BMI(Addr_Relative(), 2); // 30
+        void BVC_Relative() => BVC(Addr_Relative(), 2); // 50;
+        void BVS_Relative() => BVS(Addr_Relative(), 2); // 70;
 
         void ADC_Immediate() => ADC(Addr_Immediate(), 2); // 69
         void ADC_ZeroPage() => ADC(Addr_ZeroPage(), 3); // 65 
@@ -914,6 +930,8 @@ namespace NES_Emulator
                 case 0xB0: BCS_Relative(); break;
                 case 0x10: BPL_Relative(); break;
                 case 0x30: BMI_Relative(); break;
+                case 0x50: BVC_Relative(); break;
+                case 0x70: BVS_Relative(); break;
 
                 // NOP Variants (more eventually)
                 case 0xEA: _master_cycle += 2; break;
