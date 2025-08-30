@@ -822,6 +822,11 @@ namespace NES_Emulator
         public void Step()
         {
             byte opcode = _bus.ReadByte(_program_counter++);
+
+            // DEBUGGING
+            Console.WriteLine($"Opcode {Convert.ToString(opcode, 16)}");
+            Console.Write($" A: {Convert.ToString(_accumulator, 16)} \n X: {Convert.ToString(_register_x, 16)} \n Y: {Convert.ToString(_register_y, 16)} \n S: {Convert.ToString(_status, 2)} \n ----- \n ");
+
             switch (opcode)
             {
                 // LDA Instructions
