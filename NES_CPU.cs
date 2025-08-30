@@ -295,6 +295,18 @@ namespace NES_Emulator
             _master_cycle += cycles;
         }
 
+        public void CLD(byte cycles = 2)
+        {
+            SetFlag(StatusFlags.Overflow, false);
+            _master_cycle += cycles;
+        }
+
+        public void SED(byte cycles = 2)
+        {
+            SetFlag(StatusFlags.Decimal, true);
+            _master_cycle += cycles;
+        }
+
         public void JMP(ushort addr, byte cycles)
         {
             _program_counter = addr;
@@ -385,6 +397,16 @@ namespace NES_Emulator
             IsPageCrossed(_program_counter, addr);
             _program_counter = addr;
             _master_cycle += (ushort)(cycles + 1);
+        }
+
+        public void BVC(ushort addr, byte cycles)
+        {
+
+        }
+
+        public void BVS(ushort addr, byte cycles)
+        {
+
         }
 
         public void CMP(ushort addr, byte cycles)
@@ -534,11 +556,22 @@ namespace NES_Emulator
             _master_cycle += cycles;
         }
 
+        public void BIT(ushort addr, byte cycles)
+        {
+            byte operand = _bus.ReadByte(addr);
+            byte result = (byte) (_accumulator & operand);
+
+            SetFlag(StatusFlags.Zero, (result == 0));
+            SetFlag(StatusFlags.Negative, ((operand & (1 << 7)) != 0));
+            SetFlag(StatusFlags.Overflow, ((operand & (1 << 6)) != 0));
+
+            _master_cycle += cycles;
+        }
+
         // TODO:
         // INC, DEC
-        // BIT
         // PHA, PLA, PHP, PLP
-        // CLI, SEI, CLD, SED
+        // BVS, BVC,
 
         public void RTI(byte cycles = 6)
         {
@@ -704,8 +737,12 @@ namespace NES_Emulator
 
         void RTI_Implied() => RTI(); // 40
 
+        void BIT_ZeroPage() => BIT(Addr_ZeroPage(), 3); // 24
+        void BIT_Absolute() => BIT(Addr_Absolute(), 4); // 2C
+
         #endregion
         #endregion
+        #region ##### Execution #####
         public void Step()
         {
             byte opcode = _bus.ReadByte(_program_counter++);
@@ -853,12 +890,17 @@ namespace NES_Emulator
                 case 0x6E: ROR_Absolute(); break;
                 case 0x7E: ROR_AbsoluteX(); break;
 
+                case 0x24: BIT_ZeroPage(); break;
+                case 0x2C: BIT_Absolute(); break;
+
                 // Flag Instructions
                 case 0x18: CLC(); break;
                 case 0x38: SEC(); break;
                 case 0x58: CLI(); break;
                 case 0x78: SEI(); break;
                 case 0xB8: CLV(); break;
+                case 0xD8: CLD(); break;
+                case 0xF8: SED(); break;
 
                 // Program Control & Branching
                 case 0x4C: JMP_Absolute(); break;
@@ -877,7 +919,7 @@ namespace NES_Emulator
                 case 0xEA: _master_cycle += 2; break;
                 case 0x04: _master_cycle += 3; break;
 
-                default: Console.WriteLine($"No Match For Opcode {opcode}"); break;
+                default: Console.WriteLine($"No Match For Opcode {Convert.ToString(opcode, 16)}"); break;
             }
         }
 
@@ -894,6 +936,7 @@ namespace NES_Emulator
                 Step();
             }
         }
+        #endregion
 
         public void IRQ()
         {

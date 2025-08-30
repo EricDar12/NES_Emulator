@@ -9,6 +9,8 @@ namespace NES_Emulator
     internal class NES_Cartridge
     {
 
+        // A proper loader/mapper will be implemented
+        // This exists specifically to run nestes.nes
         public void LoadNestest(string path)
         {
             NES_BUS bus = new NES_BUS();
@@ -37,8 +39,7 @@ namespace NES_Emulator
                 Array.Copy(prg, 0, bus._memory, 0x8000, 32768);
             }
 
-            Console.WriteLine("Bytes at $C000: " +
-                BitConverter.ToString(bus._memory, 0xC000, 16));
+            Console.WriteLine("Bytes at $C000: " + BitConverter.ToString(bus._memory, 0xC000, 16));
 
             cpu._program_counter = 0xC000;
 
