@@ -237,6 +237,37 @@ namespace NES_Emulator
             _master_cycle += cycles;
         }
 
+        public void TSX(byte cycles = 2)
+        {
+            _register_x = _stack_pointer;
+            SetNegativeAndZeroFlags( _register_x);
+            _master_cycle += cycles;
+        }
+
+        public void TXS(byte cycles = 2)
+        {
+            _stack_pointer = _register_x;
+            _master_cycle += cycles;
+        }
+
+        public void INC(ushort addr, byte cycles)
+        {
+            byte operand = _bus.ReadByte(addr);
+            byte result = (byte) (operand + 1);
+            _bus.WriteByte(addr, result);
+            SetNegativeAndZeroFlags(result);
+            _master_cycle += cycles;
+        }
+
+        public void DEC(ushort addr, byte cycles)
+        {
+            byte operand = _bus.ReadByte(addr);
+            byte result = (byte)(operand - 1);
+            _bus.WriteByte(addr, result);
+            SetNegativeAndZeroFlags(result);
+            _master_cycle += cycles;
+        }
+
         public void INX(byte cycles = 2)
         {
             _register_x += 1;
@@ -582,19 +613,38 @@ namespace NES_Emulator
             _master_cycle += cycles;
         }
 
-        // TODO:
-        // INC, DEC
-        // PHA, PLA, PHP, PLP
-        // TSX, TXS
+        public void PHA(byte cycles = 3)
+        {
+            PushByte(_accumulator);
+            _master_cycle += cycles;
+        }
+
+        public void PLA(byte cycles = 4)
+        {
+            byte accumulatorOld = PopByte();
+            _accumulator = accumulatorOld;
+            SetNegativeAndZeroFlags(_accumulator);
+            _master_cycle += cycles;
+        }
+
+        public void PHP(byte cycles = 3)
+        {
+            PushByte((byte)(_status | 0b0011_0000));
+            _master_cycle += cycles;
+        }
+
+        public void PLP(byte cycles = 4)
+        {
+            byte statusOld = PopByte();
+            _status = (byte)(statusOld & 0b1110_1111);
+            _master_cycle += cycles;
+        }
 
         public void RTI(byte cycles = 6)
         {
             byte statusOld = PopByte();
-
             _status = (byte)(statusOld & 0b1110_1111);
-
             _program_counter = PopWord();
-
             _master_cycle += cycles;
         }
 
@@ -756,6 +806,16 @@ namespace NES_Emulator
         void BIT_ZeroPage() => BIT(Addr_ZeroPage(), 3); // 24
         void BIT_Absolute() => BIT(Addr_Absolute(), 4); // 2C
 
+        void INC_ZeroPage() => INC(Addr_ZeroPage(), 5); // E6
+        void INC_ZeroPageX() => INC(Addr_ZeroPageX(), 6); // F6
+        void INC_Absolute() => INC(Addr_Absolute(), 6); // EE
+        void INC_AbsoluteX() => INC(Addr_AbsoluteX(), 7); // FE
+
+        void DEC_ZeroPage() => DEC(Addr_ZeroPage(), 5); // C6
+        void DEC_ZeroPageX() => DEC(Addr_ZeroPageX(), 6); // D6
+        void DEC_Absolute() => DEC(Addr_Absolute(), 6); // CE
+        void DEC_AbsoluteX() => DEC(Addr_AbsoluteX(), 7); // DE
+
         #endregion
         #endregion
         #region ##### Execution #####
@@ -807,17 +867,35 @@ namespace NES_Emulator
                 case 0x94: STY_ZeroPageX(); break;
                 case 0x8C: STY_Absolute(); break;
 
+                // Stack Instructions
+                case 0x48: PHA(); break;
+                case 0x08: PHP(); break;
+                case 0x68: PLA(); break;
+                case 0x28: PLP(); break;
+
                 // Transfer Instructions
                 case 0xAA: TAX(); break;
                 case 0x8A: TXA(); break;
                 case 0xA8: TAY(); break;
                 case 0x98: TYA(); break;
+                case 0x9A: TXS(); break;
+                case 0xBA: TSX(); break;
 
                 // Arithmetic Instructions
                 case 0xE8: INX(); break;
                 case 0xCA: DEX(); break;
                 case 0xC8: INY(); break;
                 case 0x88: DEY(); break;
+
+                case 0xE6: INC_ZeroPage(); break;
+                case 0xF6: INC_ZeroPageX(); break;
+                case 0xEE: INC_Absolute(); break;
+                case 0xFE: INC_AbsoluteX(); break;
+
+                case 0xC6: DEC_ZeroPage(); break;
+                case 0xD6: DEC_ZeroPageX(); break;
+                case 0xCE: DEC_Absolute(); break;
+                case 0xDE: DEC_AbsoluteX(); break;
 
                 case 0x69: ADC_Immediate(); break;
                 case 0x65: ADC_ZeroPage(); break;
