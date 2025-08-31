@@ -39,11 +39,11 @@ namespace NES_Emulator
                 Array.Copy(prg, 0, bus._memory, 0x8000, 32768);
             }
 
-            Console.WriteLine("Bytes at $C000: " + BitConverter.ToString(bus._memory, 0xC000, 16));
+            // Console.WriteLine("Bytes at $C000: " + BitConverter.ToString(bus._memory, 0xC000, 16));
 
             cpu._program_counter = 0xC000;
 
-            cpu.FetchAndDecode();
+            cpu.StepOneInstruction();
 
             Console.WriteLine($"Test Result code: {bus._memory[0x0002]:X2}");
             Console.WriteLine($"Subcode: {bus._memory[0x0003]:X2}");

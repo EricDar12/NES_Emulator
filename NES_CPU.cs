@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Net.Security;
+using System.Reflection.Emit;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -823,10 +824,6 @@ namespace NES_Emulator
         {
             byte opcode = _bus.ReadByte(_program_counter++);
 
-            // DEBUGGING
-            Console.WriteLine($"Opcode {Convert.ToString(opcode, 16)}");
-            Console.Write($" A: {Convert.ToString(_accumulator, 16)} \n X: {Convert.ToString(_register_x, 16)} \n Y: {Convert.ToString(_register_y, 16)} \n S: {Convert.ToString(_status, 2)} \n ----- \n ");
-
             switch (opcode)
             {
                 // LDA Instructions
@@ -1035,6 +1032,23 @@ namespace NES_Emulator
                     break;
                 }
                 Step();
+            }
+        }
+
+        public void StepOneInstruction()
+        {
+            Console.WriteLine("Press Enter To Step");
+            while (_bus.ReadByte(_program_counter) != 0x00)
+            {
+                bool isEnterPressed = (Console.ReadKey().Key == ConsoleKey.Enter);
+                // DEBUGGING
+                Console.WriteLine($"Opcode: {Convert.ToString(_bus.ReadByte(_program_counter), 16).PadLeft(2, '0')}");
+                Console.Write($"A: {Convert.ToString(_accumulator, 16)} \nX: {Convert.ToString(_register_x, 16)} \nY: {Convert.ToString(_register_y, 16)} \nS: {Convert.ToString(_status, 2).PadLeft(8, '0')} \n-----------\n");
+                if (isEnterPressed)
+                {
+                    Step();
+                }
+                isEnterPressed = false;
             }
         }
         #endregion
