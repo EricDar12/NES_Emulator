@@ -893,6 +893,22 @@ public class CPU_Tests
         Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Overflow));
         Assert.Equal(19, (ushort)cpu._master_cycle);
     }
+
+    [Fact]
+    public static void TestBIT()
+    {
+        NES_BUS bus = new NES_BUS();
+        NES_CPU cpu = new NES_CPU(bus);
+
+        bus.WriteByte(0x000A, 0b0100_0000);
+
+        cpu.LoadAndRun(new byte[] { 0xA9, 0xFF, 0x24, 0x0A, 0x00});
+
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Overflow));
+    }
+
     #endregion
     #region ##### Addressing Mode Tests #####
     [Fact]

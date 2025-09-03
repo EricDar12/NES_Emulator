@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Net.Security;
+using System.Reflection.Emit;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -237,6 +238,37 @@ namespace NES_Emulator
             _master_cycle += cycles;
         }
 
+        public void TSX(byte cycles = 2)
+        {
+            _register_x = _stack_pointer;
+            SetNegativeAndZeroFlags( _register_x);
+            _master_cycle += cycles;
+        }
+
+        public void TXS(byte cycles = 2)
+        {
+            _stack_pointer = _register_x;
+            _master_cycle += cycles;
+        }
+
+        public void INC(ushort addr, byte cycles)
+        {
+            byte operand = _bus.ReadByte(addr);
+            byte result = (byte) (operand + 1);
+            _bus.WriteByte(addr, result);
+            SetNegativeAndZeroFlags(result);
+            _master_cycle += cycles;
+        }
+
+        public void DEC(ushort addr, byte cycles)
+        {
+            byte operand = _bus.ReadByte(addr);
+            byte result = (byte)(operand - 1);
+            _bus.WriteByte(addr, result);
+            SetNegativeAndZeroFlags(result);
+            _master_cycle += cycles;
+        }
+
         public void INX(byte cycles = 2)
         {
             _register_x += 1;
@@ -292,6 +324,18 @@ namespace NES_Emulator
         public void CLV(byte cycles = 2)
         {
             SetFlag(StatusFlags.Overflow, false);
+            _master_cycle += cycles;
+        }
+
+        public void CLD(byte cycles = 2)
+        {
+            SetFlag(StatusFlags.Overflow, false);
+            _master_cycle += cycles;
+        }
+
+        public void SED(byte cycles = 2)
+        {
+            SetFlag(StatusFlags.Decimal, true);
             _master_cycle += cycles;
         }
 
@@ -387,6 +431,30 @@ namespace NES_Emulator
             _master_cycle += (ushort)(cycles + 1);
         }
 
+        public void BVC(ushort addr, byte cycles)
+        {
+            if (IsFlagSet(StatusFlags.Overflow))
+            {
+                _master_cycle += cycles;
+                return;
+            }
+            IsPageCrossed(_program_counter, addr);
+            _program_counter = addr;
+            _master_cycle += (ushort)(cycles + 1);
+        }
+
+        public void BVS(ushort addr, byte cycles)
+        {
+            if (!IsFlagSet(StatusFlags.Overflow))
+            {
+                _master_cycle += cycles;
+                return;
+            }
+            IsPageCrossed(_program_counter, addr);
+            _program_counter = addr;
+            _master_cycle += (ushort)(cycles + 1);
+        }
+
         public void CMP(ushort addr, byte cycles)
         {
             byte operand = _bus.ReadByte(addr);
@@ -471,10 +539,8 @@ namespace NES_Emulator
             }
             else
             {
-                _bus.WriteByte(addr, operand); // The 6502 actually does this, lookup 6502 RMW
                 _bus.WriteByte(addr, result);
             }
-
             SetFlag(StatusFlags.Carry, ((operand & 0x80) != 0));
             SetNegativeAndZeroFlags(result);
             _master_cycle += cycles;
@@ -491,10 +557,8 @@ namespace NES_Emulator
             }
             else
             {
-                _bus.WriteByte(addr, operand);
                 _bus.WriteByte(addr, result);
             }
-
             SetFlag(StatusFlags.Carry, ((operand & 0x01) != 0));
             SetNegativeAndZeroFlags(result);
             _master_cycle += cycles;
@@ -512,7 +576,6 @@ namespace NES_Emulator
             }
             else
             {
-                _bus.WriteByte(addr, operand);
                 _bus.WriteByte(addr, result);
             }
             SetFlag(StatusFlags.Carry, ((operand & 0x80) != 0));
@@ -532,7 +595,6 @@ namespace NES_Emulator
             }
             else
             {
-                _bus.WriteByte(addr, operand);
                 _bus.WriteByte(addr, result);
             }
             SetFlag(StatusFlags.Carry, ((operand & 0x01) != 0));
@@ -540,20 +602,50 @@ namespace NES_Emulator
             _master_cycle += cycles;
         }
 
-        // TODO:
-        // INC, DEC
-        // BIT
-        // PHA, PLA, PHP, PLP
-        // CLI, SEI, CLD, SED
+        public void BIT(ushort addr, byte cycles)
+        {
+            byte operand = _bus.ReadByte(addr);
+            byte result = (byte) (_accumulator & operand);
+
+            SetFlag(StatusFlags.Zero, (result == 0));
+            SetFlag(StatusFlags.Negative, ((operand & (1 << 7)) != 0));
+            SetFlag(StatusFlags.Overflow, ((operand & (1 << 6)) != 0));
+
+            _master_cycle += cycles;
+        }
+
+        public void PHA(byte cycles = 3)
+        {
+            PushByte(_accumulator);
+            _master_cycle += cycles;
+        }
+
+        public void PLA(byte cycles = 4)
+        {
+            byte accumulatorOld = PopByte();
+            _accumulator = accumulatorOld;
+            SetNegativeAndZeroFlags(_accumulator);
+            _master_cycle += cycles;
+        }
+
+        public void PHP(byte cycles = 3)
+        {
+            PushByte((byte)(_status | 0b0011_0000));
+            _master_cycle += cycles;
+        }
+
+        public void PLP(byte cycles = 4)
+        {
+            byte statusOld = PopByte();
+            _status = (byte)(statusOld & 0b1110_1111);
+            _master_cycle += cycles;
+        }
 
         public void RTI(byte cycles = 6)
         {
             byte statusOld = PopByte();
-
             _status = (byte)(statusOld & 0b1110_1111);
-
             _program_counter = PopWord();
-
             _master_cycle += cycles;
         }
 
@@ -621,6 +713,8 @@ namespace NES_Emulator
         void BCS_Relative() => BCS(Addr_Relative(), 2); // B0
         void BPL_Relative() => BPL(Addr_Relative(), 2); // 10
         void BMI_Relative() => BMI(Addr_Relative(), 2); // 30
+        void BVC_Relative() => BVC(Addr_Relative(), 2); // 50;
+        void BVS_Relative() => BVS(Addr_Relative(), 2); // 70;
 
         void ADC_Immediate() => ADC(Addr_Immediate(), 2); // 69
         void ADC_ZeroPage() => ADC(Addr_ZeroPage(), 3); // 65 
@@ -710,11 +804,26 @@ namespace NES_Emulator
 
         void RTI_Implied() => RTI(); // 40
 
+        void BIT_ZeroPage() => BIT(Addr_ZeroPage(), 3); // 24
+        void BIT_Absolute() => BIT(Addr_Absolute(), 4); // 2C
+
+        void INC_ZeroPage() => INC(Addr_ZeroPage(), 5); // E6
+        void INC_ZeroPageX() => INC(Addr_ZeroPageX(), 6); // F6
+        void INC_Absolute() => INC(Addr_Absolute(), 6); // EE
+        void INC_AbsoluteX() => INC(Addr_AbsoluteX(), 7); // FE
+
+        void DEC_ZeroPage() => DEC(Addr_ZeroPage(), 5); // C6
+        void DEC_ZeroPageX() => DEC(Addr_ZeroPageX(), 6); // D6
+        void DEC_Absolute() => DEC(Addr_Absolute(), 6); // CE
+        void DEC_AbsoluteX() => DEC(Addr_AbsoluteX(), 7); // DE
+
         #endregion
         #endregion
+        #region ##### Execution #####
         public void Step()
         {
             byte opcode = _bus.ReadByte(_program_counter++);
+
             switch (opcode)
             {
                 // LDA Instructions
@@ -760,17 +869,35 @@ namespace NES_Emulator
                 case 0x94: STY_ZeroPageX(); break;
                 case 0x8C: STY_Absolute(); break;
 
+                // Stack Instructions
+                case 0x48: PHA(); break;
+                case 0x08: PHP(); break;
+                case 0x68: PLA(); break;
+                case 0x28: PLP(); break;
+
                 // Transfer Instructions
                 case 0xAA: TAX(); break;
                 case 0x8A: TXA(); break;
                 case 0xA8: TAY(); break;
                 case 0x98: TYA(); break;
+                case 0x9A: TXS(); break;
+                case 0xBA: TSX(); break;
 
                 // Arithmetic Instructions
                 case 0xE8: INX(); break;
                 case 0xCA: DEX(); break;
                 case 0xC8: INY(); break;
                 case 0x88: DEY(); break;
+
+                case 0xE6: INC_ZeroPage(); break;
+                case 0xF6: INC_ZeroPageX(); break;
+                case 0xEE: INC_Absolute(); break;
+                case 0xFE: INC_AbsoluteX(); break;
+
+                case 0xC6: DEC_ZeroPage(); break;
+                case 0xD6: DEC_ZeroPageX(); break;
+                case 0xCE: DEC_Absolute(); break;
+                case 0xDE: DEC_AbsoluteX(); break;
 
                 case 0x69: ADC_Immediate(); break;
                 case 0x65: ADC_ZeroPage(); break;
@@ -859,12 +986,17 @@ namespace NES_Emulator
                 case 0x6E: ROR_Absolute(); break;
                 case 0x7E: ROR_AbsoluteX(); break;
 
+                case 0x24: BIT_ZeroPage(); break;
+                case 0x2C: BIT_Absolute(); break;
+
                 // Flag Instructions
                 case 0x18: CLC(); break;
                 case 0x38: SEC(); break;
                 case 0x58: CLI(); break;
                 case 0x78: SEI(); break;
                 case 0xB8: CLV(); break;
+                case 0xD8: CLD(); break;
+                case 0xF8: SED(); break;
 
                 // Program Control & Branching
                 case 0x4C: JMP_Absolute(); break;
@@ -878,11 +1010,14 @@ namespace NES_Emulator
                 case 0xB0: BCS_Relative(); break;
                 case 0x10: BPL_Relative(); break;
                 case 0x30: BMI_Relative(); break;
+                case 0x50: BVC_Relative(); break;
+                case 0x70: BVS_Relative(); break;
 
                 // NOP Variants (more eventually)
                 case 0xEA: _master_cycle += 2; break;
+                case 0x04: _master_cycle += 3; break;
 
-                default: Console.WriteLine($"No Match For Opcode {opcode}"); break;
+                default: Console.WriteLine($"No Match For Opcode {Convert.ToString(opcode, 16)}"); break;
             }
         }
 
@@ -899,6 +1034,24 @@ namespace NES_Emulator
                 Step();
             }
         }
+
+        public void StepOneInstruction()
+        {
+            Console.WriteLine("Press Enter To Step");
+            while (_bus.ReadByte(_program_counter) != 0x00)
+            {
+                bool isEnterPressed = (Console.ReadKey().Key == ConsoleKey.Enter);
+                // DEBUGGING
+                Console.WriteLine($"Opcode: {Convert.ToString(_bus.ReadByte(_program_counter), 16).PadLeft(2, '0')}");
+                Console.Write($"A: {Convert.ToString(_accumulator, 16)} \nX: {Convert.ToString(_register_x, 16)} \nY: {Convert.ToString(_register_y, 16)} \nS: {Convert.ToString(_status, 2).PadLeft(8, '0')} \n-----------\n");
+                if (isEnterPressed)
+                {
+                    Step();
+                }
+                isEnterPressed = false;
+            }
+        }
+        #endregion
 
         public void IRQ()
         {

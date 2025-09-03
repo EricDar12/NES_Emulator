@@ -9,7 +9,7 @@ namespace NES_Emulator
     public class NES_BUS
     {
 
-        private byte[] _memory = new byte[65536]; // 2KB of RAM
+        public byte[] _memory = new byte[65536]; // 64 KB Memory
 
         public byte ReadByte(ushort addr)
         {
