@@ -26,7 +26,7 @@
 
 ## Documentation 🖉
 Detailed explanations for each component, as well as how I overcame significant engineering challenges can be found below:
-- [CPU](./docs/cpu.md)    
+- [CPU](./docs/The-6502-CPU.md)    
 - BUS, APU & Input coming soon...  
 
 ---
