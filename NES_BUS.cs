@@ -9,8 +9,8 @@ namespace NES_Emulator
     public class NES_BUS
     {
         public byte[] _cpuRAM = new byte[2048]; // 2 KB Memory
-        public NES_PPU _ppu;
-        public NES_Cartridge? _cart;
+        private NES_PPU _ppu;
+        private NES_Cartridge? _cart;
 
         public NES_BUS(NES_PPU ppu)
         {

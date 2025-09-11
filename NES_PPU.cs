@@ -8,7 +8,10 @@ namespace NES_Emulator
 {
     public class NES_PPU
     {
-        public NES_Cartridge? _cart;
+        private NES_Cartridge? _cart;
+        private byte[,] _tblName = new byte[2,1024];
+        private byte[] _tblPalette = new byte[32];
+
         public byte CPU_Read(ushort addr)
         {
             byte data = 0x00;
