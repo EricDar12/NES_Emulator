@@ -35,31 +35,31 @@ namespace NES_Emulator
 
         public ushort Addr_ZeroPage()
         {
-            return (ushort)_bus.ReadByte(_program_counter++);
+            return (ushort)_bus.CPU_Read(_program_counter++);
         }
 
         public ushort Addr_ZeroPageX()
         {
-            ushort addr = _bus.ReadByte(_program_counter++);
+            ushort addr = _bus.CPU_Read(_program_counter++);
             return (byte)(addr + _register_x); // Byte math ensures rollover within the zero page
         }
 
         public ushort Addr_ZeroPageY()
         {
-            ushort addr = _bus.ReadByte(_program_counter++);
+            ushort addr = _bus.CPU_Read(_program_counter++);
             return (byte)(addr + _register_y);
         }
 
         public ushort Addr_Absolute()
         {
-            byte lo = _bus.ReadByte(_program_counter++);
-            return (ushort)((_bus.ReadByte(_program_counter++) << 8) | lo);
+            byte lo = _bus.CPU_Read(_program_counter++);
+            return (ushort)((_bus.CPU_Read(_program_counter++) << 8) | lo);
         }
 
         public ushort Addr_AbsoluteX()
         {
-            byte lo = _bus.ReadByte(_program_counter++);
-            byte hi = _bus.ReadByte(_program_counter++);
+            byte lo = _bus.CPU_Read(_program_counter++);
+            byte hi = _bus.CPU_Read(_program_counter++);
 
             ushort baseAddr = (ushort)((hi << 8 | lo));
             ushort finalAddr = (ushort)(baseAddr + _register_x);
@@ -71,8 +71,8 @@ namespace NES_Emulator
 
         public ushort Addr_AbsoluteY()
         {
-            byte lo = _bus.ReadByte(_program_counter++);
-            byte hi = _bus.ReadByte(_program_counter++);
+            byte lo = _bus.CPU_Read(_program_counter++);
+            byte hi = _bus.CPU_Read(_program_counter++);
 
             ushort baseAddr = (ushort)((hi << 8 | lo));
             ushort finalAddr = (ushort)(baseAddr + _register_y);
@@ -84,23 +84,23 @@ namespace NES_Emulator
 
         public ushort Addr_Indirect()
         {
-            byte ptr_lo = _bus.ReadByte(_program_counter++);
-            byte ptr_hi = _bus.ReadByte(_program_counter++);
+            byte ptr_lo = _bus.CPU_Read(_program_counter++);
+            byte ptr_hi = _bus.CPU_Read(_program_counter++);
 
             ushort ptr = (ushort)((ptr_hi << 8) | ptr_lo);
 
-            byte lo = _bus.ReadByte(ptr);
+            byte lo = _bus.CPU_Read(ptr);
             byte hi;
 
             // 6502 Page Wrapping Bug
             if (ptr_lo == 0xFF)
             {
                 // If we are on the final byte of the page, wrap back to the 0th byte of the same page
-                hi = _bus.ReadByte((ushort)(ptr & 0xFF00));
+                hi = _bus.CPU_Read((ushort)(ptr & 0xFF00));
             }
             else
             {
-                hi = _bus.ReadByte((ushort)(ptr + 1));
+                hi = _bus.CPU_Read((ushort)(ptr + 1));
             }
 
             return (ushort)((hi << 8) | lo);
@@ -108,20 +108,20 @@ namespace NES_Emulator
 
         public ushort Addr_IndirectX()
         {
-            byte b = _bus.ReadByte(_program_counter++);
+            byte b = _bus.CPU_Read(_program_counter++);
 
-            ushort lo = _bus.ReadByte((ushort)((b + _register_x) & 0x00FF));
-            ushort hi = _bus.ReadByte((ushort)((b + _register_x + 1) & 0x00FF));
+            ushort lo = _bus.CPU_Read((ushort)((b + _register_x) & 0x00FF));
+            ushort hi = _bus.CPU_Read((ushort)((b + _register_x + 1) & 0x00FF));
 
             return (ushort)((hi << 8) | lo);
         }
 
         public ushort Addr_IndirectY()
         {
-            byte b = _bus.ReadByte(_program_counter++);
+            byte b = _bus.CPU_Read(_program_counter++);
 
-            ushort lo = _bus.ReadByte((ushort)((b) & 0x00FF));
-            ushort hi = _bus.ReadByte((ushort)((b + 1) & 0x00FF));
+            ushort lo = _bus.CPU_Read((ushort)((b) & 0x00FF));
+            ushort hi = _bus.CPU_Read((ushort)((b + 1) & 0x00FF));
 
             ushort baseAddr = (ushort)((hi << 8) | lo);
             ushort finalAddr = (ushort)(baseAddr + _register_y);
@@ -133,7 +133,7 @@ namespace NES_Emulator
 
         public ushort Addr_Relative()
         {
-            sbyte offset = (sbyte)_bus.ReadByte(_program_counter++);
+            sbyte offset = (sbyte)_bus.CPU_Read(_program_counter++);
             ushort baseAddr = _program_counter;
             ushort finalAddr = (ushort)(baseAddr + offset);
             return finalAddr;
@@ -144,7 +144,7 @@ namespace NES_Emulator
         public void PushByte(byte data)
         {
             ushort addr = (ushort)(0x0100 + _stack_pointer);
-            _bus.WriteByte(addr, data);
+            _bus.CPU_Write(addr, data);
             _stack_pointer--;
         }
 
@@ -152,7 +152,7 @@ namespace NES_Emulator
         {
             _stack_pointer++;
             ushort addr = (ushort)(0x0100 + _stack_pointer);
-            return _bus.ReadByte(addr);
+            return _bus.CPU_Read(addr);
         }
 
         public void PushWord(ushort data)
@@ -173,40 +173,40 @@ namespace NES_Emulator
 
         public void LDA(ushort addr, byte cycles)
         {
-            _accumulator = _bus.ReadByte(addr);
+            _accumulator = _bus.CPU_Read(addr);
             SetNegativeAndZeroFlags(_accumulator);
             _master_cycle += cycles;
         }
 
         public void STA(ushort addr, byte cycles)
         {
-            _bus.WriteByte(addr, _accumulator);
+            _bus.CPU_Write(addr, _accumulator);
             _master_cycle += cycles;
         }
 
         public void LDX(ushort addr, byte cycles)
         {
-            _register_x = _bus.ReadByte(addr);
+            _register_x = _bus.CPU_Read(addr);
             SetNegativeAndZeroFlags(_register_x);
             _master_cycle += cycles;
         }
 
         public void STX(ushort addr, byte cycles)
         {
-            _bus.WriteByte(addr, _register_x);
+            _bus.CPU_Write(addr, _register_x);
             _master_cycle += cycles;
         }
 
         public void LDY(ushort addr, byte cycles)
         {
-            _register_y = _bus.ReadByte(addr);
+            _register_y = _bus.CPU_Read(addr);
             SetNegativeAndZeroFlags(_register_y);
             _master_cycle += cycles;
         }
 
         public void STY(ushort addr, byte cycles)
         {
-            _bus.WriteByte(addr, _register_y);
+            _bus.CPU_Write(addr, _register_y);
             _master_cycle += cycles;
         }
 
@@ -253,18 +253,18 @@ namespace NES_Emulator
 
         public void INC(ushort addr, byte cycles)
         {
-            byte operand = _bus.ReadByte(addr);
+            byte operand = _bus.CPU_Read(addr);
             byte result = (byte) (operand + 1);
-            _bus.WriteByte(addr, result);
+            _bus.CPU_Write(addr, result);
             SetNegativeAndZeroFlags(result);
             _master_cycle += cycles;
         }
 
         public void DEC(ushort addr, byte cycles)
         {
-            byte operand = _bus.ReadByte(addr);
+            byte operand = _bus.CPU_Read(addr);
             byte result = (byte)(operand - 1);
-            _bus.WriteByte(addr, result);
+            _bus.CPU_Write(addr, result);
             SetNegativeAndZeroFlags(result);
             _master_cycle += cycles;
         }
@@ -457,7 +457,7 @@ namespace NES_Emulator
 
         public void CMP(ushort addr, byte cycles)
         {
-            byte operand = _bus.ReadByte(addr);
+            byte operand = _bus.CPU_Read(addr);
             byte difference = (byte)(_accumulator - operand);
             SetFlag(StatusFlags.Carry, (_accumulator >= operand));
             SetNegativeAndZeroFlags(difference);
@@ -466,7 +466,7 @@ namespace NES_Emulator
 
         public void CPX(ushort addr, byte cycles)
         {
-            byte operand = _bus.ReadByte(addr);
+            byte operand = _bus.CPU_Read(addr);
             byte difference = (byte)(_register_x - operand);
             SetFlag(StatusFlags.Carry, (_register_x >= operand));
             SetNegativeAndZeroFlags(difference);
@@ -475,7 +475,7 @@ namespace NES_Emulator
 
         public void CPY(ushort addr, byte cycles)
         {
-            byte operand = _bus.ReadByte(addr);
+            byte operand = _bus.CPU_Read(addr);
             byte difference = (byte)(_register_y - operand);
             SetFlag(StatusFlags.Carry, (_register_y >= operand));
             SetNegativeAndZeroFlags(difference);
@@ -484,7 +484,7 @@ namespace NES_Emulator
 
         public void ADC(ushort addr, byte cycles)
         {
-            byte operand = _bus.ReadByte(addr);
+            byte operand = _bus.CPU_Read(addr);
             ushort result = (ushort)(_accumulator + operand + (IsFlagSet(StatusFlags.Carry) ? 1 : 0));
             SetNegativeAndZeroFlags((byte)result);
             SetOverflowAndCarryFlags(result, operand);
@@ -494,7 +494,7 @@ namespace NES_Emulator
 
         public void SBC(ushort addr, byte cycles)
         {
-            byte operand = _bus.ReadByte(addr);
+            byte operand = _bus.CPU_Read(addr);
             byte negatedOperand = (byte)~operand;
             ushort result = (ushort)(_accumulator + negatedOperand + (IsFlagSet(StatusFlags.Carry) ? 1 : 0));
             SetNegativeAndZeroFlags((byte)result);
@@ -505,7 +505,7 @@ namespace NES_Emulator
 
         public void AND(ushort addr, byte cycles)
         {
-            byte operand = _bus.ReadByte(addr);
+            byte operand = _bus.CPU_Read(addr);
             _accumulator &= operand;
             SetNegativeAndZeroFlags(_accumulator);
             _master_cycle += cycles;
@@ -513,7 +513,7 @@ namespace NES_Emulator
 
         public void ORA(ushort addr, byte cycles)
         {
-            byte operand = _bus.ReadByte(addr);
+            byte operand = _bus.CPU_Read(addr);
             _accumulator |= operand;
             SetNegativeAndZeroFlags(_accumulator);
             _master_cycle += cycles;
@@ -521,7 +521,7 @@ namespace NES_Emulator
 
         public void EOR(ushort addr, byte cycles)
         {
-            byte operand = _bus.ReadByte(addr);
+            byte operand = _bus.CPU_Read(addr);
             _accumulator ^= operand;
             SetNegativeAndZeroFlags(_accumulator);
             _master_cycle += cycles;
@@ -530,7 +530,7 @@ namespace NES_Emulator
         public void ASL(ushort addr, byte cycles, bool implied)
         {
 
-            byte operand = implied ? _accumulator : _bus.ReadByte(addr);
+            byte operand = implied ? _accumulator : _bus.CPU_Read(addr);
             byte result = (byte)(operand << 1);
 
             if (implied)
@@ -539,7 +539,7 @@ namespace NES_Emulator
             }
             else
             {
-                _bus.WriteByte(addr, result);
+                _bus.CPU_Write(addr, result);
             }
             SetFlag(StatusFlags.Carry, ((operand & 0x80) != 0));
             SetNegativeAndZeroFlags(result);
@@ -548,7 +548,7 @@ namespace NES_Emulator
 
         public void LSR(ushort addr, byte cycles, bool implied)
         {
-            byte operand = implied ? _accumulator : _bus.ReadByte(addr);
+            byte operand = implied ? _accumulator : _bus.CPU_Read(addr);
             byte result = (byte)(operand >> 1);
 
             if (implied)
@@ -557,7 +557,7 @@ namespace NES_Emulator
             }
             else
             {
-                _bus.WriteByte(addr, result);
+                _bus.CPU_Write(addr, result);
             }
             SetFlag(StatusFlags.Carry, ((operand & 0x01) != 0));
             SetNegativeAndZeroFlags(result);
@@ -567,7 +567,7 @@ namespace NES_Emulator
         public void ROL(ushort addr, byte cycles, bool implied)
         {
             byte carryBit = (byte) (IsFlagSet(StatusFlags.Carry) ? 1 : 0);
-            byte operand = implied ? _accumulator : _bus.ReadByte(addr);
+            byte operand = implied ? _accumulator : _bus.CPU_Read(addr);
             byte result = (byte) ((operand << 1) | carryBit);
 
             if (implied)
@@ -576,7 +576,7 @@ namespace NES_Emulator
             }
             else
             {
-                _bus.WriteByte(addr, result);
+                _bus.CPU_Write(addr, result);
             }
             SetFlag(StatusFlags.Carry, ((operand & 0x80) != 0));
             SetNegativeAndZeroFlags(result);
@@ -586,7 +586,7 @@ namespace NES_Emulator
         public void ROR(ushort addr, byte cycles, bool implied)
         {
             byte carryBit = (byte)(IsFlagSet(StatusFlags.Carry) ? 1 : 0);
-            byte operand = implied ? _accumulator : _bus.ReadByte(addr);
+            byte operand = implied ? _accumulator : _bus.CPU_Read(addr);
             byte result = (byte)((operand >> 1) | (carryBit << 7));
 
             if (implied)
@@ -595,7 +595,7 @@ namespace NES_Emulator
             }
             else
             {
-                _bus.WriteByte(addr, result);
+                _bus.CPU_Write(addr, result);
             }
             SetFlag(StatusFlags.Carry, ((operand & 0x01) != 0));
             SetNegativeAndZeroFlags(result);
@@ -604,7 +604,7 @@ namespace NES_Emulator
 
         public void BIT(ushort addr, byte cycles)
         {
-            byte operand = _bus.ReadByte(addr);
+            byte operand = _bus.CPU_Read(addr);
             byte result = (byte) (_accumulator & operand);
 
             SetFlag(StatusFlags.Zero, (result == 0));
@@ -659,8 +659,8 @@ namespace NES_Emulator
             SetFlag(StatusFlags.InterruptDisable, true);
 
             // Read from Interrupt Vector @ FFFE-FFFF
-            byte lo = _bus.ReadByte(0xFFFE);
-            byte hi = _bus.ReadByte(0xFFFF);
+            byte lo = _bus.CPU_Read(0xFFFE);
+            byte hi = _bus.CPU_Read(0xFFFF);
 
             _program_counter = (ushort)((hi << 8) | lo);
             _master_cycle += 7;
@@ -822,7 +822,7 @@ namespace NES_Emulator
         #region ##### Execution #####
         public void Step()
         {
-            byte opcode = _bus.ReadByte(_program_counter++);
+            byte opcode = _bus.CPU_Read(_program_counter++);
 
             switch (opcode)
             {
@@ -1025,7 +1025,7 @@ namespace NES_Emulator
         {
             while (true)
             {
-                if (_bus.ReadByte(_program_counter) == 0x00)
+                if (_bus.CPU_Read(_program_counter) == 0x00)
                 {
                     BRK();
                     Console.WriteLine("Break Reached");
@@ -1038,11 +1038,11 @@ namespace NES_Emulator
         public void StepOneInstruction()
         {
             Console.WriteLine("Press Enter To Step");
-            while (_bus.ReadByte(_program_counter) != 0x00)
+            while (_bus.CPU_Read(_program_counter) != 0x00)
             {
                 bool isEnterPressed = (Console.ReadKey().Key == ConsoleKey.Enter);
                 // DEBUGGING
-                Console.WriteLine($"Opcode: {Convert.ToString(_bus.ReadByte(_program_counter), 16).PadLeft(2, '0')}");
+                Console.WriteLine($"Opcode: {Convert.ToString(_bus.CPU_Read(_program_counter), 16).PadLeft(2, '0')}");
                 Console.Write($"A: {Convert.ToString(_accumulator, 16)} \nX: {Convert.ToString(_register_x, 16)} \nY: {Convert.ToString(_register_y, 16)} \nS: {Convert.ToString(_status, 2).PadLeft(8, '0')} \n-----------\n");
                 if (isEnterPressed)
                 {
@@ -1050,6 +1050,8 @@ namespace NES_Emulator
                 }
                 isEnterPressed = false;
             }
+            Console.WriteLine($"Opcode: {Convert.ToString(_bus.CPU_Read(_program_counter), 16).PadLeft(2, '0')}");
+            Console.Write($"A: {Convert.ToString(_accumulator, 16)} \nX: {Convert.ToString(_register_x, 16)} \nY: {Convert.ToString(_register_y, 16)} \nS: {Convert.ToString(_status, 2).PadLeft(8, '0')} \n-----------\n");
         }
         #endregion
 
@@ -1062,7 +1064,7 @@ namespace NES_Emulator
                 PushByte((byte)(_status | 0b0011_0000));
                 SetFlag(StatusFlags.InterruptDisable, true);
 
-                _program_counter = (ushort)((_bus.ReadByte(0xFFFE) | _bus.ReadByte(0xFFFF) << 8));
+                _program_counter = (ushort)((_bus.CPU_Read(0xFFFE) | _bus.CPU_Read(0xFFFF) << 8));
 
                 _master_cycle += 7;
             }
@@ -1075,7 +1077,7 @@ namespace NES_Emulator
             PushByte((byte)(_status | 0b0011_0000));
             SetFlag(StatusFlags.InterruptDisable, true);
 
-            _program_counter = (ushort)((_bus.ReadByte(0xFFFA) | _bus.ReadByte(0xFFFB) << 8));
+            _program_counter = (ushort)((_bus.CPU_Read(0xFFFA) | _bus.CPU_Read(0xFFFB) << 8));
 
             _master_cycle += 7;
         }
@@ -1151,8 +1153,8 @@ namespace NES_Emulator
             _master_cycle = 8;
 
             // Read reset vector at FFFC - FFFD
-            byte lo = _bus.ReadByte(0xFFFC);
-            byte hi = _bus.ReadByte(0xFFFD);
+            byte lo = _bus.CPU_Read(0xFFFC);
+            byte hi = _bus.CPU_Read(0xFFFD);
 
             _program_counter = (ushort)((hi << 8) | lo);
         }
@@ -1161,11 +1163,16 @@ namespace NES_Emulator
         {
             for (int i = 0; i < program.Length; i++)
             {
-                _bus.WriteByte((ushort)(loadAddress + i), program[i]);
+                _bus.CPU_Write((ushort)(loadAddress + i), program[i]);
             }
 
-            _bus.WriteByte(0xFFFC, (byte)loadAddress);
-            _bus.WriteByte(0xFFFD, (byte)(loadAddress >> 8));
+            _bus.CPU_Write(0xFFFC, (byte)loadAddress);
+            _bus.CPU_Write(0xFFFD, (byte)(loadAddress >> 8));
+        }
+
+        public void Clock()
+        {
+
         }
     }
 }

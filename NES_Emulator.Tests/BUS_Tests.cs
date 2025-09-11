@@ -7,8 +7,8 @@ public class BUS_Tests
     public void TestReadWriteByte()
     {
         var bus = new NES_BUS();
-        bus.WriteByte(0x07FF, 0x0A);
-        byte b = bus.ReadByte(0x07FF);
+        bus.CPU_Write(0x07FF, 0x0A);
+        byte b = bus.CPU_Read(0x07FF);
         Assert.Equal(0x0A, b);
     }
 }

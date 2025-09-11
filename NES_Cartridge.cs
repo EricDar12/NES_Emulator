@@ -6,47 +6,27 @@ using System.Threading.Tasks;
 
 namespace NES_Emulator
 {
-    internal class NES_Cartridge
+    public class NES_Cartridge
     {
 
-        // A proper loader/mapper will be implemented
-        // This exists specifically to run nestes.nes
-        public void LoadNestest(string path)
+        public byte CPU_Read(ushort addr)
         {
-            NES_BUS bus = new NES_BUS();
-            NES_CPU cpu = new NES_CPU(bus);
+            return 0;
+        }
 
-            byte[] rom = File.ReadAllBytes(path);
+        public void CPU_Write(ushort addr, byte data)
+        {
 
-            if (rom[0] != 'N' || rom[1] != 'E' || rom[2] != 'S' || rom[3] != 0x1A)
-                throw new Exception("Invalid NES file");
+        }
 
-            int prgBanks = rom[4]; // Number of 16KB PRG banks
-            int chrBanks = rom[5];
+        public byte PPU_Read(ushort addr)
+        {
+            return 0;
+        }
 
-            int prgOffset = 16;
-            int prgSize = prgBanks * 16384;
-            byte[] prg = new byte[prgSize];
-            Array.Copy(rom, prgOffset, prg, 0, prgSize);
+        public void PPU_Write(ushort addr, byte data)
+        {
 
-            if (prgBanks == 1)
-            {
-                Array.Copy(prg, 0, bus._memory, 0x8000, 16384);
-                Array.Copy(prg, 0, bus._memory, 0xC000, 16384);
-            }
-            else if (prgBanks == 2)
-            {
-                Array.Copy(prg, 0, bus._memory, 0x8000, 32768);
-            }
-
-            // Console.WriteLine("Bytes at $C000: " + BitConverter.ToString(bus._memory, 0xC000, 16));
-
-            cpu._program_counter = 0xC000;
-
-            cpu.StepOneInstruction();
-
-            Console.WriteLine($"Test Result code: {bus._memory[0x0002]:X2}");
-            Console.WriteLine($"Subcode: {bus._memory[0x0003]:X2}");
         }
     }
 }

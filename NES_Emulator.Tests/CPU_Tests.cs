@@ -46,7 +46,7 @@ public class CPU_Tests
         cpu.PushByte(0x0A);
 
         Assert.Equal(0x01FD, expectedAddress); // Redundant, but preserved
-        Assert.Equal(0x0A, bus.ReadByte(expectedAddress));
+        Assert.Equal(0x0A, bus.CPU_Read(expectedAddress));
         Assert.Equal(0xFC, cpu._stack_pointer);
     }
 
@@ -58,7 +58,7 @@ public class CPU_Tests
 
         cpu._stack_pointer = 0xFF;
 
-        bus.WriteByte(0x0100, 0x0A);
+        bus.CPU_Write(0x0100, 0x0A);
 
         byte b = cpu.PopByte(); // FF + 1 = 00 due to wrap
 
@@ -77,8 +77,8 @@ public class CPU_Tests
 
         cpu.PushWord(testValue);
 
-        Assert.Equal(0x12, bus.ReadByte(0x01FD));
-        Assert.Equal(0x34, bus.ReadByte(0x01FC));
+        Assert.Equal(0x12, bus.CPU_Read(0x01FD));
+        Assert.Equal(0x34, bus.CPU_Read(0x01FC));
         Assert.Equal(0xFB, cpu._stack_pointer);
     }
 
@@ -90,8 +90,8 @@ public class CPU_Tests
 
         cpu._stack_pointer = 0xFB;
 
-        bus.WriteByte(0x01FC, 0x34);
-        bus.WriteByte(0x01FD, 0x12);
+        bus.CPU_Write(0x01FC, 0x34);
+        bus.CPU_Write(0x01FD, 0x12);
 
         ushort result = cpu.PopWord();
 
@@ -127,7 +127,7 @@ public class CPU_Tests
 
         cpu.LoadAndRun(new byte[] { 0xA9, 0xFF, 0x85, 0x0F, 0x00 });
 
-        Assert.Equal(0xFF, bus.ReadByte(0x000F));
+        Assert.Equal(0xFF, bus.CPU_Read(0x000F));
         Assert.Equal((ushort)20, (ushort)cpu._master_cycle);
     }
 
@@ -137,7 +137,7 @@ public class CPU_Tests
         NES_BUS bus = new NES_BUS();
         NES_CPU cpu = new NES_CPU(bus);
 
-        bus.WriteByte(0x000B, 0xA1);
+        bus.CPU_Write(0x000B, 0xA1);
 
         cpu.LoadAndRun(new byte[] { 0xA0, 0x0B, 0xB6, 0x00 });
 
@@ -153,7 +153,7 @@ public class CPU_Tests
 
         cpu.LoadAndRun(new byte[] { 0xA2, 0xAA, 0x86, 0xF1, 0x00 });
 
-        Assert.Equal(0xAA, bus.ReadByte(0x00F1));
+        Assert.Equal(0xAA, bus.CPU_Read(0x00F1));
         Assert.Equal((ushort)20, (ushort)cpu._master_cycle);
     }
 
@@ -163,7 +163,7 @@ public class CPU_Tests
         NES_BUS bus = new NES_BUS();
         NES_CPU cpu = new NES_CPU(bus);
 
-        bus.WriteByte(0x0085, 0x00);
+        bus.CPU_Write(0x0085, 0x00);
         cpu.LoadAndRun(new byte[] { 0xA2, 0x05, 0xB4, 0x80, 0x00 });
 
         Assert.Equal(0x00, cpu._register_y);
@@ -179,7 +179,7 @@ public class CPU_Tests
 
         cpu.LoadAndRun(new byte[] { 0xA0, 0xBB, 0xA2, 0x10, 0x94, 0x20, 0x00 });
 
-        Assert.Equal(0xBB, bus.ReadByte(0x0030));
+        Assert.Equal(0xBB, bus.CPU_Read(0x0030));
         Assert.Equal((ushort)23, (ushort)cpu._master_cycle);
     }
 
@@ -189,7 +189,7 @@ public class CPU_Tests
         NES_BUS bus = new NES_BUS();
         NES_CPU cpu = new NES_CPU(bus);
 
-        bus.WriteByte(0x1234, 0x7F);
+        bus.CPU_Write(0x1234, 0x7F);
         cpu.LoadAndRun(new byte[] { 0xAC, 0x34, 0x12, 0x00 });
 
         Assert.Equal(0x7F, cpu._register_y);
@@ -204,7 +204,7 @@ public class CPU_Tests
 
         cpu.LoadAndRun(new byte[] { 0xA0, 0xCC, 0x8C, 0xCD, 0xAB, 0x00 });
 
-        Assert.Equal(0xCC, bus.ReadByte(0xABCD));
+        Assert.Equal(0xCC, bus.CPU_Read(0xABCD));
         Assert.Equal((ushort)21, (ushort)cpu._master_cycle);
     }
 
@@ -367,9 +367,9 @@ public class CPU_Tests
         NES_CPU cpu = new NES_CPU(bus);
 
         // JMP Target
-        bus.WriteByte(0x0107, 0xA9);
-        bus.WriteByte(0x0108, 0x0C);
-        bus.WriteByte(0x0109, 0x00);
+        bus.CPU_Write(0x0107, 0xA9);
+        bus.CPU_Write(0x0108, 0x0C);
+        bus.CPU_Write(0x0109, 0x00);
 
         // JMP ABS, 0x0107, LDA IMM, BRK
         cpu.LoadAndRun(new byte[] { 0x4C, 0x07, 0x01 });
@@ -385,11 +385,11 @@ public class CPU_Tests
         NES_CPU cpu = new NES_CPU(bus);
 
         // JMP Target
-        bus.WriteByte(0x0209, 0x0C);
-        bus.WriteByte(0x020A, 0x03);
-        bus.WriteByte(0x030C, 0xA9);
-        bus.WriteByte(0x030D, 0x01);
-        bus.WriteByte(0x030E, 0x00);
+        bus.CPU_Write(0x0209, 0x0C);
+        bus.CPU_Write(0x020A, 0x03);
+        bus.CPU_Write(0x030C, 0xA9);
+        bus.CPU_Write(0x030D, 0x01);
+        bus.CPU_Write(0x030E, 0x00);
 
         cpu.LoadAndRun(new byte[] { 0x6C, 0x09, 0x02 });
 
@@ -403,7 +403,7 @@ public class CPU_Tests
         NES_BUS bus = new NES_BUS();
         NES_CPU cpu = new NES_CPU(bus);
 
-        bus.WriteByte(0x030D, 0x00);
+        bus.CPU_Write(0x030D, 0x00);
 
         cpu.LoadAndRun(new byte[] { 0x20, 0x0D, 0x03 });
 
@@ -419,9 +419,9 @@ public class CPU_Tests
         NES_BUS bus = new NES_BUS();
         NES_CPU cpu = new NES_CPU(bus);
 
-        bus.WriteByte(0x0107, 0xA9); // LDA FF
-        bus.WriteByte(0x0108, 0x0F);
-        bus.WriteByte(0x0109, 0x60); // RTS, BRK
+        bus.CPU_Write(0x0107, 0xA9); // LDA FF
+        bus.CPU_Write(0x0108, 0x0F);
+        bus.CPU_Write(0x0109, 0x60); // RTS, BRK
 
         cpu.LoadAndRun(new byte[] { 0x20, 0x07, 0x01, 0x00 });
 
@@ -437,9 +437,9 @@ public class CPU_Tests
         NES_CPU cpu = new NES_CPU(bus);
 
         // Branch Target
-        bus.WriteByte(0x0584, 0xA9);
-        bus.WriteByte(0x0585, 0x0A);
-        bus.WriteByte(0x0586, 0x00);
+        bus.CPU_Write(0x0584, 0xA9);
+        bus.CPU_Write(0x0585, 0x0A);
+        bus.CPU_Write(0x0586, 0x00);
 
         // LDA #0, BEQ 0x0604 - 0x80, BRK
         cpu.LoadAndRun(new byte[] { 0xA9, 0x00, 0xF0, 0x80 });
@@ -455,9 +455,9 @@ public class CPU_Tests
         NES_CPU cpu = new NES_CPU(bus);
 
         // Branch Target
-        bus.WriteByte(0x0683, 0xA9);
-        bus.WriteByte(0x0684, 0x0C);
-        bus.WriteByte(0x0685, 0x00);
+        bus.CPU_Write(0x0683, 0xA9);
+        bus.CPU_Write(0x0684, 0x0C);
+        bus.CPU_Write(0x0685, 0x00);
 
         // LDA #01, BNE 0x0604 + 0x07F, LDA #0C, BRK
         cpu.LoadAndRun(new byte[] { 0xA9, 0x01, 0xD0, 0x7F });
@@ -473,9 +473,9 @@ public class CPU_Tests
         NES_CPU cpu = new NES_CPU(bus);
 
         // Branch Target
-        bus.WriteByte(0x05F9, 0xA9);
-        bus.WriteByte(0x05FA, 0x0B);
-        bus.WriteByte(0x05FB, 0x00);
+        bus.CPU_Write(0x05F9, 0xA9);
+        bus.CPU_Write(0x05FA, 0x0B);
+        bus.CPU_Write(0x05FB, 0x00);
 
         // CLC, BCC 0x0603 - 0x0A, LDA #0B, BRK
         cpu.LoadAndRun(new byte[] { 0x18, 0x90, 0xF6 });
@@ -492,9 +492,9 @@ public class CPU_Tests
         NES_CPU cpu = new NES_CPU(bus);
 
         // Branch Target
-        bus.WriteByte(0x060D, 0xA9);
-        bus.WriteByte(0x060E, 0x0B);
-        bus.WriteByte(0x060F, 0x00);
+        bus.CPU_Write(0x060D, 0xA9);
+        bus.CPU_Write(0x060E, 0x0B);
+        bus.CPU_Write(0x060F, 0x00);
 
         // SEC, BCS 0x0603 + 0x0A, LDA #0B, BRK
         cpu.LoadAndRun(new byte[] { 0x38, 0xB0, 0x0A });
@@ -511,9 +511,9 @@ public class CPU_Tests
         NES_CPU cpu = new NES_CPU(bus);
 
         // Branch Target
-        bus.WriteByte(0x0618, 0xA0);
-        bus.WriteByte(0x0619, 0x0C);
-        bus.WriteByte(0x061A, 0x00);
+        bus.CPU_Write(0x0618, 0xA0);
+        bus.CPU_Write(0x0619, 0x0C);
+        bus.CPU_Write(0x061A, 0x00);
 
         // LDA #7F, BPL 0x0604 + 0x14, LDY #0C, BRK 
         cpu.LoadAndRun(new byte[] { 0xA9, 0x7F, 0x10, 0x14 });
@@ -530,9 +530,9 @@ public class CPU_Tests
         NES_CPU cpu = new NES_CPU(bus);
 
         // Branch Target
-        bus.WriteByte(0x0584, 0xA2);
-        bus.WriteByte(0x0585, 0x0C);
-        bus.WriteByte(0x0586, 0x00);
+        bus.CPU_Write(0x0584, 0xA2);
+        bus.CPU_Write(0x0585, 0x0C);
+        bus.CPU_Write(0x0586, 0x00);
 
         // LDA #F4, BMI 0x0604 + 0x14, LDY #0C, BRK 
         cpu.LoadAndRun(new byte[] { 0xA9, 0xF4, 0x30, 0x80 });
@@ -549,11 +549,11 @@ public class CPU_Tests
         NES_CPU cpu = new NES_CPU(bus);
 
         // IndirectX Target
-        bus.WriteByte(0x004E, 0x41);
-        bus.WriteByte(0x004F, 0x02);
+        bus.CPU_Write(0x004E, 0x41);
+        bus.CPU_Write(0x004F, 0x02);
 
         // Pointer Address
-        bus.WriteByte(0x0241, 0x0A);
+        bus.CPU_Write(0x0241, 0x0A);
 
         // LDA #0A, LDX #44, ADC (Ind X) 0A, BRK
         cpu.LoadAndRun(new byte[] { 0xA9, 0x0A, 0xA2, 0x44, 0x61, 0x0A, 0x00 });
@@ -680,7 +680,7 @@ public class CPU_Tests
         NES_BUS bus = new NES_BUS();
         NES_CPU cpu = new NES_CPU(bus);
 
-        bus.WriteByte(0x000F, 0x09);
+        bus.CPU_Write(0x000F, 0x09);
 
         // LDA #05, LDX #0F, AND Zpx (5 AND 9), BRK 
         cpu.LoadAndRun(new byte[] { 0xA9, 0x05, 0xA2, 0x0F, 0x35, 0x00});
@@ -741,7 +741,7 @@ public class CPU_Tests
         NES_BUS bus = new NES_BUS();
         NES_CPU cpu = new NES_CPU(bus);
 
-        bus.WriteByte(0x0007, 0x0C);
+        bus.CPU_Write(0x0007, 0x0C);
 
         // ASL ZP (0000 + 7), LDY ZP (0000 + 7)
         cpu.LoadAndRun(new byte[] { 0x06, 0x07, 0xA4, 0x07, 0x00 });
@@ -791,7 +791,7 @@ public class CPU_Tests
         NES_BUS bus = new NES_BUS();
         NES_CPU cpu = new NES_CPU(bus);
 
-        bus.WriteByte(0x0007, 0x0E);
+        bus.CPU_Write(0x0007, 0x0E);
 
         // LDA #80, ASL 80 < 00 (Carry out MSB), ROR ZP 0E > 87 (Carry into MSB), LDX ZP, BRK
         cpu.LoadAndRun(new byte[] { 0xA9, 0x80, 0x0A, 0x66, 0x07, 0xA6, 0x07, 0x00 });
@@ -813,18 +813,18 @@ public class CPU_Tests
         cpu._program_counter = 0x0200;
 
         // Write IRQ At Reset Vector
-        bus.WriteByte(0xFFFE, 0x00); 
-        bus.WriteByte(0xFFFF, 0x03);
+        bus.CPU_Write(0xFFFE, 0x00); 
+        bus.CPU_Write(0xFFFF, 0x03);
 
         // Program To Be Executed After RTI
-        bus.WriteByte(0x0200, 0xA2);    
-        bus.WriteByte(0x0201, 0x01);    
-        bus.WriteByte(0x0202, 0x00);    
+        bus.CPU_Write(0x0200, 0xA2);    
+        bus.CPU_Write(0x0201, 0x01);    
+        bus.CPU_Write(0x0202, 0x00);    
 
         // Service Routine
-        bus.WriteByte(0x0300, 0xA9); 
-        bus.WriteByte(0x0301, 0xFF);
-        bus.WriteByte(0x0302, 0x40);
+        bus.CPU_Write(0x0300, 0xA9); 
+        bus.CPU_Write(0x0301, 0xFF);
+        bus.CPU_Write(0x0302, 0x40);
 
         // Set PC To 0x0300
         cpu.IRQ(); 
@@ -849,22 +849,22 @@ public class CPU_Tests
         cpu.SetFlag(NES_CPU.StatusFlags.InterruptDisable, true); 
 
         // NMI Vector
-        bus.WriteByte(0xFFFA, 0x00);
-        bus.WriteByte(0xFFFB, 0x03);
+        bus.CPU_Write(0xFFFA, 0x00);
+        bus.CPU_Write(0xFFFB, 0x03);
 
         // Reset Vector (For BRK)
-        bus.WriteByte(0xFFFE, 0x00);
-        bus.WriteByte(0xFFFF, 0x04);
+        bus.CPU_Write(0xFFFE, 0x00);
+        bus.CPU_Write(0xFFFF, 0x04);
 
         // Service Routine
-        bus.WriteByte(0x0300, 0xA9);
-        bus.WriteByte(0x0301, 0x01);
-        bus.WriteByte(0x0302, 0x40);
+        bus.CPU_Write(0x0300, 0xA9);
+        bus.CPU_Write(0x0301, 0x01);
+        bus.CPU_Write(0x0302, 0x40);
 
         // Program To Be Executed After RTI
-        bus.WriteByte(0x0200, 0xA0);
-        bus.WriteByte(0x0201, 0xFF);
-        bus.WriteByte(0x0203, 0x00);
+        bus.CPU_Write(0x0200, 0xA0);
+        bus.CPU_Write(0x0201, 0xFF);
+        bus.CPU_Write(0x0203, 0x00);
 
         // Set PC To 0x0300
         cpu.NMI();
@@ -900,7 +900,7 @@ public class CPU_Tests
         NES_BUS bus = new NES_BUS();
         NES_CPU cpu = new NES_CPU(bus);
 
-        bus.WriteByte(0x000A, 0b0100_0000);
+        bus.CPU_Write(0x000A, 0b0100_0000);
 
         cpu.LoadAndRun(new byte[] { 0xA9, 0xFF, 0x24, 0x0A, 0x00});
 
@@ -918,13 +918,13 @@ public class CPU_Tests
         var cpu = new NES_CPU(bus);
         cpu._program_counter = 0x0100;
 
-        bus.WriteByte(0x0100, 0x44);
-        bus.WriteByte(0x0101, 0x34);
+        bus.CPU_Write(0x0100, 0x44);
+        bus.CPU_Write(0x0101, 0x34);
 
         ushort addr = cpu.Addr_Immediate();
 
         Assert.Equal(0x0100, addr);
-        Assert.Equal(0x44, bus.ReadByte(addr));
+        Assert.Equal(0x44, bus.CPU_Read(addr));
         Assert.Equal(0x0101, cpu._program_counter);
     }
 
@@ -935,13 +935,13 @@ public class CPU_Tests
         var cpu = new NES_CPU(bus);
         cpu._program_counter = 0x0100;
 
-        bus.WriteByte(0x0044, 0xA9);
-        bus.WriteByte(0x0100, 0x44);
+        bus.CPU_Write(0x0044, 0xA9);
+        bus.CPU_Write(0x0100, 0x44);
 
         ushort addr = cpu.Addr_ZeroPage();
 
         Assert.Equal(0x0044, addr);
-        Assert.Equal(0xA9, bus.ReadByte(addr));
+        Assert.Equal(0xA9, bus.CPU_Read(addr));
         Assert.Equal(0x0101, cpu._program_counter);
     }
 
@@ -953,13 +953,13 @@ public class CPU_Tests
         cpu._program_counter = 0x0100;
         cpu._register_x = 0x0A;
 
-        bus.WriteByte(0x00DF, 0xFF);
-        bus.WriteByte(0x0100, 0xD5); // 0xD5 + 0x0A = 0xDF
+        bus.CPU_Write(0x00DF, 0xFF);
+        bus.CPU_Write(0x0100, 0xD5); // 0xD5 + 0x0A = 0xDF
 
         ushort addr = cpu.Addr_ZeroPageX();
 
         Assert.Equal(0x00DF, addr);
-        Assert.Equal(0xFF, bus.ReadByte(addr));
+        Assert.Equal(0xFF, bus.CPU_Read(addr));
         Assert.Equal(0x0101, cpu._program_counter);
     }
 
@@ -971,13 +971,13 @@ public class CPU_Tests
         cpu._program_counter = 0x0100;
         cpu._register_y = 0x0A;
 
-        bus.WriteByte(0x0009, 0xA9);
-        bus.WriteByte(0x0100, 0xFF); // 0xFF + 0x0A = 0x09 due to wrap
+        bus.CPU_Write(0x0009, 0xA9);
+        bus.CPU_Write(0x0100, 0xFF); // 0xFF + 0x0A = 0x09 due to wrap
 
         ushort addr = cpu.Addr_ZeroPageY();
 
         Assert.Equal(0x0009, addr);
-        Assert.Equal(0xA9, bus.ReadByte(addr));
+        Assert.Equal(0xA9, bus.CPU_Read(addr));
         Assert.Equal(0x0101, cpu._program_counter);
     }
 
@@ -988,14 +988,14 @@ public class CPU_Tests
         var cpu = new NES_CPU(bus);
         cpu._program_counter = 0x0100;
 
-        bus.WriteByte(0x01FF, 0x0A);
-        bus.WriteByte(0x0100, 0xFF);
-        bus.WriteByte(0x0101, 0x01);
+        bus.CPU_Write(0x01FF, 0x0A);
+        bus.CPU_Write(0x0100, 0xFF);
+        bus.CPU_Write(0x0101, 0x01);
 
         ushort addr = cpu.Addr_Absolute();
 
         Assert.Equal(0x01FF, addr);
-        Assert.Equal(0x0A, bus.ReadByte(addr));
+        Assert.Equal(0x0A, bus.CPU_Read(addr));
         Assert.Equal(0x0102, cpu._program_counter);
     }
 
@@ -1007,14 +1007,14 @@ public class CPU_Tests
         cpu._program_counter = 0x0100;
         cpu._register_x = 0x05;
 
-        bus.WriteByte(0x0204, 0x0A);
-        bus.WriteByte(0x0100, 0xFF);
-        bus.WriteByte(0x0101, 0x01);
+        bus.CPU_Write(0x0204, 0x0A);
+        bus.CPU_Write(0x0100, 0xFF);
+        bus.CPU_Write(0x0101, 0x01);
 
         ushort addr = cpu.Addr_AbsoluteX();
 
         Assert.Equal(0x0204, addr);
-        Assert.Equal(0x0A, bus.ReadByte(addr));
+        Assert.Equal(0x0A, bus.CPU_Read(addr));
         Assert.Equal(0x0102, cpu._program_counter);
     }
 
@@ -1026,14 +1026,14 @@ public class CPU_Tests
         cpu._program_counter = 0x0100;
         cpu._register_y = 0x0A;
 
-        bus.WriteByte(0x0209, 0x0B);
-        bus.WriteByte(0x0100, 0xFF);
-        bus.WriteByte(0x0101, 0x01);
+        bus.CPU_Write(0x0209, 0x0B);
+        bus.CPU_Write(0x0100, 0xFF);
+        bus.CPU_Write(0x0101, 0x01);
 
         ushort addr = cpu.Addr_AbsoluteY();
 
         Assert.Equal(0x0209, addr);
-        Assert.Equal(0x0B, bus.ReadByte(addr));
+        Assert.Equal(0x0B, bus.CPU_Read(addr));
         Assert.Equal(0x0102, cpu._program_counter);
     }
 
@@ -1044,16 +1044,16 @@ public class CPU_Tests
         var cpu = new NES_CPU(bus);
         cpu._program_counter = 0x0200;
 
-        bus.WriteByte(0x0200, 0xFF);
-        bus.WriteByte(0x0201, 0x03);
-        bus.WriteByte(0x03FF, 0x07); // High byte (bug emulation)
-        bus.WriteByte(0x0300, 0x07);
-        bus.WriteByte(0x0707, 0x01);
+        bus.CPU_Write(0x0200, 0xFF);
+        bus.CPU_Write(0x0201, 0x03);
+        bus.CPU_Write(0x03FF, 0x07); // High byte (bug emulation)
+        bus.CPU_Write(0x0300, 0x07);
+        bus.CPU_Write(0x0707, 0x01);
 
         ushort addr = cpu.Addr_Indirect();
 
         Assert.Equal(0x0707, addr);
-        Assert.Equal(0x01, bus.ReadByte(addr));
+        Assert.Equal(0x01, bus.CPU_Read(addr));
         Assert.Equal(0x0202, cpu._program_counter);
     }
 
@@ -1065,15 +1065,15 @@ public class CPU_Tests
         cpu._program_counter = 0x0100;
         cpu._register_x = 0x05;
 
-        bus.WriteByte(0x0100, 0x0A);
-        bus.WriteByte(0x000F, 0x06);
-        bus.WriteByte(0x0010, 0x05);
-        bus.WriteByte(0x0506, 0x01);
+        bus.CPU_Write(0x0100, 0x0A);
+        bus.CPU_Write(0x000F, 0x06);
+        bus.CPU_Write(0x0010, 0x05);
+        bus.CPU_Write(0x0506, 0x01);
 
         ushort addr = cpu.Addr_IndirectX();
 
         Assert.Equal(0x0506, addr);
-        Assert.Equal(0x01, bus.ReadByte(addr));
+        Assert.Equal(0x01, bus.CPU_Read(addr));
         Assert.Equal(0x0101, cpu._program_counter);
     }
 
@@ -1085,15 +1085,15 @@ public class CPU_Tests
         cpu._program_counter = 0x0200;
         cpu._register_y = 0x07;
 
-        bus.WriteByte(0x0200, 0x09);
-        bus.WriteByte(0x0009, 0x05);
-        bus.WriteByte(0x000A, 0x03);
-        bus.WriteByte(0x030C, 0x09); // 0x0305 + 0x07 = 0x030C
+        bus.CPU_Write(0x0200, 0x09);
+        bus.CPU_Write(0x0009, 0x05);
+        bus.CPU_Write(0x000A, 0x03);
+        bus.CPU_Write(0x030C, 0x09); // 0x0305 + 0x07 = 0x030C
 
         ushort addr = cpu.Addr_IndirectY();
 
         Assert.Equal(0x030C, addr);
-        Assert.Equal(0x09, bus.ReadByte(addr));
+        Assert.Equal(0x09, bus.CPU_Read(addr));
         Assert.Equal(0x0201, cpu._program_counter);
     }
 
@@ -1104,7 +1104,7 @@ public class CPU_Tests
         var cpu = new NES_CPU(bus);
         cpu._program_counter = 0x0100;
 
-        bus.WriteByte(0x0100, 0x0B);
+        bus.CPU_Write(0x0100, 0x0B);
 
         ushort addr = cpu.Addr_Relative();
 

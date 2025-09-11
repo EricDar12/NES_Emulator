@@ -8,32 +8,53 @@ namespace NES_Emulator
 {
     public class NES_BUS
     {
+        public byte[] _cpuRAM = new byte[2048]; // 2 KB Memory
+        public NES_PPU _ppu;
+        public NES_Cartridge? _cart;
 
-        public byte[] _memory = new byte[65536]; // 64 KB Memory
-
-        public byte ReadByte(ushort addr)
+        public NES_BUS(NES_PPU ppu)
         {
-            if (addr >= 0x0000 && addr <= _memory.Length) {
-                return _memory[addr];
-            }
-            Console.WriteLine($"Out Of Bounds Read At: {addr}");
-            return 0;
+            _ppu = ppu;
         }
 
-        public void WriteByte(ushort addr, byte data)
+        public byte CPU_Read(ushort addr)
         {
-            if (addr >= 0x0000 && addr <= _memory.Length) {
-                _memory[addr] = data;
+            byte data = 0x00;
+
+            if (addr >= 0x0000 && addr <= 0x1FFF) {
+                data = _cpuRAM[addr & 0x07FF];
             }
-            else Console.WriteLine($"Out Of Bounds Write At: {addr}");
+
+            else if (addr >= 0x2000 && addr <= 0x3FFF)
+            {
+                data = _ppu.CPU_Read((ushort)(addr & 0x0007));
+            }
+
+            return data;
+        }
+
+        public void CPU_Write(ushort addr, byte data)
+        {
+            if (addr >= 0x0000 && addr <= 0x1FFF) {
+                _cpuRAM[addr & 0x07FF] = data;
+            }
+
+            else if (addr >= 0x2000 && addr <= 0x3FFF)
+            {
+                _ppu.CPU_Write((ushort)(addr & 0x0007), data);
+            }
+        }
+
+        public void ConnectCartridge(NES_Cartridge cart)
+        {
+            _cart = cart;
         }
 
         private void ClearMemory()
         {
-            foreach (byte b in _memory) {
-                _memory[b] = 0;
+            foreach (byte b in _cpuRAM) {
+                _cpuRAM[b] = 0;
             }
         }
-
     }
 }

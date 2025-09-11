@@ -6,8 +6,81 @@ using System.Threading.Tasks;
 
 namespace NES_Emulator
 {
-    internal class NES_PPU
+    public class NES_PPU
     {
+        public NES_Cartridge? _cart;
+        public byte CPU_Read(ushort addr)
+        {
+            byte data = 0x00;
 
+            switch (addr)
+            {
+                case 0x0000: 
+                    break; // Control
+                case 0x0001: 
+                    break; // Mask
+                case 0x0002: 
+                    break; // Status
+                case 0x0003: 
+                    break; // OAM Address
+                case 0x0004: 
+                    break; // OAM Data
+                case 0x0005: 
+                    break; // Scroll
+                case 0x0006: 
+                    break; // PPU Address
+                case 0x0007: 
+                    break; // PPU Data
+            }
+            return data;
+        }
+
+        public void CPU_Write(ushort addr, byte data) 
+        {
+            switch (addr)
+            {
+                case 0x0000:
+                    break; // Control
+                case 0x0001:
+                    break; // Mask
+                case 0x0002:
+                    break; // Status
+                case 0x0003:
+                    break; // OAM Address
+                case 0x0004:
+                    break; // OAM Data
+                case 0x0005:
+                    break; // Scroll
+                case 0x0006:
+                    break; // PPU Address
+                case 0x0007:
+                    break; // PPU Data
+            }
+        }
+
+        public byte PPU_Read(ushort addr)
+        {
+            return 0;
+        }
+
+        public void PPU_Write(ushort addr, byte data)
+        {
+
+        }
+
+        public void ConnectCartridge(NES_Cartridge cart)
+        {
+            _cart = cart;
+        }
+
+        public void Reset()
+        {
+
+        }
+
+        public void Clock()
+        {
+
+        }
     }
 }
