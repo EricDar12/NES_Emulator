@@ -11,7 +11,7 @@ namespace NES_Emulator
         public NES_BUS _bus;
         public NES_CPU _cpu;
         public NES_PPU _ppu;
-        private NES_Cartridge? _cart;
+        public NES_Cartridge? _cart;
         private int _systemClockCounter = 0;
 
         public NES_System()

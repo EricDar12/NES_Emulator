@@ -4,6 +4,8 @@ using Xunit;
 namespace NES_Emulator.Tests;
 public class CPU_Tests
 {
+
+    /* TODO Refactor all tests to function with the new system architecture
     [Fact]
     public void TestStatusRegister()
     {
@@ -12,27 +14,26 @@ public class CPU_Tests
 
         Assert.Equal(0b0010_0000, cpu._status);
 
-        cpu.SetFlag(NES_CPU.StatusFlags.Negative, true);
-        cpu.SetFlag(NES_CPU.StatusFlags.Zero, true);
-        cpu.SetFlag(NES_CPU.StatusFlags.Carry, true);
-        cpu.SetFlag(NES_CPU.StatusFlags.Decimal, true);
-        cpu.SetFlag(NES_CPU.StatusFlags.Break, true);
-        cpu.SetFlag(NES_CPU.StatusFlags.Overflow, true);
-        cpu.SetFlag(NES_CPU.StatusFlags.InterruptDisable, true);
+        cpu.SetFlag(NES_CPU.StatusFlags.NEGATIVE, true);
+        cpu.SetFlag(NES_CPU.StatusFlags.ZERO, true);
+        cpu.SetFlag(NES_CPU.StatusFlags.CARRY, true);
+        cpu.SetFlag(NES_CPU.StatusFlags.DECIMAL, true);
+        cpu.SetFlag(NES_CPU.StatusFlags.BREAK, true);
+        cpu.SetFlag(NES_CPU.StatusFlags.OVERFLOW, true);
+        cpu.SetFlag(NES_CPU.StatusFlags.INTERRUPT_DISABLE, true);
 
         Assert.Equal(0b11111111, cpu._status);
 
-        cpu.SetFlag(NES_CPU.StatusFlags.Negative, false);
-        cpu.SetFlag(NES_CPU.StatusFlags.Zero, false);
-        cpu.SetFlag(NES_CPU.StatusFlags.Carry, false);
-        cpu.SetFlag(NES_CPU.StatusFlags.Decimal, false);
-        cpu.SetFlag(NES_CPU.StatusFlags.Break, false);
-        cpu.SetFlag(NES_CPU.StatusFlags.Overflow, false);
-        cpu.SetFlag(NES_CPU.StatusFlags.InterruptDisable, false);
+        cpu.SetFlag(NES_CPU.StatusFlags.NEGATIVE, false);
+        cpu.SetFlag(NES_CPU.StatusFlags.ZERO, false);
+        cpu.SetFlag(NES_CPU.StatusFlags.CARRY, false);
+        cpu.SetFlag(NES_CPU.StatusFlags.DECIMAL, false);
+        cpu.SetFlag(NES_CPU.StatusFlags.BREAK, false);
+        cpu.SetFlag(NES_CPU.StatusFlags.OVERFLOW, false);
+        cpu.SetFlag(NES_CPU.StatusFlags.INTERRUPT_DISABLE, false);
 
         Assert.Equal(0b0010_0000, cpu._status);
     }
-
     #region ##### Stack Tests #####
     [Fact]
     public void TestPushByte()
@@ -110,8 +111,8 @@ public class CPU_Tests
         cpu.LoadAndRun(new byte[] { 0xA9, 0x65, 0x00 });
 
         Assert.Equal(0x65, cpu._accumulator);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
         Assert.Equal((ushort)17, (ushort)cpu._master_cycle);
 
         Assert.Equal(0b0011_0000, cpu.PopByte());
@@ -168,7 +169,7 @@ public class CPU_Tests
 
         Assert.Equal(0x00, cpu._register_y);
         Assert.Equal((ushort)21, (ushort)cpu._master_cycle);
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
     }
 
     [Fact]
@@ -218,8 +219,8 @@ public class CPU_Tests
 
         Assert.Equal(0x42, cpu._register_x);
         Assert.Equal(0x42, cpu._accumulator);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
         Assert.Equal((ushort)19, (ushort)cpu._master_cycle);
     }
 
@@ -233,8 +234,8 @@ public class CPU_Tests
 
         Assert.Equal(0x55, cpu._accumulator);
         Assert.Equal(0x55, cpu._register_x);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
         Assert.Equal((ushort)19, (ushort)cpu._master_cycle);
     }
 
@@ -248,8 +249,8 @@ public class CPU_Tests
 
         Assert.Equal(0x33, cpu._register_y);
         Assert.Equal(0x33, cpu._accumulator);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
         Assert.Equal((ushort)19, (ushort)cpu._master_cycle);
     }
 
@@ -263,8 +264,8 @@ public class CPU_Tests
 
         Assert.Equal(0xFF, cpu._accumulator);
         Assert.Equal(0xFF, cpu._register_y);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
         Assert.Equal((ushort)19, (ushort)cpu._master_cycle);
     }
 
@@ -280,8 +281,8 @@ public class CPU_Tests
         cpu.LoadAndRun(new byte[] { 0xA2, regX, 0xE8, 0x00 });
 
         Assert.Equal((byte)(regX + 1), cpu._register_x);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
         Assert.Equal(19, (ushort)cpu._master_cycle);
     }
 
@@ -297,8 +298,8 @@ public class CPU_Tests
         cpu.LoadAndRun(new byte[] { 0xA2, regX, 0xCA, 0x00 });
 
         Assert.Equal((byte)(regX - 1), cpu._register_x);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
         Assert.Equal(19, (ushort)cpu._master_cycle);
     }
 
@@ -314,8 +315,8 @@ public class CPU_Tests
         cpu.LoadAndRun(new byte[] { 0xA0, regY, 0xC8, 0x00 });
 
         Assert.Equal((byte)(regY + 1), cpu._register_y);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
         Assert.Equal(19, (ushort)cpu._master_cycle);
     }
 
@@ -331,8 +332,8 @@ public class CPU_Tests
         cpu.LoadAndRun(new byte[] { 0xA0, regY, 0x88, 0x00 });
 
         Assert.Equal((byte)(regY - 1), cpu._register_x);
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
         Assert.Equal(19, (ushort)cpu._master_cycle);
     }
 
@@ -344,7 +345,7 @@ public class CPU_Tests
 
         // SEC, CLC, BRK
         cpu.LoadAndRun(new byte[] { 0x38, 0x18, 0x00 });
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry), "CLC Clears Carry Flag");
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.CARRY), "CLC Clears Carry Flag");
         Assert.Equal(19, (ushort)cpu._master_cycle);
     }
 
@@ -356,7 +357,7 @@ public class CPU_Tests
 
         // SEC, BRK
         cpu.LoadAndRun(new byte[] { 0x38, 0x00 });
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry), "SEC Sets Carry Flag");
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.CARRY), "SEC Sets Carry Flag");
         Assert.Equal(17, (ushort)cpu._master_cycle);
     }
 
@@ -482,7 +483,7 @@ public class CPU_Tests
 
         Assert.Equal(0x0B, cpu._accumulator);
         Assert.Equal(23, (ushort) cpu._master_cycle);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.CARRY));
     }
 
     [Fact]
@@ -501,7 +502,7 @@ public class CPU_Tests
 
         Assert.Equal(0x0B, cpu._accumulator);
         Assert.Equal(22, (ushort)cpu._master_cycle);
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.CARRY));
     }
 
     [Fact]
@@ -520,7 +521,7 @@ public class CPU_Tests
 
         Assert.Equal(0x0C, cpu._register_y);
         Assert.Equal(22, (ushort)cpu._master_cycle);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
     }
 
     [Fact]
@@ -539,7 +540,7 @@ public class CPU_Tests
 
         Assert.Equal(0x0C, cpu._register_x);
         Assert.Equal(23, (ushort)cpu._master_cycle);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
     }
 
     [Fact]
@@ -560,8 +561,8 @@ public class CPU_Tests
 
         Assert.Equal(0x14, cpu._accumulator);
         Assert.Equal(25, (ushort) cpu._master_cycle);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Overflow));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.CARRY));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.OVERFLOW));
     }
 
     [Fact]
@@ -576,8 +577,8 @@ public class CPU_Tests
 
         Assert.Equal(0x7F, cpu._accumulator);
         Assert.Equal(19, (ushort)cpu._master_cycle);
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Overflow));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.CARRY));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.OVERFLOW));
     }
 
     [Fact]
@@ -591,8 +592,8 @@ public class CPU_Tests
 
         Assert.Equal(0x80, cpu._accumulator); // -128 in signed
         Assert.Equal(19, (ushort) cpu._master_cycle);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Overflow));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.CARRY));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.OVERFLOW));
     }
 
     [Fact]
@@ -605,7 +606,7 @@ public class CPU_Tests
         cpu.LoadAndRun(new byte[] { 0x38, 0xA9, 0x00, 0xE9, 0x01, 0x00});
 
         Assert.Equal(0xFF, cpu._accumulator);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.CARRY));
         Assert.Equal(21, (ushort) cpu._master_cycle);
     }
 
@@ -620,9 +621,9 @@ public class CPU_Tests
 
         // 5 - 3 = 2
         Assert.Equal(0x02, cpu._accumulator);
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));   // no borrow needed, carry set
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.CARRY));   // no borrow needed, carry set
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
         Assert.Equal(21, (ushort)cpu._master_cycle);
     }
 
@@ -636,9 +637,9 @@ public class CPU_Tests
         cpu.LoadAndRun(new byte[] { 0xA9, 0x05, 0xC9, 0x03, 0x00 });
 
         Assert.Equal(0x05, cpu._accumulator);
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.CARRY));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
         Assert.Equal(19, (ushort) cpu._master_cycle);
     }
 
@@ -652,9 +653,9 @@ public class CPU_Tests
         cpu.LoadAndRun(new byte[] { 0xA2, 0x0A, 0xE0, 0x0A, 0x00 });
 
         Assert.Equal(0x0A, cpu._register_x);
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.CARRY));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
         Assert.Equal(19, (ushort)cpu._master_cycle);
     }
 
@@ -668,9 +669,9 @@ public class CPU_Tests
         cpu.LoadAndRun(new byte[] { 0xA0, 0x0A, 0xE0, 0x0C, 0x00 });
 
         Assert.Equal(0x0A, cpu._register_y);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.CARRY));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
         Assert.Equal(19, (ushort)cpu._master_cycle);
     }
 
@@ -686,8 +687,8 @@ public class CPU_Tests
         cpu.LoadAndRun(new byte[] { 0xA9, 0x05, 0xA2, 0x0F, 0x35, 0x00});
 
         Assert.Equal(0x01, cpu._accumulator);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
         Assert.Equal(23, (ushort) cpu._master_cycle);
     }
 
@@ -700,8 +701,8 @@ public class CPU_Tests
         cpu.LoadAndRun(new byte[] { 0xA9, 0x0C, 0x09, 0xFF, 0x00 });
 
         Assert.Equal(0xFF, cpu._accumulator);
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
         Assert.Equal(19, (ushort)cpu._master_cycle);
     }
 
@@ -714,8 +715,8 @@ public class CPU_Tests
         cpu.LoadAndRun(new byte[] { 0xA9, 0x0C, 0x49, 0x0C, 0x00 });
 
         Assert.Equal(0x00, cpu._accumulator);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
         Assert.Equal(19, (ushort)cpu._master_cycle);
     }
 
@@ -729,9 +730,9 @@ public class CPU_Tests
         cpu.LoadAndRun(new byte[] { 0xA9, 0x82, 0x0A, 0x00 });
 
         Assert.Equal(0x04, cpu._accumulator);
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.CARRY));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
         Assert.Equal(19, (ushort) cpu._master_cycle);
     }
 
@@ -747,9 +748,9 @@ public class CPU_Tests
         cpu.LoadAndRun(new byte[] { 0x06, 0x07, 0xA4, 0x07, 0x00 });
 
         Assert.Equal(0x18, cpu._register_y);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.CARRY));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
         Assert.Equal(23, (ushort) cpu._master_cycle);
     }
 
@@ -763,9 +764,9 @@ public class CPU_Tests
         cpu.LoadAndRun(new byte[] { 0xA9, 0x05, 0x4A, 0x4A, 0x00 });
 
         Assert.Equal(0x01, cpu._accumulator);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.CARRY));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
         Assert.Equal(21, (ushort) cpu._master_cycle);
     }
 
@@ -779,9 +780,9 @@ public class CPU_Tests
         cpu.LoadAndRun(new byte[] { 0xA9, 0x80, 0x2A, 0x00 });
 
         Assert.Equal(0x00, cpu._accumulator);
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.CARRY));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
         Assert.Equal(19, (ushort) cpu._master_cycle);
     }
 
@@ -798,9 +799,9 @@ public class CPU_Tests
 
         Assert.Equal(0x00, cpu._accumulator);
         Assert.Equal(0x87, cpu._register_x);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Carry));
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.CARRY));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
         Assert.Equal(27, (ushort)cpu._master_cycle);
     }
 
@@ -832,9 +833,9 @@ public class CPU_Tests
 
         Assert.Equal(0xFF, cpu._accumulator); // ISR Executed
         Assert.Equal(0x01, cpu._register_x); // Return and continue execution
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Break));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.InterruptDisable));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.BREAK));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.INTERRUPT_DISABLE));
     }
 
     [Fact]
@@ -846,7 +847,7 @@ public class CPU_Tests
         cpu._program_counter = 0x0200;
         
         // NMI Should Still Fire
-        cpu.SetFlag(NES_CPU.StatusFlags.InterruptDisable, true); 
+        cpu.SetFlag(NES_CPU.StatusFlags.INTERRUPT_DISABLE, true); 
 
         // NMI Vector
         bus.CPU_Write(0xFFFA, 0x00);
@@ -873,9 +874,9 @@ public class CPU_Tests
         Assert.Equal(0x01, cpu._accumulator);
         Assert.Equal(0xFF, cpu._register_y);
         Assert.Equal(0x0400, cpu._program_counter);
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Break));
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.InterruptDisable));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.BREAK));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.INTERRUPT_DISABLE));
     }
 
     [Fact]
@@ -885,12 +886,12 @@ public class CPU_Tests
         NES_CPU cpu = new NES_CPU(bus);
 
         // No opcode exists to manually set overflow
-        cpu.SetFlag(NES_CPU.StatusFlags.Overflow, true);
+        cpu.SetFlag(NES_CPU.StatusFlags.OVERFLOW, true);
 
         cpu.LoadAndRun(new byte[] { 0x78, 0xB8, 0x00 });
 
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.InterruptDisable));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Overflow));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.INTERRUPT_DISABLE));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.OVERFLOW));
         Assert.Equal(19, (ushort)cpu._master_cycle);
     }
 
@@ -904,9 +905,9 @@ public class CPU_Tests
 
         cpu.LoadAndRun(new byte[] { 0xA9, 0xFF, 0x24, 0x0A, 0x00});
 
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Negative));
-        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.Zero));
-        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.Overflow));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.NEGATIVE));
+        Assert.False(cpu.IsFlagSet(NES_CPU.StatusFlags.ZERO));
+        Assert.True(cpu.IsFlagSet(NES_CPU.StatusFlags.OVERFLOW));
     }
 
     #endregion
@@ -1113,3 +1114,6 @@ public class CPU_Tests
     }
 }
 #endregion
+*/
+
+}

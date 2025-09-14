@@ -299,43 +299,43 @@ namespace NES_Emulator
 
         public void CLC(byte cycles = 2)
         {
-            SetFlag(StatusFlags.Carry, false);
+            SetFlag(StatusFlags.CARRY, false);
             _master_cycle += cycles;
         }
 
         public void SEC(byte cycles = 2)
         {
-            SetFlag(StatusFlags.Carry, true);
+            SetFlag(StatusFlags.CARRY, true);
             _master_cycle += cycles;
         }
 
         public void CLI(byte cycles = 2)
         {
-            SetFlag(StatusFlags.InterruptDisable, false);
+            SetFlag(StatusFlags.INTERRUPT_DISABLE, false);
             _master_cycle += cycles;
         }
 
         public void SEI(byte cycles = 2)
         {
-            SetFlag(StatusFlags.InterruptDisable, true);
+            SetFlag(StatusFlags.INTERRUPT_DISABLE, true);
             _master_cycle += cycles;
         }
 
         public void CLV(byte cycles = 2)
         {
-            SetFlag(StatusFlags.Overflow, false);
+            SetFlag(StatusFlags.OVERFLOW, false);
             _master_cycle += cycles;
         }
 
         public void CLD(byte cycles = 2)
         {
-            SetFlag(StatusFlags.Overflow, false);
+            SetFlag(StatusFlags.OVERFLOW, false);
             _master_cycle += cycles;
         }
 
         public void SED(byte cycles = 2)
         {
-            SetFlag(StatusFlags.Decimal, true);
+            SetFlag(StatusFlags.DECIMAL, true);
             _master_cycle += cycles;
         }
 
@@ -361,7 +361,7 @@ namespace NES_Emulator
 
         public void BEQ(ushort addr, byte cycles)
         {
-            if (!IsFlagSet(StatusFlags.Zero))
+            if (!IsFlagSet(StatusFlags.ZERO))
             {
                 _master_cycle += cycles;
                 return;
@@ -373,7 +373,7 @@ namespace NES_Emulator
 
         public void BNE(ushort addr, byte cycles)
         {
-            if (IsFlagSet(StatusFlags.Zero))
+            if (IsFlagSet(StatusFlags.ZERO))
             {
                 _master_cycle += cycles;
                 return;
@@ -385,7 +385,7 @@ namespace NES_Emulator
 
         public void BCC(ushort addr, byte cycles)
         {
-            if (IsFlagSet(StatusFlags.Carry))
+            if (IsFlagSet(StatusFlags.CARRY))
             {
                 _master_cycle += cycles;
                 return;
@@ -397,7 +397,7 @@ namespace NES_Emulator
 
         public void BCS(ushort addr, byte cycles)
         {
-            if (!IsFlagSet(StatusFlags.Carry))
+            if (!IsFlagSet(StatusFlags.CARRY))
             {
                 _master_cycle += cycles;
                 return;
@@ -409,7 +409,7 @@ namespace NES_Emulator
 
         public void BPL(ushort addr, byte cycles)
         {
-            if (IsFlagSet(StatusFlags.Negative))
+            if (IsFlagSet(StatusFlags.NEGATIVE))
             {
                 _master_cycle += cycles;
                 return;
@@ -421,7 +421,7 @@ namespace NES_Emulator
 
         public void BMI(ushort addr, byte cycles)
         {
-            if (!IsFlagSet(StatusFlags.Negative))
+            if (!IsFlagSet(StatusFlags.NEGATIVE))
             {
                 _master_cycle += cycles;
                 return;
@@ -433,7 +433,7 @@ namespace NES_Emulator
 
         public void BVC(ushort addr, byte cycles)
         {
-            if (IsFlagSet(StatusFlags.Overflow))
+            if (IsFlagSet(StatusFlags.OVERFLOW))
             {
                 _master_cycle += cycles;
                 return;
@@ -445,7 +445,7 @@ namespace NES_Emulator
 
         public void BVS(ushort addr, byte cycles)
         {
-            if (!IsFlagSet(StatusFlags.Overflow))
+            if (!IsFlagSet(StatusFlags.OVERFLOW))
             {
                 _master_cycle += cycles;
                 return;
@@ -459,7 +459,7 @@ namespace NES_Emulator
         {
             byte operand = _bus.CPU_Read(addr);
             byte difference = (byte)(_accumulator - operand);
-            SetFlag(StatusFlags.Carry, (_accumulator >= operand));
+            SetFlag(StatusFlags.CARRY, (_accumulator >= operand));
             SetNegativeAndZeroFlags(difference);
             _master_cycle += cycles;
         }
@@ -468,7 +468,7 @@ namespace NES_Emulator
         {
             byte operand = _bus.CPU_Read(addr);
             byte difference = (byte)(_register_x - operand);
-            SetFlag(StatusFlags.Carry, (_register_x >= operand));
+            SetFlag(StatusFlags.CARRY, (_register_x >= operand));
             SetNegativeAndZeroFlags(difference);
             _master_cycle += cycles;
         }
@@ -477,7 +477,7 @@ namespace NES_Emulator
         {
             byte operand = _bus.CPU_Read(addr);
             byte difference = (byte)(_register_y - operand);
-            SetFlag(StatusFlags.Carry, (_register_y >= operand));
+            SetFlag(StatusFlags.CARRY, (_register_y >= operand));
             SetNegativeAndZeroFlags(difference);
             _master_cycle += cycles;
         }
@@ -485,7 +485,7 @@ namespace NES_Emulator
         public void ADC(ushort addr, byte cycles)
         {
             byte operand = _bus.CPU_Read(addr);
-            ushort result = (ushort)(_accumulator + operand + (IsFlagSet(StatusFlags.Carry) ? 1 : 0));
+            ushort result = (ushort)(_accumulator + operand + (IsFlagSet(StatusFlags.CARRY) ? 1 : 0));
             SetNegativeAndZeroFlags((byte)result);
             SetOverflowAndCarryFlags(result, operand);
             _accumulator = (byte)result;
@@ -496,7 +496,7 @@ namespace NES_Emulator
         {
             byte operand = _bus.CPU_Read(addr);
             byte negatedOperand = (byte)~operand;
-            ushort result = (ushort)(_accumulator + negatedOperand + (IsFlagSet(StatusFlags.Carry) ? 1 : 0));
+            ushort result = (ushort)(_accumulator + negatedOperand + (IsFlagSet(StatusFlags.CARRY) ? 1 : 0));
             SetNegativeAndZeroFlags((byte)result);
             SetOverflowAndCarryFlags(result, negatedOperand);
             _accumulator = (byte)result;
@@ -541,7 +541,7 @@ namespace NES_Emulator
             {
                 _bus.CPU_Write(addr, result);
             }
-            SetFlag(StatusFlags.Carry, ((operand & 0x80) != 0));
+            SetFlag(StatusFlags.CARRY, ((operand & 0x80) != 0));
             SetNegativeAndZeroFlags(result);
             _master_cycle += cycles;
         }
@@ -559,14 +559,14 @@ namespace NES_Emulator
             {
                 _bus.CPU_Write(addr, result);
             }
-            SetFlag(StatusFlags.Carry, ((operand & 0x01) != 0));
+            SetFlag(StatusFlags.CARRY, ((operand & 0x01) != 0));
             SetNegativeAndZeroFlags(result);
             _master_cycle += cycles;
         }
 
         public void ROL(ushort addr, byte cycles, bool implied)
         {
-            byte carryBit = (byte) (IsFlagSet(StatusFlags.Carry) ? 1 : 0);
+            byte carryBit = (byte) (IsFlagSet(StatusFlags.CARRY) ? 1 : 0);
             byte operand = implied ? _accumulator : _bus.CPU_Read(addr);
             byte result = (byte) ((operand << 1) | carryBit);
 
@@ -578,14 +578,14 @@ namespace NES_Emulator
             {
                 _bus.CPU_Write(addr, result);
             }
-            SetFlag(StatusFlags.Carry, ((operand & 0x80) != 0));
+            SetFlag(StatusFlags.CARRY, ((operand & 0x80) != 0));
             SetNegativeAndZeroFlags(result);
             _master_cycle += cycles;
         }
 
         public void ROR(ushort addr, byte cycles, bool implied)
         {
-            byte carryBit = (byte)(IsFlagSet(StatusFlags.Carry) ? 1 : 0);
+            byte carryBit = (byte)(IsFlagSet(StatusFlags.CARRY) ? 1 : 0);
             byte operand = implied ? _accumulator : _bus.CPU_Read(addr);
             byte result = (byte)((operand >> 1) | (carryBit << 7));
 
@@ -597,7 +597,7 @@ namespace NES_Emulator
             {
                 _bus.CPU_Write(addr, result);
             }
-            SetFlag(StatusFlags.Carry, ((operand & 0x01) != 0));
+            SetFlag(StatusFlags.CARRY, ((operand & 0x01) != 0));
             SetNegativeAndZeroFlags(result);
             _master_cycle += cycles;
         }
@@ -607,9 +607,9 @@ namespace NES_Emulator
             byte operand = _bus.CPU_Read(addr);
             byte result = (byte) (_accumulator & operand);
 
-            SetFlag(StatusFlags.Zero, (result == 0));
-            SetFlag(StatusFlags.Negative, ((operand & (1 << 7)) != 0));
-            SetFlag(StatusFlags.Overflow, ((operand & (1 << 6)) != 0));
+            SetFlag(StatusFlags.ZERO, (result == 0));
+            SetFlag(StatusFlags.NEGATIVE, ((operand & (1 << 7)) != 0));
+            SetFlag(StatusFlags.OVERFLOW, ((operand & (1 << 6)) != 0));
 
             _master_cycle += cycles;
         }
@@ -656,7 +656,7 @@ namespace NES_Emulator
             Console.WriteLine($"DEBUG:Addr Pushed To Stack {_program_counter}");
 
             PushByte((byte)(_status | 0b0011_0000));
-            SetFlag(StatusFlags.InterruptDisable, true);
+            SetFlag(StatusFlags.INTERRUPT_DISABLE, true);
 
             // Read from Interrupt Vector @ FFFE-FFFF
             byte lo = _bus.CPU_Read(0xFFFE);
@@ -1057,12 +1057,12 @@ namespace NES_Emulator
 
         public void IRQ()
         {
-            if (!IsFlagSet(StatusFlags.InterruptDisable))
+            if (!IsFlagSet(StatusFlags.INTERRUPT_DISABLE))
             {
                 PushWord(_program_counter);
 
                 PushByte((byte)(_status | 0b0011_0000));
-                SetFlag(StatusFlags.InterruptDisable, true);
+                SetFlag(StatusFlags.INTERRUPT_DISABLE, true);
 
                 _program_counter = (ushort)((_bus.CPU_Read(0xFFFE) | _bus.CPU_Read(0xFFFF) << 8));
 
@@ -1075,7 +1075,7 @@ namespace NES_Emulator
             PushWord(_program_counter);
 
             PushByte((byte)(_status | 0b0011_0000));
-            SetFlag(StatusFlags.InterruptDisable, true);
+            SetFlag(StatusFlags.INTERRUPT_DISABLE, true);
 
             _program_counter = (ushort)((_bus.CPU_Read(0xFFFA) | _bus.CPU_Read(0xFFFB) << 8));
 
@@ -1085,14 +1085,14 @@ namespace NES_Emulator
         [Flags]
         public enum StatusFlags : byte
         {
-            Carry = 1 << 0,
-            Zero = 1 << 1,
-            InterruptDisable = 1 << 2,
-            Decimal = 1 << 3,
-            Break = 1 << 4,
-            Unused = 1 << 5, // Always set to 1
-            Overflow = 1 << 6,
-            Negative = 1 << 7
+            CARRY = 1 << 0,
+            ZERO = 1 << 1,
+            INTERRUPT_DISABLE = 1 << 2,
+            DECIMAL = 1 << 3,
+            BREAK = 1 << 4,
+            UNUSED = 1 << 5, // Always set to 1
+            OVERFLOW = 1 << 6,
+            NEGATIVE = 1 << 7
         }
 
         public bool IsFlagSet(StatusFlags flag)
@@ -1114,16 +1114,16 @@ namespace NES_Emulator
 
         public void SetNegativeAndZeroFlags(byte value)
         {
-            SetFlag(StatusFlags.Zero, value == 0);
-            SetFlag(StatusFlags.Negative, (value & 0x80) != 0);
+            SetFlag(StatusFlags.ZERO, value == 0);
+            SetFlag(StatusFlags.NEGATIVE, (value & 0x80) != 0);
         }
 
         public void SetOverflowAndCarryFlags(ushort result, byte operand)
         {
-            SetFlag(StatusFlags.Carry, result > 255);
+            SetFlag(StatusFlags.CARRY, result > 255);
             // Two values of the same sign summing to a value of the opposite sign
             bool overflow = ((~(_accumulator ^ operand) & (_accumulator ^ result)) & 0x80) != 0;
-            SetFlag(StatusFlags.Overflow, overflow);
+            SetFlag(StatusFlags.OVERFLOW, overflow);
         }
 
         public void IsPageCrossed(ushort baseAddr, ushort finalAddr)
