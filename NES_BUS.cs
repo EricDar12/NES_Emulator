@@ -20,8 +20,13 @@ namespace NES_Emulator
         public byte CPU_Read(ushort addr)
         {
             byte data = 0x00;
+        
+            if (_cart != null && _cart.CPU_Read(addr))
+            {
 
-            if (addr >= 0x0000 && addr <= 0x1FFF) {
+            }
+
+            else if (addr >= 0x0000 && addr <= 0x1FFF) {
                 data = _cpuRAM[addr & 0x07FF];
             }
 
@@ -35,7 +40,13 @@ namespace NES_Emulator
 
         public void CPU_Write(ushort addr, byte data)
         {
-            if (addr >= 0x0000 && addr <= 0x1FFF) {
+
+            if (_cart != null && _cart.CPU_Write(addr, data))
+            {
+
+            }
+
+            else if (addr >= 0x0000 && addr <= 0x1FFF) {
                 _cpuRAM[addr & 0x07FF] = data;
             }
 

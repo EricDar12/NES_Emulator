@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,13 +10,16 @@ namespace NES_Emulator
 {
     public class NES_Cartridge
     {
-        public List<byte> _prgMemory = new List<byte>();
-        public List<byte> _chrMemory = new List<byte>();
+        public byte[]? _prgMemory;
+        public byte[]? _chrMemory;
         public byte _mapperID = 0;
         public byte _prgBanks = 0;
         public byte _chrBanks = 0;
         public Mirror _mirror = Mirror.HORIZONTAL;
         public bool isImageValid = false;
+
+        private const int PROGRAM_MEMORY_UNIT = 16384;
+        private const int CHARACTER_MEMORY_UNIT = 8192;
 
         public NES_Cartridge(string filePath)
         {
@@ -52,7 +56,13 @@ namespace NES_Emulator
 
             if (fileFormat == 1)
             {
+                _prgBanks = header.prg_rom_chunks;
+                _prgMemory = new byte[_prgBanks * PROGRAM_MEMORY_UNIT];
+                fs.Read(_prgMemory, 0, _prgBanks);
 
+                _chrBanks = header.chr_rom_chunks;
+                _chrMemory = new byte[_chrBanks * CHARACTER_MEMORY_UNIT];
+                fs.Read(_chrMemory, 0, _chrBanks);
             }
 
             if (fileFormat == 3)
@@ -84,24 +94,24 @@ namespace NES_Emulator
             ONESCREEN_HI
         }
 
-        public byte CPU_Read(ushort addr)
+        public bool CPU_Read(ushort addr)
         {
-            return 0;
+            return false;
         }
 
-        public void CPU_Write(ushort addr, byte data)
+        public bool CPU_Write(ushort addr, byte data)
         {
-
+            return false;
         }
 
-        public byte PPU_Read(ushort addr)
+        public bool PPU_Read(ushort addr)
         {
-            return 0;
+            return false;
         }
 
-        public void PPU_Write(ushort addr, byte data)
+        public bool PPU_Write(ushort addr, byte data)
         {
-
+            return false;
         }
     }
 }

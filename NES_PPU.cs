@@ -63,12 +63,24 @@ namespace NES_Emulator
 
         public byte PPU_Read(ushort addr)
         {
-            return 0;
+
+            byte data = 0;
+
+            if (_cart != null && _cart.PPU_Read(addr))
+            {
+
+            }
+
+            return data;
+
         }
 
         public void PPU_Write(ushort addr, byte data)
         {
+            if (_cart != null && _cart.PPU_Write(addr, data))
+            {
 
+            }
         }
 
         public void ConnectCartridge(NES_Cartridge cart)
