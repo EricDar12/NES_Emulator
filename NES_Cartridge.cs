@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
@@ -10,11 +11,12 @@ namespace NES_Emulator
 {
     public class NES_Cartridge
     {
-        public byte[]? _prgMemory;
-        public byte[]? _chrMemory;
+        public required byte[] _prgMemory;
+        public required byte[] _chrMemory;
         public byte _mapperID = 0;
         public byte _prgBanks = 0;
         public byte _chrBanks = 0;
+        public NES_Mapper _mapper;
         public Mirror _mirror = Mirror.HORIZONTAL;
         public bool isImageValid = false;
 
@@ -44,10 +46,11 @@ namespace NES_Emulator
                 fs.Seek(512, SeekOrigin.Current);
             }
 
-            _mapperID = (byte) (((header.mapper2 >> 4) << 4) | (header.mapper1 >> 4));
+            _mapperID = (byte)(((header.mapper2 >> 4) << 4) | (header.mapper1 >> 4));
             _mirror = (header.mapper1 & 0x01) != 0 ? Mirror.VERTICAL : Mirror.HORIZONTAL;
 
-            byte fileFormat = 1;
+            // Hardcoded for prototyping
+            byte fileFormat = 1; 
 
             if (fileFormat == 0)
             {
@@ -68,6 +71,14 @@ namespace NES_Emulator
             if (fileFormat == 3)
             {
 
+            }
+
+            switch (_mapperID)
+            {
+                case 0:
+                    _mapper = new Mapper_0000(_prgBanks, _chrBanks); break;
+                default:
+                    _mapper = new Mapper_0000(_prgBanks, _chrBanks); break;
             }
 
         }
@@ -94,13 +105,30 @@ namespace NES_Emulator
             ONESCREEN_HI
         }
 
-        public bool CPU_Read(ushort addr)
+        public bool CPU_Read(ushort addr, out byte data)
         {
+            ushort mappedAddr = 0;
+            data = 0;
+
+            if (_mapper.CPU_Map_Read(addr, out mappedAddr))
+            {
+                data = _prgMemory[mappedAddr];     
+                return true;
+            }
+
             return false;
         }
 
         public bool CPU_Write(ushort addr, byte data)
         {
+            ushort mappedAddr = 0;
+
+            if (_mapper.CPU_Map_Write(addr, out mappedAddr))
+            {
+                _prgMemory[mappedAddr] = data;
+                return true;
+            }
+
             return false;
         }
 

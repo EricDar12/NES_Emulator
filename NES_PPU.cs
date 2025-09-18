@@ -68,7 +68,7 @@ namespace NES_Emulator
 
             if (_cart != null && _cart.PPU_Read(addr))
             {
-
+                // Cartridge addressing range
             }
 
             return data;

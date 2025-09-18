@@ -21,9 +21,9 @@ namespace NES_Emulator
         {
             byte data = 0x00;
         
-            if (_cart != null && _cart.CPU_Read(addr))
+            if (_cart != null && _cart.CPU_Read(addr, out data))
             {
-
+                // If the cartridge can handle the read, it will set data via out variable
             }
 
             else if (addr >= 0x0000 && addr <= 0x1FFF) {
@@ -43,7 +43,7 @@ namespace NES_Emulator
 
             if (_cart != null && _cart.CPU_Write(addr, data))
             {
-
+                
             }
 
             else if (addr >= 0x0000 && addr <= 0x1FFF) {
