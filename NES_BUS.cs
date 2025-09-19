@@ -23,7 +23,7 @@ namespace NES_Emulator
         
             if (_cart != null && _cart.CPU_Read(addr, out data))
             {
-                // If the cartridge can handle the read, it will set data via out variable
+                // If the cartridge can handle the read, it will set "data" via out variable
             }
 
             else if (addr >= 0x0000 && addr <= 0x1FFF) {

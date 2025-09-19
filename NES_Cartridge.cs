@@ -11,14 +11,14 @@ namespace NES_Emulator
 {
     public class NES_Cartridge
     {
-        public required byte[] _prgMemory;
-        public required byte[] _chrMemory;
+        public byte[] _prgMemory;
+        public byte[] _chrMemory;
         public byte _mapperID = 0;
         public byte _prgBanks = 0;
         public byte _chrBanks = 0;
         public NES_Mapper _mapper;
         public Mirror _mirror = Mirror.HORIZONTAL;
-        public bool isImageValid = false;
+        public bool _isImageValid = false;
 
         private const int PROGRAM_MEMORY_UNIT = 16384;
         private const int CHARACTER_MEMORY_UNIT = 8192;
@@ -50,7 +50,7 @@ namespace NES_Emulator
             _mirror = (header.mapper1 & 0x01) != 0 ? Mirror.VERTICAL : Mirror.HORIZONTAL;
 
             // Hardcoded for prototyping
-            byte fileFormat = 1; 
+            byte fileFormat = 1;
 
             if (fileFormat == 0)
             {
@@ -73,6 +73,7 @@ namespace NES_Emulator
 
             }
 
+            // More mappers will come
             switch (_mapperID)
             {
                 case 0:
@@ -81,6 +82,18 @@ namespace NES_Emulator
                     _mapper = new Mapper_0000(_prgBanks, _chrBanks); break;
             }
 
+            _isImageValid = true;
+
+            Console.WriteLine(
+                $"PRGMemory: {_prgMemory?.Length} bytes | " +
+                $"CHRMemory: {_chrMemory?.Length} bytes | " +
+                $"MapperID: {_mapperID} | " +
+                $"PRGBanks: {_prgBanks} | " +
+                $"CHRBanks: {_chrBanks} | " +
+                $"Mapper: {_mapper.ToString() ?? "null"} | " +
+                $"Mirror: {_mirror} | " +
+                $"IsImageValid: {_isImageValid}"
+            );
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -112,7 +125,7 @@ namespace NES_Emulator
 
             if (_mapper.CPU_Map_Read(addr, out mappedAddr))
             {
-                data = _prgMemory[mappedAddr];     
+                data = _prgMemory[mappedAddr];
                 return true;
             }
 
@@ -132,13 +145,31 @@ namespace NES_Emulator
             return false;
         }
 
-        public bool PPU_Read(ushort addr)
+        public bool PPU_Read(ushort addr, out byte data)
         {
+            ushort mappedAddr = 0;
+            data = 0;
+
+            if (_mapper.PPU_Map_Read(addr, out mappedAddr))
+            {
+                data = _chrMemory[mappedAddr];
+                return true;
+            }
+
             return false;
         }
 
         public bool PPU_Write(ushort addr, byte data)
         {
+
+            ushort mappedAddr = 0;
+
+            if (_mapper.PPU_Map_Write(addr, out mappedAddr))
+            {
+                _chrMemory[mappedAddr] = data;
+                return true;
+            }
+
             return false;
         }
     }

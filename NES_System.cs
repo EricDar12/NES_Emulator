@@ -21,6 +21,14 @@ namespace NES_Emulator
             _cpu = new NES_CPU(_bus);
         }
 
+        public NES_System(NES_Cartridge cart)
+        {
+            _ppu = new NES_PPU();
+            _bus = new NES_BUS(_ppu);
+            _cpu = new NES_CPU(_bus);
+            InsertCartridge(cart);
+        }
+
         public void Reset()
         {
             _cpu.Reset();
@@ -45,7 +53,7 @@ namespace NES_Emulator
             _bus.ConnectCartridge(_cart);
             _ppu.ConnectCartridge(_cart);
             // Clear system state after insertion
-            Reset();
+            //Reset();
         }
     }
 }

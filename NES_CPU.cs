@@ -1172,7 +1172,7 @@ namespace NES_Emulator
 
         public void Clock()
         {
-
+            throw new NotImplementedException();
         }
     }
 }
