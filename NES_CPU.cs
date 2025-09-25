@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Net.Security;
-using System.Reflection.Emit;
-using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace NES_Emulator
 {
@@ -823,7 +818,7 @@ namespace NES_Emulator
         public void Step()
         {
             byte opcode = _bus.CPU_Read(_program_counter++);
-
+            Console.WriteLine(Convert.ToString(opcode, 16));
             switch (opcode)
             {
                 // LDA Instructions
@@ -1021,6 +1016,16 @@ namespace NES_Emulator
             }
         }
 
+        public void Clock()
+        {
+            Console.WriteLine("Cycle Count: " + _master_cycle);
+            if (_master_cycle == 0)
+            {
+                Step();
+            }
+            _master_cycle--;
+        }
+
         public void FetchAndDecode()
         {
             while (true)
@@ -1168,11 +1173,6 @@ namespace NES_Emulator
 
             _bus.CPU_Write(0xFFFC, (byte)loadAddress);
             _bus.CPU_Write(0xFFFD, (byte)(loadAddress >> 8));
-        }
-
-        public void Clock()
-        {
-            throw new NotImplementedException();
         }
     }
 }

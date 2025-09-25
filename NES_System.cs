@@ -53,7 +53,7 @@ namespace NES_Emulator
             _bus.ConnectCartridge(_cart);
             _ppu.ConnectCartridge(_cart);
             // Clear system state after insertion
-            //Reset();
+            Reset();
         }
     }
 }
