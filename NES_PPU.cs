@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,11 +13,19 @@ namespace NES_Emulator
         private byte[,] _tblName = new byte[2, 1024];
         private byte[] _tblPalette = new byte[32];
         private byte[,] _tblPattern = new byte[2, 4096];
-        private bool _isFrameComplete = false;
-        private ushort _scanline = 0;
-        private ushort _cycle = 0;
+        public bool _isFrameComplete = false;
+        public bool _NMI_Enable = false;
+        private int _scanline = 0;
+        private int _cycles = 0;
         private byte _addressLatch = 0;
         private byte _dataBuffer = 0;
+        private ushort _ppuAddr = 0x0000;
+
+        public byte _ppuStatus = 0b0000_0000;
+        public byte _ppuMask = 0b0000_0000;
+        public byte _ppuCtrl = 0b0000_0000;
+
+        // All of the colors the NES is capable of presenting
         static readonly uint[] NesMasterPalette = new uint[64]
         {
             0xFF545454, 0xFF001E74, 0xFF081090, 0xFF300088,
@@ -40,28 +49,148 @@ namespace NES_Emulator
             0xFFA0D6E4, 0xFFA0A2A0, 0xFF000000, 0xFF000000
         };
 
+        // Purely for demonstration, games are responsible for loading their own palette data
+        public void InitializeDefaultPalettes()
+        {
+            // Palette 0 - Grayscale (classic)
+            _tblPalette[0x00] = 0x0F; // Black
+            _tblPalette[0x01] = 0x00; // Dark gray  
+            _tblPalette[0x02] = 0x10; // Light gray
+            _tblPalette[0x03] = 0x30; // White
+
+            // Palette 1 - Blue theme (water/ice)
+            _tblPalette[0x04] = 0x0F; // Black
+            _tblPalette[0x05] = 0x01; // Deep blue
+            _tblPalette[0x06] = 0x11; // Medium blue  
+            _tblPalette[0x07] = 0x21; // Light blue
+
+            // Palette 2 - Warm theme (earth/fire) - This is what you're using with _selectedPalette = 0x02
+            _tblPalette[0x08] = 0x0F; // Black
+            _tblPalette[0x09] = 0x06; // Dark red
+            _tblPalette[0x0A] = 0x16; // Orange
+            _tblPalette[0x0B] = 0x27; // Yellow
+
+            // Palette 3 - Nature theme (grass/forest)
+            _tblPalette[0x0C] = 0x0F; // Black
+            _tblPalette[0x0D] = 0x09; // Dark green
+            _tblPalette[0x0E] = 0x19; // Medium green
+            _tblPalette[0x0F] = 0x29; // Light green
+
+            // Palette 4 - Purple theme (magic/fantasy)
+            _tblPalette[0x10] = 0x0F; // Black
+            _tblPalette[0x11] = 0x04; // Dark purple
+            _tblPalette[0x12] = 0x14; // Medium purple
+            _tblPalette[0x13] = 0x24; // Light purple/pink
+
+            // Palette 5 - Sunset theme
+            _tblPalette[0x14] = 0x0F; // Black
+            _tblPalette[0x15] = 0x08; // Dark orange
+            _tblPalette[0x16] = 0x28; // Bright orange
+            _tblPalette[0x17] = 0x38; // Light orange/yellow
+
+            // Palette 6 - Ocean theme
+            _tblPalette[0x18] = 0x0F; // Black
+            _tblPalette[0x19] = 0x02; // Navy blue
+            _tblPalette[0x1A] = 0x12; // Ocean blue
+            _tblPalette[0x1B] = 0x22; // Sky blue
+
+            // Palette 7 - High contrast (good for detailed sprites)
+            _tblPalette[0x1C] = 0x0F; // Black
+            _tblPalette[0x1D] = 0x06; // Red
+            _tblPalette[0x1E] = 0x2A; // Bright green
+            _tblPalette[0x1F] = 0x30; // White
+        }
+
+        #region ##### PPU REGISTERS #####
+
+        [Flags]
+        public enum PPUSTATUS
+        {
+            UNUSED = 0b0001_1111,
+            SPRITE_OVERFLOW = 1 << 5,
+            SPRITE_ZERO_HIT = 1 << 6,
+            VERTICAL_BLANK = 1 << 7
+        };
+
+        [Flags]
+        public enum PPUMASK
+        {
+            GRAYSCALE = 1 << 0,
+            RENDER_BG_LEFT = 1 << 1,
+            RENDER_SPRITES_LEFT = 1 << 2,
+            RENDER_BG = 1 << 3,
+            RENDER_SPRITES = 1 << 4,
+            ENHANCE_RED = 1 << 5,
+            ENHANCE_GREEN = 1 << 6,
+            ENHANCE_BLUE = 1 << 7,
+        }
+
+        [Flags]
+        public enum PPUCTRL
+        {
+            NAMETABLE_X = 1 << 0,
+            NAMETABLE_Y = 1 << 1,
+            INCREMENT_MODE = 1 << 2,
+            PATTERN_SPRITE = 1 << 3,
+            PATTERN_BG = 1 << 4,
+            SPRITE_SIZE = 1 << 5,
+            SLAVE_MODE = 1 << 6,
+            ENABLE_NMI = 1 << 7
+        }
+
+        public bool IsSet<TEnum>(TEnum flag, byte reg) where TEnum : Enum
+        {
+            return (reg & Convert.ToByte(flag)) != 0;
+        }
+
+        public void SetFlag<TEnum>(TEnum flag, ref byte reg, bool value) where TEnum : Enum
+        {
+            byte bFlag = Convert.ToByte(flag);
+            if (value)
+            {
+                reg |= bFlag;
+            }
+            else
+            {
+                reg &= (byte)~bFlag;
+            }
+        }
+        #endregion
+
         public byte CPU_Read(ushort addr)
         {
             byte data = 0x00;
 
             switch (addr)
             {
-                case 0x0000:
-                    break; // Control
-                case 0x0001:
-                    break; // Mask
-                case 0x0002:
-                    break; // Status
-                case 0x0003:
-                    break; // OAM Address
-                case 0x0004:
-                    break; // OAM Data
-                case 0x0005:
-                    break; // Scroll
-                case 0x0006:
-                    break; // PPU Address
-                case 0x0007:
-                    break; // PPU Data
+                case 0x0000: // Control
+                    break; 
+                case 0x0001: // Mask
+                    break; 
+                case 0x0002: // Status
+                    data = (byte) ((_ppuStatus & 0xE0) | (_dataBuffer & 0x1F));
+                    SetFlag<PPUSTATUS>(PPUSTATUS.VERTICAL_BLANK, ref _ppuStatus, false);
+                    _addressLatch = 0;
+                    break; 
+                case 0x0003: // OAM Address
+                    break; 
+                case 0x0004: // OAM Data
+                    break; 
+                case 0x0005: // Scroll
+                    break; 
+                case 0x0006: // PPU Address
+                    break; 
+                case 0x0007: // PPU Data
+
+                    data = _dataBuffer;
+                    _dataBuffer = PPU_Read(_ppuAddr);
+
+                    if (_ppuAddr > 0x3F00) // If accessing palette memory, dont wait a clock cycle in the buffer
+                    {
+                        data = _dataBuffer;
+                    }
+                    _ppuAddr++;
+                    break; 
             }
             return data;
         }
@@ -70,22 +199,35 @@ namespace NES_Emulator
         {
             switch (addr)
             {
-                case 0x0000:
-                    break; // Control
-                case 0x0001:
-                    break; // Mask
-                case 0x0002:
-                    break; // Status
-                case 0x0003:
-                    break; // OAM Address
-                case 0x0004:
-                    break; // OAM Data
-                case 0x0005:
-                    break; // Scroll
-                case 0x0006:
-                    break; // PPU Address
-                case 0x0007:
-                    break; // PPU Data
+                case 0x0000: // Control
+                    _ppuCtrl = data;
+                    break; 
+                case 0x0001: // Mask
+                    _ppuMask = data;
+                    break; 
+                case 0x0002: // Status
+                    break; 
+                case 0x0003: // OAM Address
+                    break; 
+                case 0x0004: // OAM Data
+                    break; 
+                case 0x0005: // Scroll
+                    break; 
+                case 0x0006: // PPU Address
+                    if (_addressLatch == 0)
+                    {
+                        _ppuAddr = (ushort)((_ppuAddr & 0x00FF) | (data << 8));
+                        _addressLatch = 1;
+                    } else
+                    {
+                        _ppuAddr = (ushort)((_ppuAddr & 0xFF00) | data);
+                        _addressLatch = 0;
+                    }
+                    break; 
+                case 0x0007: // PPU Data
+                    PPU_Write(_ppuAddr, data);
+                    _ppuAddr++;
+                    break; 
             }
         }
 
@@ -101,12 +243,12 @@ namespace NES_Emulator
 
             else if (addr >= 0x0000 & addr <= 0x1FFF)
             {
-                data = _tblPattern[((addr & 0x1000) >> 12), (addr * 0x0FFF)];
+                data = _tblPattern[((addr & 0x1000) >> 12), (addr & 0x0FFF)];
             }
 
             else if (addr >= 0x2000 & addr <= 0x3EFF)
             {
-
+                // Nametable address range / VRAM
             }
 
             else if (addr >= 0x3F00 & addr <= 0x3FFF)
@@ -131,7 +273,7 @@ namespace NES_Emulator
 
             else if (addr >= 0x0000 & addr <= 0x1FFF)
             {
-                _tblPattern[(addr & 0x1000) >> 12, addr * 0x0FFF] = data;
+                _tblPattern[(addr & 0x1000) >> 12, addr & 0x0FFF] = data;
             }
 
             else if (addr >= 0x2000 & addr <= 0x3EFF)
@@ -153,13 +295,17 @@ namespace NES_Emulator
 
         public uint[] GetPatternTable(byte index, byte palette)
         {
+            // A Pattern Table is a 16x16 grid, where each cell in the grid is 8x8 pixels
             uint[] buffer = new uint[128 * 128];
 
+            // Iterate through each tile in the Pattern Table
             for (ushort tileY = 0; tileY < 16; tileY++)
             {
                 for (ushort tileX = 0; tileX < 16; tileX++)
                 {
                     ushort offset = (ushort)(tileY * 256 + tileX * 16);
+
+                    // Iterate through each pixel in the grid cell
                     for (ushort row = 0; row < 8; row++)
                     {
                         byte tile_lsb = PPU_Read((ushort)(index * 0x1000 + offset + row + 0));
@@ -187,7 +333,7 @@ namespace NES_Emulator
 
         public uint GetColorFromPaletteRAM(byte palette, byte pixel)
         {
-            return NesMasterPalette[(ushort)(PPU_Read((ushort)(0x3F00 + (palette << 2) + pixel)) & 0x3F)];
+            return NesMasterPalette[PPU_Read((ushort)(0x3F00 + (palette << 2) + pixel))];
         }
 
         public void ConnectCartridge(NES_Cartridge cart)
@@ -202,7 +348,32 @@ namespace NES_Emulator
 
         public void Clock()
         {
-            //throw new NotImplementedException();
+
+            if (_scanline == -1 && _cycles == 1)
+            {
+                SetFlag<PPUSTATUS>(PPUSTATUS.VERTICAL_BLANK, ref _ppuStatus, false);
+            }
+
+            if (_scanline == 241 && _cycles == 1)
+            {
+                SetFlag<PPUSTATUS>(PPUSTATUS.VERTICAL_BLANK, ref _ppuStatus, true);
+                if (IsSet<PPUCTRL>(PPUCTRL.ENABLE_NMI, _ppuCtrl))
+                {
+                    _NMI_Enable = true;
+                }
+            }
+
+            _cycles++;
+            if (_cycles >= 341)
+            {
+                _cycles = 0;
+                _scanline++;
+                if (_scanline >= 261)
+                {
+                    _scanline = -1;
+                    _isFrameComplete = true;
+                }
+            }
         }
     }
 }

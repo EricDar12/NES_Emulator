@@ -9,13 +9,14 @@ namespace NES_Emulator
         static readonly ushort NES_HEIGHT = 240;
 
         static bool _isRunning = false;
-        static byte _selectedPalette = 0x02;
+        static byte _selectedPalette = 0x00;
 
         static void Main(string[] args)
         {
 
-            NES_Cartridge _cart = new NES_Cartridge("C:\\Users\\eric1\\OneDrive\\Documents\\NES_Emulator\\Test ROMs\\Super Mario Bros. (World).nes");
+            NES_Cartridge _cart = new NES_Cartridge("C:\\Users\\eric1\\OneDrive\\Documents\\NES_Emulator\\Test ROMs\\dk.nes");
             NES_System _nes = new NES_System(_cart);
+            _nes._ppu.InitializeDefaultPalettes();
 
             if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO) < 0)
             {
@@ -53,7 +54,9 @@ namespace NES_Emulator
 
             while (_isRunning)
             {
-                _nes.Clock();
+
+                do { _nes.Clock(); } while (!_nes._ppu._isFrameComplete);
+                _nes._ppu._isFrameComplete = false;
 
                 SDL.SDL_Event e;
                 while (SDL.SDL_PollEvent(out e) != 0)
@@ -62,7 +65,18 @@ namespace NES_Emulator
                     {
                         _isRunning = false;
                     }
+                    // For demonstration purposes, switch active palette
+                    if (e.type == SDL.SDL_EventType.SDL_KEYDOWN)
+                    {
+                        switch (e.key.keysym.sym)
+                        {
+                            case SDL.SDL_Keycode.SDLK_SPACE:
+                                _selectedPalette = (byte)((_selectedPalette + 1) % 8);    
+                            break;
+                        }
+                    }
                 }
+
 
                 uint[] left = _nes._ppu.GetPatternTable(0, _selectedPalette);
                 uint[] right = _nes._ppu.GetPatternTable(1, _selectedPalette);

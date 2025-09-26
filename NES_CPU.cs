@@ -1018,7 +1018,6 @@ namespace NES_Emulator
 
         public void Clock()
         {
-            Console.WriteLine("Cycle Count: " + _master_cycle);
             if (_master_cycle == 0)
             {
                 Step();
