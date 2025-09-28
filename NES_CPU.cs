@@ -11,9 +11,9 @@ namespace NES_Emulator
         public byte _register_x;
         public byte _register_y;
         public ushort _program_counter;
-        public byte _status = 0b0010_0000;
+        public byte _status = 0b0000_0000;
         public byte _stack_pointer;
-        public UInt32 _master_cycle = 0;
+        public ushort _master_cycle = 0;
         public NES_BUS _bus;
 
         public NES_CPU(NES_BUS bus)
@@ -139,6 +139,7 @@ namespace NES_Emulator
         public void PushByte(byte data)
         {
             ushort addr = (ushort)(0x0100 + _stack_pointer);
+            //Console.WriteLine($"PUSH: Writing {data:X2} to {addr:X4}");
             _bus.CPU_Write(addr, data);
             _stack_pointer--;
         }
@@ -147,7 +148,9 @@ namespace NES_Emulator
         {
             _stack_pointer++;
             ushort addr = (ushort)(0x0100 + _stack_pointer);
-            return _bus.CPU_Read(addr);
+            byte value = _bus.CPU_Read(addr);
+            //Console.WriteLine($"POP: Reading {value:X2} from {addr:X4}");
+            return value;
         }
 
         public void PushWord(ushort data)
@@ -324,7 +327,7 @@ namespace NES_Emulator
 
         public void CLD(byte cycles = 2)
         {
-            SetFlag(StatusFlags.OVERFLOW, false);
+            SetFlag(StatusFlags.DECIMAL, false);
             _master_cycle += cycles;
         }
 
@@ -817,6 +820,7 @@ namespace NES_Emulator
         #region ##### Execution #####
         public void Step()
         {
+            SetFlag(StatusFlags.UNUSED, true);
             byte opcode = _bus.CPU_Read(_program_counter++);
             Console.WriteLine(Convert.ToString(opcode, 16));
             switch (opcode)
@@ -1007,22 +1011,25 @@ namespace NES_Emulator
                 case 0x30: BMI_Relative(); break;
                 case 0x50: BVC_Relative(); break;
                 case 0x70: BVS_Relative(); break;
+                case 0x00: BRK(); break;
 
                 // NOP Variants (more eventually)
                 case 0xEA: _master_cycle += 2; break;
                 case 0x04: _master_cycle += 3; break;
 
-                default: Console.WriteLine($"No Match For Opcode {Convert.ToString(opcode, 16)}"); break;
+                default: Console.WriteLine($"No Match For Opcode {Convert.ToString(opcode, 16)}"); _master_cycle += 2; break;
             }
         }
 
         public void Clock()
         {
+            // Each instruction consumes cycles, stored in _master_cycle at execution
+            // before executing the next instruction, count down that many cycles
             if (_master_cycle == 0)
             {
                 Step();
             }
-            _master_cycle--;
+            else _master_cycle--;
         }
 
         public void FetchAndDecode()
@@ -1031,7 +1038,7 @@ namespace NES_Emulator
             {
                 if (_bus.CPU_Read(_program_counter) == 0x00)
                 {
-                    BRK();
+                    BRK(); // This is bad
                     Console.WriteLine("Break Reached");
                     break;
                 }
@@ -1045,17 +1052,14 @@ namespace NES_Emulator
             while (_bus.CPU_Read(_program_counter) != 0x00)
             {
                 bool isEnterPressed = (Console.ReadKey().Key == ConsoleKey.Enter);
-                // DEBUGGING
-                Console.WriteLine($"Opcode: {Convert.ToString(_bus.CPU_Read(_program_counter), 16).PadLeft(2, '0')}");
-                Console.Write($"A: {Convert.ToString(_accumulator, 16)} \nX: {Convert.ToString(_register_x, 16)} \nY: {Convert.ToString(_register_y, 16)} \nS: {Convert.ToString(_status, 2).PadLeft(8, '0')} \n-----------\n");
+                LogProcessorStatus();
                 if (isEnterPressed)
                 {
                     Step();
                 }
                 isEnterPressed = false;
             }
-            Console.WriteLine($"Opcode: {Convert.ToString(_bus.CPU_Read(_program_counter), 16).PadLeft(2, '0')}");
-            Console.Write($"A: {Convert.ToString(_accumulator, 16)} \nX: {Convert.ToString(_register_x, 16)} \nY: {Convert.ToString(_register_y, 16)} \nS: {Convert.ToString(_status, 2).PadLeft(8, '0')} \n-----------\n");
+            LogProcessorStatus();
         }
         #endregion
 
@@ -1147,12 +1151,11 @@ namespace NES_Emulator
 
         public void Reset()
         {
-            // TODO Store these as const data somewhere rather than magic numbers
             _stack_pointer = 0xFD;
             _accumulator = 0x00;
             _register_x = 0x00;
             _register_y = 0x00;
-            _status = 0b0010_0000;
+            _status = 0b0010_0100;
             _program_counter = 0xFFFC;
             _master_cycle = 8;
 
@@ -1172,6 +1175,12 @@ namespace NES_Emulator
 
             _bus.CPU_Write(0xFFFC, (byte)loadAddress);
             _bus.CPU_Write(0xFFFD, (byte)(loadAddress >> 8));
+        }
+
+        public void LogProcessorStatus()
+        {
+            Console.WriteLine($"PC: {Convert.ToString(_program_counter, 16)} Opcode: {Convert.ToString(_bus.CPU_Read(_program_counter), 16).PadLeft(2, '0')}");
+            Console.Write($"A: {Convert.ToString(_accumulator, 16)} \nX: {Convert.ToString(_register_x, 16)} \nY: {Convert.ToString(_register_y, 16)} \nP: {Convert.ToString(_status, 2).PadLeft(8, '0')} {Convert.ToString(_status, 16)} \nSP: {Convert.ToString(_stack_pointer, 16)} \n-----------\n");
         }
     }
 }

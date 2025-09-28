@@ -47,10 +47,9 @@ namespace NES_Emulator
 
             if (_ppu._NMI_Enable)
             {
-                _ppu.SetFlag<NES_PPU.PPUCTRL>(NES_PPU.PPUCTRL.ENABLE_NMI, ref _ppu._ppuStatus, false);
+                _ppu.SetFlag<NES_PPU.PPUCTRL>(NES_PPU.PPUCTRL.ENABLE_NMI, ref _ppu._ppuCtrl, false);
                 _cpu.NMI();
             }
-
             _systemClockCounter++;
         }
 

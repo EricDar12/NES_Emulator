@@ -17,8 +17,8 @@ namespace NES_Emulator
         public bool _NMI_Enable = false;
         private int _scanline = 0;
         private int _cycles = 0;
-        private byte _addressLatch = 0;
-        private byte _dataBuffer = 0;
+        private byte _addressLatch = 0b0000_0000;
+        private byte _dataBuffer = 0b0000_0000;
         private ushort _ppuAddr = 0x0000;
 
         public byte _ppuStatus = 0b0000_0000;
@@ -26,7 +26,7 @@ namespace NES_Emulator
         public byte _ppuCtrl = 0b0000_0000;
 
         // All of the colors the NES is capable of presenting
-        static readonly uint[] NesMasterPalette = new uint[64]
+        static readonly uint[] _nesMasterPalette = new uint[64]
         {
             0xFF545454, 0xFF001E74, 0xFF081090, 0xFF300088,
             0xFF4C0058, 0xFF580000, 0xFF541800, 0xFF3C1C00,
@@ -104,7 +104,7 @@ namespace NES_Emulator
         #region ##### PPU REGISTERS #####
 
         [Flags]
-        public enum PPUSTATUS
+        public enum PPUSTATUS : byte
         {
             UNUSED = 0b0001_1111,
             SPRITE_OVERFLOW = 1 << 5,
@@ -113,7 +113,7 @@ namespace NES_Emulator
         };
 
         [Flags]
-        public enum PPUMASK
+        public enum PPUMASK : byte
         {
             GRAYSCALE = 1 << 0,
             RENDER_BG_LEFT = 1 << 1,
@@ -126,7 +126,7 @@ namespace NES_Emulator
         }
 
         [Flags]
-        public enum PPUCTRL
+        public enum PPUCTRL : byte
         {
             NAMETABLE_X = 1 << 0,
             NAMETABLE_Y = 1 << 1,
@@ -181,7 +181,6 @@ namespace NES_Emulator
                 case 0x0006: // PPU Address
                     break; 
                 case 0x0007: // PPU Data
-
                     data = _dataBuffer;
                     _dataBuffer = PPU_Read(_ppuAddr);
 
@@ -333,7 +332,7 @@ namespace NES_Emulator
 
         public uint GetColorFromPaletteRAM(byte palette, byte pixel)
         {
-            return NesMasterPalette[PPU_Read((ushort)(0x3F00 + (palette << 2) + pixel))];
+            return _nesMasterPalette[PPU_Read((ushort)(0x3F00 + (palette << 2) + pixel))];
         }
 
         public void ConnectCartridge(NES_Cartridge cart)
@@ -364,7 +363,8 @@ namespace NES_Emulator
             }
 
             _cycles++;
-            if (_cycles >= 341)
+            int maxCycles = (_scanline == 261) ? 340 : 341; // Scanline 261 is one cycle shorter
+            if (_cycles >= maxCycles)
             {
                 _cycles = 0;
                 _scanline++;

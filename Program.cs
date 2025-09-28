@@ -14,9 +14,15 @@ namespace NES_Emulator
         static void Main(string[] args)
         {
 
-            NES_Cartridge _cart = new NES_Cartridge("C:\\Users\\eric1\\OneDrive\\Documents\\NES_Emulator\\Test ROMs\\dk.nes");
+            NES_Cartridge _cart = new NES_Cartridge("C:\\Users\\eric1\\OneDrive\\Documents\\NES_Emulator\\Test ROMs\\smb.nes");
             NES_System _nes = new NES_System(_cart);
             _nes._ppu.InitializeDefaultPalettes();
+
+            //_nes._cpu._program_counter = 0xC000;
+            //_nes._cpu.StepOneInstruction();
+            //_nes._cpu.FetchAndDecode();
+            //Console.WriteLine("RESULTS: " + _nes._cpu._bus.CPU_Read(0x0002) + " " + _nes._cpu._bus.CPU_Read(0x0003));
+            //_nes._cpu.LogProcessorStatus();
 
             if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO) < 0)
             {
@@ -54,7 +60,7 @@ namespace NES_Emulator
 
             while (_isRunning)
             {
-
+                //_nes._cpu._program_counter = 0xC000;
                 do { _nes.Clock(); } while (!_nes._ppu._isFrameComplete);
                 _nes._ppu._isFrameComplete = false;
 
@@ -71,8 +77,8 @@ namespace NES_Emulator
                         switch (e.key.keysym.sym)
                         {
                             case SDL.SDL_Keycode.SDLK_SPACE:
-                                _selectedPalette = (byte)((_selectedPalette + 1) % 8);    
-                            break;
+                                _selectedPalette = (byte)((_selectedPalette + 1) % 8);
+                                break;
                         }
                     }
                 }
