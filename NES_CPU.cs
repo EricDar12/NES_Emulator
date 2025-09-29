@@ -1179,8 +1179,8 @@ namespace NES_Emulator
 
         public void LogProcessorStatus()
         {
-            Console.WriteLine($"PC: {Convert.ToString(_program_counter, 16)} Opcode: {Convert.ToString(_bus.CPU_Read(_program_counter), 16).PadLeft(2, '0')}");
-            Console.Write($"A: {Convert.ToString(_accumulator, 16)} \nX: {Convert.ToString(_register_x, 16)} \nY: {Convert.ToString(_register_y, 16)} \nP: {Convert.ToString(_status, 2).PadLeft(8, '0')} {Convert.ToString(_status, 16)} \nSP: {Convert.ToString(_stack_pointer, 16)} \n-----------\n");
+            Console.WriteLine($"PC: {Convert.ToString(_program_counter, 16)} | Opcode: {Convert.ToString(_bus.CPU_Read(_program_counter), 16).PadLeft(2, '0')}");
+            Console.Write($"A: {Convert.ToString(_accumulator, 16)} \nX: {Convert.ToString(_register_x, 16)} \nY: {Convert.ToString(_register_y, 16)} \nP: {Convert.ToString(_status, 2).PadLeft(8, '0')} | Hex:{Convert.ToString(_status, 16)} \nSP: {Convert.ToString(_stack_pointer, 16)} \n-----------\n");
         }
     }
 }

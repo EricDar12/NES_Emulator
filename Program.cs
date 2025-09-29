@@ -14,7 +14,7 @@ namespace NES_Emulator
         static void Main(string[] args)
         {
 
-            NES_Cartridge _cart = new NES_Cartridge("C:\\Users\\eric1\\OneDrive\\Documents\\NES_Emulator\\Test ROMs\\smb.nes");
+            NES_Cartridge _cart = new NES_Cartridge("C:\\Users\\eric1\\OneDrive\\Documents\\NES_Emulator\\Test ROMs\\dk.nes");
             NES_System _nes = new NES_System(_cart);
             _nes._ppu.InitializeDefaultPalettes();
 
@@ -115,6 +115,8 @@ namespace NES_Emulator
             SDL.SDL_DestroyRenderer(renderer);
             SDL.SDL_DestroyWindow(window);
             SDL.SDL_Quit();
+
+            _nes._cpu.LogProcessorStatus();
 
         }
     }
