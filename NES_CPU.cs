@@ -651,7 +651,7 @@ namespace NES_Emulator
         {
             PushWord((ushort)(_program_counter + 2));
 
-            Console.WriteLine($"DEBUG:Addr Pushed To Stack {_program_counter}");
+            //Console.WriteLine($"DEBUG:Addr Pushed To Stack {_program_counter}");
 
             PushByte((byte)(_status | 0b0011_0000));
             SetFlag(StatusFlags.INTERRUPT_DISABLE, true);
@@ -822,7 +822,7 @@ namespace NES_Emulator
         {
             SetFlag(StatusFlags.UNUSED, true);
             byte opcode = _bus.CPU_Read(_program_counter++);
-            Console.WriteLine(Convert.ToString(opcode, 16));
+            //Console.WriteLine(Convert.ToString(opcode, 16));
             switch (opcode)
             {
                 // LDA Instructions
@@ -1017,6 +1017,7 @@ namespace NES_Emulator
                 case 0xEA: _master_cycle += 2; break;
                 case 0x04: _master_cycle += 3; break;
 
+                // Treat unimplemented instructions as NOP
                 default: Console.WriteLine($"No Match For Opcode {Convert.ToString(opcode, 16)}"); _master_cycle += 2; break;
             }
         }
@@ -1049,16 +1050,12 @@ namespace NES_Emulator
         public void StepOneInstruction()
         {
             Console.WriteLine("Press Enter To Step");
-            while (_bus.CPU_Read(_program_counter) != 0x00)
+            bool isEnterPressed = (Console.ReadKey().Key == ConsoleKey.Enter);
+            if (isEnterPressed)
             {
-                bool isEnterPressed = (Console.ReadKey().Key == ConsoleKey.Enter);
-                LogProcessorStatus();
-                if (isEnterPressed)
-                {
-                    Step();
-                }
-                isEnterPressed = false;
+                Step();
             }
+            isEnterPressed = false;
             LogProcessorStatus();
         }
         #endregion
