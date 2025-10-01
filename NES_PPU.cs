@@ -219,9 +219,18 @@ namespace NES_Emulator
                         _addressLatch = 1;
                     } else
                     {
-                        _ppuAddr = (ushort)((_ppuAddr & 0xFF00) | data);
+                        _ppuAddr = (ushort)((_ppuAddr & 0xFF00) | data);    
                         _addressLatch = 0;
                     }
+                    // the actual implementation should be this
+                    // if (latch == 0)
+                    // t = (ushort)((t & 0x00FF) | ((data & 0x3F) << 8)); // high 6 bits
+                    // t &= 0x3FFF; // turn off Z bit
+                    // latch = 1
+                    // else
+                    // t = (ushort)((t & 0xFF00) | data); // low 8 bits
+                    // v = t; // write temporary address into active vram address
+                    // latch = 0;
                     break; 
                 case 0x0007: // PPU Data
                     PPU_Write(_ppuAddr, data);
