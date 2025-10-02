@@ -25,6 +25,9 @@ namespace NES_Emulator
         public byte _ppuMask = 0b0000_0000;
         public byte _ppuCtrl = 0b0000_0000;
 
+        public PPU_Addr_Reg _tram = new PPU_Addr_Reg();
+        public PPU_Addr_Reg _vram = new PPU_Addr_Reg();
+
         // All of the colors the NES is capable of presenting
         static readonly uint[] _nesMasterPalette = new uint[64]
         {
@@ -101,7 +104,7 @@ namespace NES_Emulator
             _tblPalette[0x1F] = 0x30; // White
         }
 
-        #region ##### PPU REGISTERS #####
+        #region ##### REGISTERS ENUMS #####
 
         [Flags]
         public enum PPUSTATUS : byte
@@ -188,7 +191,7 @@ namespace NES_Emulator
                     {
                         data = _dataBuffer;
                     }
-                    _ppuAddr++;
+                    _ppuAddr++; // TODO: Determine increment size via PPUCTRL.INCREMENT_MODE
                     break; 
             }
             return data;
@@ -257,6 +260,7 @@ namespace NES_Emulator
             else if (addr >= 0x2000 & addr <= 0x3EFF)
             {
                 // Nametable address range / VRAM
+                // TODO: Implement mirroring logic for nametable r/w !!!!! important !!!!! 44:48 OLC tutorial
             }
 
             else if (addr >= 0x3F00 & addr <= 0x3FFF)

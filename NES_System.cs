@@ -39,7 +39,7 @@ namespace NES_Emulator
         public void Clock()
         {
             _ppu.Clock();
-            // PPU runs 3x as fast as the CPU
+            // PPU runs 3x faster than the CPU
             if (_systemClockCounter % 3 == 0)
             {
                 _cpu.Clock();

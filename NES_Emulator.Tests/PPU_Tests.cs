@@ -88,5 +88,26 @@ namespace NES_Emulator.Tests
             Assert.Equal(0, nes._ppu._ppuCtrl);
         }
 
+        [Fact]
+        public void TestLoopyRegister()
+        {
+            NES_PPU ppu = new NES_PPU();
+
+            Assert.Equal(0, ppu._tram._reg);
+            Assert.Equal(0, ppu._vram._reg);
+
+            ppu._tram.CoarseX = 0xFFFF;
+            ppu._tram.FineY = 0x06;
+
+            ppu._vram.NameTableX = 0x01;
+            ppu._vram.CoarseX = 0x01;
+
+            Assert.Equal(0x601F, ppu._tram._reg);
+            Assert.Equal(0x401, ppu._vram._reg);
+
+            ppu._tram.FineY = 0x00;
+
+            Assert.Equal(0x1F, ppu._tram._reg);
+        }
     }
 }
