@@ -96,18 +96,36 @@ namespace NES_Emulator.Tests
             Assert.Equal(0, ppu._tram._reg);
             Assert.Equal(0, ppu._vram._reg);
 
+            // Attempt to overflow all the bit ranges, tests masking
             ppu._tram.CoarseX = 0xFFFF;
-            ppu._tram.FineY = 0x06;
+            ppu._tram.CoarseY = 0xFFFF;
+            ppu._tram.NameTableX = 0xFFFF;
+            ppu._tram.NameTableY = 0xFFFF;
+            ppu._tram.FineY = 0xFFFF;
 
-            ppu._vram.NameTableX = 0x01;
-            ppu._vram.CoarseX = 0x01;
+            ppu._vram.CoarseX = 0xFFFF;
+            ppu._vram.CoarseY = 0xFFFF;
+            ppu._vram.NameTableX = 0xFFFF;
+            ppu._vram.NameTableY = 0xFFFF;
+            ppu._vram.FineY = 0xFFFF;
 
-            Assert.Equal(0x601F, ppu._tram._reg);
-            Assert.Equal(0x401, ppu._vram._reg);
+            Assert.Equal(0x3FFF, ppu._tram._reg);
+            Assert.Equal(0x3FFF, ppu._vram._reg);
 
-            ppu._tram.FineY = 0x00;
+            ppu._tram.CoarseX = 0;
+            ppu._tram.CoarseY = 0;
+            ppu._tram.NameTableX = 0;
+            ppu._tram.NameTableY = 0;
+            ppu._tram.FineY = 0;
 
-            Assert.Equal(0x1F, ppu._tram._reg);
+            ppu._vram.CoarseX = 0;
+            ppu._vram.CoarseY = 0;
+            ppu._vram.NameTableX = 0;
+            ppu._vram.NameTableY = 0;
+            ppu._vram.FineY = 0;
+
+            Assert.Equal(0, ppu._tram._reg);
+            Assert.Equal(0, ppu._vram._reg);
         }
     }
 }
