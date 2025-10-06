@@ -18,8 +18,9 @@ namespace NES_Emulator
         private int _scanline = 0;
         private int _cycles = 0;
         private byte _addressLatch = 0b0000_0000;
-        private byte _dataBuffer = 0b0000_0000;
-        private ushort _ppuAddr = 0x0000;
+        private byte _dataBuffer = 0b0000_0000; // open bus
+
+        private byte _fineX = 0x00;
 
         public byte _ppuStatus = 0b0000_0000;
         public byte _ppuMask = 0b0000_0000;
@@ -172,7 +173,7 @@ namespace NES_Emulator
                     break; 
                 case 0x0002: // Status
                     data = (byte) ((_ppuStatus & 0xE0) | (_dataBuffer & 0x1F));
-                    SetFlag<PPUSTATUS>(PPUSTATUS.VERTICAL_BLANK, ref _ppuStatus, false);
+                    _ppuStatus |= (byte)PPUSTATUS.VERTICAL_BLANK;
                     _addressLatch = 0;
                     break; 
                 case 0x0003: // OAM Address
@@ -185,14 +186,13 @@ namespace NES_Emulator
                     break; 
                 case 0x0007: // PPU Data
                     data = _dataBuffer;
-                    _dataBuffer = PPU_Read(_ppuAddr);
-
-                    if (_ppuAddr > 0x3F00) // If accessing palette memory, dont wait a clock cycle in the buffer
+                    _dataBuffer = PPU_Read(_vram._reg);
+                    if (_vram._reg > 0x3F00) // If accessing palette memory, dont wait a clock cycle in the buffer
                     {
                         data = _dataBuffer;
                     }
-                    _ppuAddr++; // TODO: Determine increment size via PPUCTRL.INCREMENT_MODE
-                    break; 
+                    _vram._reg += (_ppuCtrl & (byte)PPUCTRL.INCREMENT_MODE) != 0 ? (byte)32 : (byte)1;
+                    break;
             }
             return data;
         }
@@ -203,6 +203,8 @@ namespace NES_Emulator
             {
                 case 0x0000: // Control
                     _ppuCtrl = data;
+                    _tram.NameTableX = (_ppuCtrl & (byte)PPUCTRL.NAMETABLE_X) != 0 ? (byte)1 : (byte)0;
+                    _tram.NameTableY = (_ppuCtrl & (byte)PPUCTRL.NAMETABLE_Y) != 0 ? (byte)1 : (byte)0;
                     break; 
                 case 0x0001: // Mask
                     _ppuMask = data;
@@ -214,30 +216,25 @@ namespace NES_Emulator
                 case 0x0004: // OAM Data
                     break; 
                 case 0x0005: // Scroll
+                    // TODO: Scroll address latch behavior 55:35 OLC lecture
                     break; 
                 case 0x0006: // PPU Address
                     if (_addressLatch == 0)
                     {
-                        _ppuAddr = (ushort)((_ppuAddr & 0x00FF) | (data << 8));
+                        _tram._reg = (ushort)((_tram._reg & 0x00FF) | ((data & 0x3F) << 8)); // Mask data to 6 bits, shift to high byte
+                        _tram._reg &= 0x3FFF; // Turn off Z bit
                         _addressLatch = 1;
-                    } else
+                    }
+                    else
                     {
-                        _ppuAddr = (ushort)((_ppuAddr & 0xFF00) | data);    
+                        _tram._reg = (ushort)((_tram._reg & 0xFF00) | data); // Low 8 bits
+                        _vram._reg = _tram._reg; // Write temporary address into active vram address
                         _addressLatch = 0;
                     }
-                    // the actual implementation should be this
-                    // if (latch == 0)
-                    // t = (ushort)((t & 0x00FF) | ((data & 0x3F) << 8)); // high 6 bits
-                    // t &= 0x3FFF; // turn off Z bit
-                    // latch = 1
-                    // else
-                    // t = (ushort)((t & 0xFF00) | data); // low 8 bits
-                    // v = t; // write temporary address into active vram address
-                    // latch = 0;
                     break; 
                 case 0x0007: // PPU Data
-                    PPU_Write(_ppuAddr, data);
-                    _ppuAddr++;
+                    PPU_Write(_vram._reg, data);
+                    _vram._reg += (_ppuCtrl & (byte)PPUCTRL.INCREMENT_MODE) != 0 ? (byte)32 : (byte)1;
                     break; 
             }
         }
@@ -261,6 +258,18 @@ namespace NES_Emulator
             {
                 // Nametable address range / VRAM
                 // TODO: Implement mirroring logic for nametable r/w !!!!! important !!!!! 44:48 OLC tutorial
+                // ^ this is kind of done but not sure how I feel about it
+
+                ushort normalizedAddr = (ushort)(addr & 0x0FFF); // Clamp to 4kib range
+                byte tableIndex = (byte)(normalizedAddr / 0x0400); // Logical table (0-3)
+                ushort tableOffset = (ushort)(normalizedAddr & 0x03FF); // Clamp to 1kib , nameetables are only 1kb each
+
+                // This is only going to work for vertical and horizontal mirroring
+                byte physicalTable = (_cart != null && _cart._mirror == NES_Cartridge.Mirror.VERTICAL) ? 
+                    (byte)(tableIndex & 0x01) // 0,1,0,1 
+                  : (byte)(tableIndex >> 1); // 0,0,1,1
+                
+                data = _tblName[physicalTable,tableOffset];
             }
 
             else if (addr >= 0x3F00 & addr <= 0x3FFF)
@@ -290,7 +299,15 @@ namespace NES_Emulator
 
             else if (addr >= 0x2000 & addr <= 0x3EFF)
             {
+                ushort normalizedAddr = (ushort)(addr & 0x0FFF);
+                byte tableIndex = (byte)(normalizedAddr / 0x0400);
+                ushort tableOffset = (ushort)(normalizedAddr & 0x03FF);
 
+                byte physicalTable = (_cart != null && _cart._mirror == NES_Cartridge.Mirror.VERTICAL) ?
+                    (byte)(tableIndex & 0x01) // 0,1,0,1 
+                  : (byte)(tableIndex >> 1); // 0,0,1,1
+
+                _tblName[physicalTable, tableOffset] = data;
             }
 
             else if (addr >= 0x3F00 & addr <= 0x3FFF)
@@ -363,13 +380,13 @@ namespace NES_Emulator
 
             if (_scanline == -1 && _cycles == 1)
             {
-                SetFlag<PPUSTATUS>(PPUSTATUS.VERTICAL_BLANK, ref _ppuStatus, false);
+                _ppuStatus &= (byte)~PPUSTATUS.VERTICAL_BLANK;
             }
 
             if (_scanline == 241 && _cycles == 1)
             {
-                SetFlag<PPUSTATUS>(PPUSTATUS.VERTICAL_BLANK, ref _ppuStatus, true);
-                if (IsSet<PPUCTRL>(PPUCTRL.ENABLE_NMI, _ppuCtrl))
+                _ppuStatus |= (byte)PPUSTATUS.VERTICAL_BLANK;
+                if ((_ppuCtrl & (byte)PPUCTRL.ENABLE_NMI) != 0)
                 {
                     _NMI_Enable = true;
                 }
