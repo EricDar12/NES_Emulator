@@ -78,6 +78,15 @@ public void SetFlag(StatusFlags flag, bool value)
 
 ---
 
+## Before We Continue...
+Did you know that Bender from Futurama runs on a 6502 CPU? It was revealed in the episode, "Fry and the Slurm Factory" when Professor Farnsworth uses his "Z-Ray" to look through Bender's body.
+
+![A image of Bender's Brain](https://spectrum.ieee.org/media-library/futurama-tm-and-c-2009-twentieth-century-fox-film-corporation-all-rights-reserved.jpg?id=25561417&width=2400&height=1800)
+
+It’s a fitting nod to the impact of the MOS 6502, a CPU that was both dominant and surprisingly sophisticated for its time. It powered iconic machines like the Apple II, Commodore 64, Atari 400, and of course, the Nintendo Entertainment System.
+
+---
+
 ## Addressing Modes
 
 The Ricoh 2A03 supports 13 addressing modes. These modes determine how the CPU finds the operand for an instruction.
@@ -140,7 +149,7 @@ if ((baseAddr & 0xFF00) != (finalAddr & 0xFF00))
 
 ## Instruction Set
 
-The 2A03’s instruction set can be represented as a 16×16 table of 256 opcodes. Of these, 151 are **official instructions**. The remaining 105 opcodes are **unofficial instructions**. While some NES games make use of these unofficial instructions, they are much less common and will not be implemented in this emulator until much later.
+The 2A03’s instruction set can be represented as a 16×16 table of 256 opcodes. Of these, 151 are **official instructions**. The remaining 105 opcodes are **unofficial instructions**. While some NES games make use of these unofficial instructions, they are much less common and will not be implemented in this emulator until later.
 
 Some basic opcodes include:
 - LDA (Load Accumulator)
@@ -188,7 +197,7 @@ This document serves as a high-level overview of the 6502 CPU. Covering everythi
 
 ##### One thing is for certain:
 
-Emulating a CPU is **extraordinarily complex**, even one considered simple by today's standards (and even in the 1980s, for that matter). Completing this component is a huge acomplishment, but it is still only the first step in a **much** larger project.
+Emulating a CPU is **extraordinarily complex**, even one considered simple by today's standards. Completing this component is a huge acomplishment, but it is still only the first step in a **much** larger project.
 
 ---
 
