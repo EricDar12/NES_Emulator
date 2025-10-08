@@ -231,7 +231,7 @@ namespace NES_Emulator
                     else
                     {
                         _tram.FineY = (byte)(data & 0x07);
-                        _tram.CoarseX = (byte)(data >> 3);
+                        _tram.CoarseY = (byte)(data >> 3);
                         _addressLatch = 0;
                     }
 
