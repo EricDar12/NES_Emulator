@@ -17,10 +17,14 @@ namespace NES_Emulator
         public bool _NMI_Enable = false;
         private int _scanline = 0;
         private int _cycles = 0;
-        private byte _addressLatch = 0b0000_0000;
+        private byte _addressLatch = 0; // 1 or 0
         private byte _dataBuffer = 0b0000_0000; // open bus
 
-        private byte _fineX = 0x00;
+        private byte _fineX = 0b0000_0000;
+        private byte _bgNextTileID = 0b0000_0000;
+        private byte _bgNextTileAttrib = 0b0000_0000;
+        private byte _bgNextTileLSB = 0b0000_0000;
+        private byte _bgNextTileMSB = 0b0000_0000;
 
         public byte _ppuStatus = 0b0000_0000;
         public byte _ppuMask = 0b0000_0000;
@@ -172,8 +176,9 @@ namespace NES_Emulator
                 case 0x0001: // Mask
                     break; 
                 case 0x0002: // Status
+                    // Combine the bottom five bits of the last PPU transaction with the top three bits of the status register
                     data = (byte) ((_ppuStatus & 0xE0) | (_dataBuffer & 0x1F));
-                    _ppuStatus |= (byte)PPUSTATUS.VERTICAL_BLANK;
+                    _ppuStatus &= (byte)~PPUSTATUS.VERTICAL_BLANK; // Unset the vertical blank flag
                     _addressLatch = 0;
                     break; 
                 case 0x0003: // OAM Address
@@ -217,6 +222,19 @@ namespace NES_Emulator
                     break; 
                 case 0x0005: // Scroll
                     // TODO: Scroll address latch behavior 55:35 OLC lecture
+                    if (_addressLatch == 0)
+                    {
+                        _fineX = (byte)(data & 0x07);
+                        _tram.CoarseX = (byte)(data >> 3);
+                        _addressLatch = 1;
+                    } 
+                    else
+                    {
+                        _tram.FineY = (byte)(data & 0x07);
+                        _tram.CoarseX = (byte)(data >> 3);
+                        _addressLatch = 0;
+                    }
+
                     break; 
                 case 0x0006: // PPU Address
                     if (_addressLatch == 0)
@@ -381,6 +399,29 @@ namespace NES_Emulator
             if (_scanline == -1 && _cycles == 1)
             {
                 _ppuStatus &= (byte)~PPUSTATUS.VERTICAL_BLANK;
+            }
+
+            if ((_cycles >= 2 && _cycles < 258) || (_cycles >= 321 && _cycles <= 338)) {
+
+                switch ((_cycles - 1) % 8)
+                {
+                    case 0:
+                        _bgNextTileID = PPU_Read((ushort)(0x2000 | (_vram._reg & 0x0FFF)));
+                        break;
+                    case 1: break;
+                    case 2: break;
+                    case 3: break;
+                    case 4: break;
+                    case 5: break;
+                    case 6: break;
+                    case 7: break;
+                }
+
+            }
+
+            if (_cycles == 256)
+            {
+
             }
 
             if (_scanline == 241 && _cycles == 1)
