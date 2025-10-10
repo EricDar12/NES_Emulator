@@ -8,22 +8,16 @@ namespace NES_Emulator
         static readonly ushort NES_WIDTH = 256;
         static readonly ushort NES_HEIGHT = 240;
 
-        static bool _isRunning = false;
+        static bool _isRunning = true;
         static byte _selectedPalette = 0x00;
 
         static void Main(string[] args)
         {
 
             // Different paths for both devices I work on
-            NES_Cartridge _cart = new NES_Cartridge("C:\\Users\\eric1\\OneDrive\\Documents\\NES_Emulator\\Test ROMs\\smb.nes");
+            NES_Cartridge _cart = new NES_Cartridge("C:\\Users\\eric1\\OneDrive\\Documents\\NES_Emulator\\Test ROMs\\dk.nes");
             //NES_Cartridge _cart = new NES_Cartridge("C:\\Users\\eric1\\Documents\\Visual Studio 2022\\Projects\\Test ROMs\\smb.nes");
             NES_System _nes = new NES_System(_cart);
-
-            _nes._ppu.InitializeDefaultPalettes();
-
-            // Debugging nestest.nes //
-            //_nes._cpu._program_counter = 0xC000;
-            //Console.WriteLine("RESULTS: " + _nes._cpu._bus.CPU_Read(0x0002) + " " + _nes._cpu._bus.CPU_Read(0x0003));
 
             if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO) < 0)
             {
@@ -54,53 +48,27 @@ namespace NES_Emulator
                 SDL.SDL_PIXELFORMAT_ARGB8888,
                 (int)SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING,
                 256,
-                128
+                240
             );
 
-            _isRunning = true;
-
+            int frameCount = 0;
             while (_isRunning)
             {
-                do { _nes.Clock(); } while (!_nes._ppu._isFrameComplete);
+                int cycleCount = 0;
+                do
+                {
+                    _nes.Clock();
+                    cycleCount++;
+                } while (!_nes._ppu._isFrameComplete);
+
+                frameCount++;
+                Console.WriteLine($"Frame {frameCount} complete. Cycles: {cycleCount}, Scanline: {_nes._ppu._scanline}, Cycle: {_nes._ppu._cycles}");
+
                 _nes._ppu._isFrameComplete = false;
-
-                SDL.SDL_Event e;
-                while (SDL.SDL_PollEvent(out e) != 0)
-                {
-                    if (e.type == SDL.SDL_EventType.SDL_QUIT)
-                    {
-                        _isRunning = false;
-                    }
-                    // For demonstration purposes, switch active palette
-                    if (e.type == SDL.SDL_EventType.SDL_KEYDOWN)
-                    {
-                        switch (e.key.keysym.sym)
-                        {
-                            case SDL.SDL_Keycode.SDLK_SPACE:
-                                _selectedPalette = (byte)((_selectedPalette + 1) % 8);
-                                break;
-                        }
-                    }
-                }
-
-
-                uint[] left = _nes._ppu.GetPatternTable(0, _selectedPalette);
-                uint[] right = _nes._ppu.GetPatternTable(1, _selectedPalette);
-
-                uint[] combined = new uint[256 * 128];
-
-                for (int y = 0; y < 128; y++)
-                {
-                    for (int x = 0; x < 128; x++)
-                    {
-                        combined[y * 256 + x] = left[y * 128 + x];
-                        combined[y * 256 + 128 + x] = right[y * 128 + x];
-                    }
-                }
 
                 unsafe
                 {
-                    fixed (uint* ptr = combined)
+                    fixed (uint* ptr = _nes._ppu._frameBuffer)
                     {
                         SDL.SDL_UpdateTexture(texture, IntPtr.Zero, (IntPtr)ptr, 256 * sizeof(uint));
                     }
@@ -111,13 +79,10 @@ namespace NES_Emulator
                 SDL.SDL_RenderPresent(renderer);
                 SDL.SDL_Delay(16);
             }
-
             SDL.SDL_DestroyRenderer(renderer);
             SDL.SDL_DestroyWindow(window);
             SDL.SDL_Quit();
-
-            _nes._cpu.LogProcessorStatus();
-
+            //_nes._cpu.LogProcessorStatus();
         }
     }
 }

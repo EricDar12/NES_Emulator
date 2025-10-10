@@ -47,7 +47,7 @@ namespace NES_Emulator
 
             if (_ppu._NMI_Enable)
             {
-                _ppu._ppuCtrl &= (byte)~NES_PPU.PPUCTRL.ENABLE_NMI; 
+                _ppu._NMI_Enable = false;
                 _cpu.NMI();
             }
             _systemClockCounter++;
