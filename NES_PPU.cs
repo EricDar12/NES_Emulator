@@ -10,26 +10,26 @@ namespace NES_Emulator
     public class NES_PPU
     {
         private NES_Cartridge? _cart;
-        private byte[,] _tblName = new byte[2, 1024];
-        private byte[] _tblPalette = new byte[32];
-        private byte[,] _tblPattern = new byte[2, 4096];
+        public byte[,] _tblName = new byte[2, 1024];
+        public byte[] _tblPalette = new byte[32];
+        public byte[,] _tblPattern = new byte[2, 4096];
         public bool _isFrameComplete = false;
         public bool _NMI_Enable = false;
         public int _scanline = 0;
-        public int _cycles = 0;
+        public int _cycle = 0;
         private byte _addressLatch = 0; // 1 or 0
         private byte _dataBuffer = 0b0000_0000; // open bus
 
-        private byte _fineX = 0b0000_0000;
-        private byte _bgNextTileID = 0b0000_0000;
-        private byte _bgNextTileAttrib = 0b0000_0000;
-        private byte _bgNextTileLSB = 0b0000_0000;
-        private byte _bgNextTileMSB = 0b0000_0000;
+        public byte _fineX = 0b0000_0000;
+        public byte _bgNextTileID = 0b0000_0000;
+        public byte _bgNextTileAttrib = 0b0000_0000;
+        public byte _bgNextTileLSB = 0b0000_0000;
+        public byte _bgNextTileMSB = 0b0000_0000;
 
-        private ushort _bgShifterPatternLo = 0x00;
-        private ushort _bgShifterPatternHi = 0x00;
-        private ushort _bgShifterAttribLo = 0x00;
-        private ushort _bgShifterAttribHi = 0x00;
+        public ushort _bgShifterPatternLo = 0x00;
+        public ushort _bgShifterPatternHi = 0x00;
+        public ushort _bgShifterAttribLo = 0x00;
+        public ushort _bgShifterAttribHi = 0x00;
 
         public byte _ppuStatus = 0b0000_0000;
         public byte _ppuMask = 0b0000_0000;
@@ -266,6 +266,7 @@ namespace NES_Emulator
         {
 
             byte data = 0;
+            addr &= 0x3FFF;
 
             if (_cart != null && _cart.PPU_Read(addr, out data))
             {
@@ -302,7 +303,7 @@ namespace NES_Emulator
                 if (addr == 0x0014) addr = 0x0004;
                 if (addr == 0x0018) addr = 0x0008;
                 if (addr == 0x001C) addr = 0x000C;
-                data = _tblPalette[addr];
+                data = (byte)(_tblPalette[addr] & ((_ppuMask & (byte)PPUMASK.GRAYSCALE) != 0 ? 0x30 : 0x3F));
             }
 
             return data;
@@ -310,6 +311,9 @@ namespace NES_Emulator
 
         public void PPU_Write(ushort addr, byte data)
         {
+
+            addr &= 0x3FFF;
+
             if (_cart != null && _cart.PPU_Write(addr, data))
             {
 
@@ -415,6 +419,7 @@ namespace NES_Emulator
 
             _bgShifterPatternLo = (ushort)((_bgShifterPatternLo & 0xFF00) | _bgNextTileLSB);
             _bgShifterPatternHi = (ushort)((_bgShifterPatternHi & 0xFF00) | _bgNextTileMSB);
+
             _bgShifterAttribLo = (ushort)((_bgShifterAttribLo & 0xFF00) | nxtAttribLo);
             _bgShifterAttribHi = (ushort)((_bgShifterAttribHi & 0xFF00) | nxtAttribHi);
         }
@@ -477,50 +482,53 @@ namespace NES_Emulator
 
         public void Reset()
         {
-            //throw new NotImplementedException();
+            _fineX = 0x00;
+            _addressLatch = 0x00;
+            _dataBuffer = 0x00;
+            _scanline = 0;
+            _cycle = 0;
+            _bgNextTileID = 0x00;
+            _bgNextTileAttrib = 0x00;
+            _bgNextTileLSB = 0x00;
+            _bgNextTileMSB = 0x00;
+            _bgShifterPatternLo = 0x00;
+            _bgShifterPatternHi = 0x00;
+            _bgShifterAttribLo = 0x00;
+            _bgShifterAttribHi = 0x00;
+            _ppuStatus = 0b0000_0000;
+            _ppuMask= 0b0000_0000;
+            _ppuCtrl = 0b0000_0000;
+            _vram._reg = 0x00;
+            _tram._reg = 0x00;
         }
+
 
         public void Clock()
         {
 
-            //if (_scanline == 0 && _cycles == 0) Console.WriteLine("Hit SC 0 and CY 0");
-
             if (_scanline >= -1 && _scanline < 240)
             {
-                //if (_scanline == 0 && _cycles == 0)
-                //{
-                //    _cycles = 1;
-                //    Console.WriteLine("Skipped to Cycle 1");
-                //}
 
-                //if (_scanline == 0 && _cycles == 1)
-                //{
-                //    Console.WriteLine($"PPU State - CTRL: 0x{_ppuCtrl:X2}, MASK: 0x{_ppuMask:X2}");
-                //}
+                if (_scanline == 0 && _cycle == 0)
+                {
+                    _cycle = 1;
+                }
 
-                if (_scanline == -1 && _cycles == 1)
+
+                if (_scanline == -1 && _cycle == 1)
                 {
                     _ppuStatus &= (byte)~PPUSTATUS.VERTICAL_BLANK;
 
                 }
 
-                if ((_cycles >= 2 && _cycles < 258) || (_cycles >= 321 && _cycles < 338))
+                if ((_cycle >= 2 && _cycle < 258) || (_cycle >= 321 && _cycle < 338))
                 {
-
                     UpdateShifters();
-
-                    switch ((_cycles - 1) % 8)
+                    switch ((_cycle - 1) % 8)
                     {
                         case 0:
                             LoadBGShifters();
                             _bgNextTileID = PPU_Read((ushort)(0x2000 | (_vram._reg & 0x0FFF)));
-                            // Debug tile fetch
-                            if (_scanline == 0 && _cycles == 9)
-                            {
-                                Console.WriteLine($"Fetching tile at cycle {_cycles}:");
-                                Console.WriteLine($"  TileID: 0x{_bgNextTileID:X2}");
-                                Console.WriteLine($"  VRAM address: 0x{_vram._reg:X4}");
-                            }
                             break;
                         case 2:
                             ushort attribAddr = (ushort)((_vram.NameTableY << 11) | (_vram.NameTableX << 10) | ((_vram.CoarseY >> 2) << 3) | (_vram.CoarseX >> 2));
@@ -532,56 +540,48 @@ namespace NES_Emulator
                         case 4:
                             ushort nxtTileLsbAddr = (ushort)((((_ppuCtrl & (byte)PPUCTRL.PATTERN_BG) >> 4) << 12) + (ushort)(_bgNextTileID << 4) + (_vram.FineY + 0));
                             _bgNextTileLSB = PPU_Read(nxtTileLsbAddr);
-                            // Debug pattern fetch
-                            if (_scanline == 0 && _cycles == 13)
-                            {
-                                Console.WriteLine($"  Pattern LSB addr: 0x{nxtTileLsbAddr:X4}, value: 0x{_bgNextTileLSB:X2}");
-                            }
                             break;
                         case 6:
                             ushort nxtTileMsbAddr = (ushort)((((_ppuCtrl & (byte)PPUCTRL.PATTERN_BG) >> 4) << 12) + (ushort)(_bgNextTileID << 4) + (_vram.FineY + 8));
                             _bgNextTileMSB = PPU_Read(nxtTileMsbAddr);
-                            // Debug pattern fetch
-                            if (_scanline == 0 && _cycles == 15)
-                            {
-                                Console.WriteLine($"  Pattern MSB addr: 0x{nxtTileMsbAddr:X4}, value: 0x{_bgNextTileMSB:X2}");
-                                Console.WriteLine($"  After fetch - LSB: 0x{_bgNextTileLSB:X2}, MSB: 0x{_bgNextTileMSB:X2}, Attrib: 0x{_bgNextTileAttrib:X2}");
-                            }
                             break;
                         case 7:
                             IncrementScrollX();
                             break;
                     }
                 }
-                if (_cycles == 256)
+
+                if (_cycle == 256)
                 {
                     IncrementScrollY();
                 }
 
-                if (_cycles == 257)
+                if (_cycle == 257)
                 {
                     LoadBGShifters();
                     TransferAddressX();
                 }
 
-                if (_cycles == 338 || _cycles == 340)
+                if (_cycle == 338 || _cycle == 340)
                 {
                     _bgNextTileID = PPU_Read((ushort)(0x2000 | (_vram._reg & 0x0FFF)));
                 }
 
-                if (_scanline == -1 && _cycles >= 280 && _cycles < 305)
+                if (_scanline == -1 && _cycle >= 280 && _cycle < 305)
                 {
                     TransferAddressY();
                 }
             }
 
-
-            if (_scanline == 241 && _cycles == 1)
+            if (_scanline >= 241 && _scanline < 261)
             {
-                _ppuStatus |= (byte)PPUSTATUS.VERTICAL_BLANK;
-                if ((_ppuCtrl & (byte)PPUCTRL.ENABLE_NMI) != 0)
+                if (_scanline == 241 && _cycle == 1)
                 {
-                    _NMI_Enable = true;
+                    _ppuStatus |= (byte)PPUSTATUS.VERTICAL_BLANK;
+                    if ((_ppuCtrl & (byte)PPUCTRL.ENABLE_NMI) != 0)
+                    {
+                        _NMI_Enable = true;
+                    }
                 }
             }
 
@@ -595,23 +595,23 @@ namespace NES_Emulator
                 byte p0_pixel = (_bgShifterPatternLo & bit_mux) > 0 ? (byte)1 : (byte)0;
                 byte p1_pixel = (_bgShifterPatternHi & bit_mux) > 0 ? (byte)1 : (byte)0;
 
-                bg_pixel = (byte)((p1_pixel << 1) | (p0_pixel));
+                bg_pixel = (byte)((p1_pixel << 1) | p0_pixel);
 
                 byte p0_pal = (_bgShifterAttribLo & bit_mux) > 0 ? (byte)1 : (byte)0;
                 byte p1_pal = (_bgShifterAttribHi & bit_mux) > 0 ? (byte)1 : (byte)0;
 
-                bg_palette = (byte)((p1_pal << 1) | (p0_pal));
+                bg_palette = (byte)((p1_pal << 1) | p0_pal);
             }
 
-            if (_scanline >= 0 && _scanline < 240 && _cycles > 0 && _cycles <= 256)
+            if (_scanline >= 0 && _scanline < 240 && _cycle > 0 && _cycle <= 256)
             {
-                _frameBuffer[_scanline * 256 + (_cycles - 1)] = GetColorFromPaletteRAM(bg_palette, bg_pixel);
+                _frameBuffer[_scanline * 256 + (_cycle - 1)] = GetColorFromPaletteRAM(bg_palette, bg_pixel);
             }
 
-            _cycles++;
-            if (_cycles >= 341)
+            _cycle++;
+            if (_cycle >= 341)
             {
-                _cycles = 0;
+                _cycle = 0;
                 _scanline++;
                 if (_scanline >= 261)
                 {

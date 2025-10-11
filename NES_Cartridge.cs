@@ -64,7 +64,15 @@ namespace NES_Emulator
                 fs.Read(_prgMemory, 0, _prgMemory.Length);
 
                 _chrBanks = header.chr_rom_chunks;
-                _chrMemory = new byte[_chrBanks * CHARACTER_MEMORY_UNIT];
+                if (_chrBanks == 0)
+                {
+                    _chrMemory = new byte[CHARACTER_MEMORY_UNIT];
+                } 
+                else
+                {
+                    _chrMemory = new byte[_chrBanks * CHARACTER_MEMORY_UNIT];
+                }
+
                 fs.Read(_chrMemory, 0, _chrMemory.Length);
             }
 

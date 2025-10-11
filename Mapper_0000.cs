@@ -54,6 +54,14 @@ namespace NES_Emulator
         public override bool PPU_Map_Write(ushort addr, out ushort mappedAddr)
         {
             mappedAddr = 0;
+            if (addr >= 0x0000 && addr <= 0x1FFF)
+            {
+                if (_chrBanks == 0)
+                {
+                    mappedAddr = addr;
+                    return true;
+                }
+            }
             return false;
         }
     }

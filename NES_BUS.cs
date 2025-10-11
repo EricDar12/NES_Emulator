@@ -20,8 +20,14 @@ namespace NES_Emulator
         public byte CPU_Read(ushort addr)
         {
             byte data = 0x00;
+
+            if (addr >= 0x4000 && addr <= 0x4017)
+            {
+                // APU Addressing Range;
+                data = 0;
+            }
         
-            if (_cart != null && _cart.CPU_Read(addr, out data))
+            else if (_cart != null && _cart.CPU_Read(addr, out data))
             {
                 // If the cartridge can handle the read, it will set "data" via out variable
             }
@@ -41,7 +47,12 @@ namespace NES_Emulator
         public void CPU_Write(ushort addr, byte data)
         {
 
-            if (_cart != null && _cart.CPU_Write(addr, data))
+            if (addr >= 0x4000 && addr <= 0x4017)
+            {
+                // APU Addressing Range;
+            }
+
+            else if (_cart != null && _cart.CPU_Write(addr, data))
             {
                 
             }
