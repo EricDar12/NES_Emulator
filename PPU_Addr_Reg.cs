@@ -9,7 +9,13 @@ namespace NES_Emulator
     public class PPU_Addr_Reg
     {
 
-        public ushort _reg { get; set; } = 0x0000;
+        public ushort _reg { get; private set; } = 0x0000;
+
+        public ushort Reg
+        {
+            get => _reg;
+            set => _reg = (ushort)(value & 0x3FFF);
+        }
 
         public ushort CoarseX
         {

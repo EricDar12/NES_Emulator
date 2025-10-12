@@ -62,41 +62,42 @@ namespace NES_Emulator
 
                 Console.WriteLine($"Frame: {frameCount} ");
 
-                //Console.WriteLine($"TRAM: {Convert.ToString(_nes._ppu._tram._reg,2)} CX:{_nes._ppu._tram.CoarseX} CY:{_nes._ppu._tram.CoarseY} NTX:{_nes._ppu._tram.NameTableX} NTY:{_nes._ppu._tram.NameTableY} FY:{_nes._ppu._tram.FineY} FX:{_nes._ppu._fineX}");
-                //Console.WriteLine($"VRAM: {Convert.ToString(_nes._ppu._vram._reg,2)} CX:{_nes._ppu._vram.CoarseX} CY:{_nes._ppu._vram.CoarseY} NTX:{_nes._ppu._vram.NameTableX} NTY:{_nes._ppu._vram.NameTableY} FY:{_nes._ppu._vram.FineY} FX:{_nes._ppu._fineX}");
                 Thread.Sleep(100);
                 
-                //_nes._ppu.SetFlag<NES_PPU.PPUMASK>(NES_PPU.PPUMASK.RENDER_BG, ref _nes._ppu._ppuMask, true);
-
                 frameCount++;
-                if (frameCount > 30)
-                {
-                    Console.WriteLine("\nNametable 0 contents (rows 0-7):");
-                    for (int row = 0; row < 8; row++)
-                    {
-                        Console.Write($"Row {row}: ");
-                        for (int col = 0; col < 32; col++)
-                        {
-                            Console.Write($"{_nes._ppu._tblName[0, row * 32 + col]:X2} ");
-                        }
-                        Console.WriteLine();
-                    }
-                }
+                //if (frameCount > 30)
+                //{
+                //    Console.WriteLine("\nNametable 0 contents (rows 0-7):");
+                //    for (int row = 0; row < 8; row++)
+                //    {
+                //        Console.Write($"Row {row}: ");
+                //        for (int col = 0; col < 32; col++)
+                //        {
+                //            Console.Write($"{_nes._ppu._tblName[0, row * 32 + col]:X2} ");
+                //        }
+                //        Console.WriteLine();
+                //    }
+                //}
 
                 //if (_nes._ppu.IsSet<NES_PPU.PPUMASK>(NES_PPU.PPUMASK.RENDER_BG, _nes._ppu._ppuMask))
                 //{
                 //    Console.WriteLine("Rendering Enabled At Frame: " + frameCount);
                 //}
 
-                if (frameCount == 31)
-                {
-                    Console.WriteLine("Palette memory:");
-                    for (int i = 0; i < 32; i++)
-                    {
-                        Console.Write($"[{i:X2}]={_nes._ppu._tblPalette[i]:X2} ");
-                        if ((i + 1) % 8 == 0) Console.WriteLine();
-                    }
-                }
+                //if (frameCount >= 30 && frameCount <= 40)
+                //{
+                //    Console.WriteLine("Palette memory:");
+                //    for (int i = 0; i < 32; i++)
+                //    {
+                //        Console.Write($"[{i:X2}]={_nes._ppu._tblPalette[i]:X2} ");
+                //        if ((i + 1) % 8 == 0) Console.WriteLine();
+                //    }
+                //}
+                //else if (frameCount >= 40 && frameCount <= 50)
+                //{
+                //    Console.WriteLine($"TRAM: {Convert.ToString(_nes._ppu._tram._reg, 2)} CX:{_nes._ppu._tram.CoarseX} CY:{_nes._ppu._tram.CoarseY} NTX:{_nes._ppu._tram.NameTableX} NTY:{_nes._ppu._tram.NameTableY} FY:{_nes._ppu._tram.FineY} FX:{_nes._ppu._fineX}");
+                //    Console.WriteLine($"VRAM: {Convert.ToString(_nes._ppu._vram._reg, 2)} CX:{_nes._ppu._vram.CoarseX} CY:{_nes._ppu._vram.CoarseY} NTX:{_nes._ppu._vram.NameTableX} NTY:{_nes._ppu._vram.NameTableY} FY:{_nes._ppu._vram.FineY} FX:{_nes._ppu._fineX}");
+                //}
 
                 unsafe
                 {

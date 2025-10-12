@@ -197,13 +197,14 @@ namespace NES_Emulator
                 case 0x0006: // PPU Address
                     break;
                 case 0x0007: // PPU Data
+                    Console.WriteLine("Reading 2007");
                     data = _dataBuffer;
                     _dataBuffer = PPU_Read(_vram._reg);
                     if (_vram._reg >= 0x3F00) // If accessing palette memory, dont wait a clock cycle in the buffer
                     {
                         data = _dataBuffer;
                     }
-                    _vram._reg += (_ppuCtrl & (byte)PPUCTRL.INCREMENT_MODE) != 0 ? (byte)32 : (byte)1;
+                    _vram.Reg += (_ppuCtrl & (byte)PPUCTRL.INCREMENT_MODE) != 0 ? (byte)32 : (byte)1;
                     break;
             }
             return data;
@@ -244,20 +245,21 @@ namespace NES_Emulator
                 case 0x0006: // PPU Address
                     if (_addressLatch == 0)
                     {
-                        _tram._reg = (ushort)((_tram._reg & 0x00FF) | ((data & 0x3F) << 8)); // Mask data to 6 bits, shift to high byte
-                        _tram._reg &= 0x3FFF; // Turn off Z bit
+                        _tram.Reg = (ushort)((_tram.Reg & 0x00FF) | ((data & 0x3F) << 8)); // Mask data to 6 bits, shift to high byte
                         _addressLatch = 1;
                     }
                     else
                     {
-                        _tram._reg = (ushort)((_tram._reg & 0xFF00) | data); // Low 8 bits
-                        _vram._reg = _tram._reg; // Write temporary address into active vram address
+                        _tram.Reg = (ushort)((_tram.Reg & 0xFF00) | data); // Low 8 bits
+                        Console.WriteLine($"TRAM: {_tram._reg} VRAM: {_vram.Reg}");
+                        _vram.Reg = _tram.Reg; // Write temporary address into active vram address
                         _addressLatch = 0;
+                        Console.WriteLine($"TRAM After: {_tram.Reg} VRAM After: {_vram.Reg} \n-----------");
                     }
                     break;
                 case 0x0007: // PPU Data
-                    PPU_Write(_vram._reg, data);
-                    _vram._reg += (_ppuCtrl & (byte)PPUCTRL.INCREMENT_MODE) != 0 ? (byte)32 : (byte)1;
+                    PPU_Write(_vram.Reg, data);
+                    _vram.Reg += (_ppuCtrl & (byte)PPUCTRL.INCREMENT_MODE) != 0 ? (byte)32 : (byte)1;
                     break;
             }
         }
@@ -500,8 +502,8 @@ namespace NES_Emulator
             _ppuStatus = 0b0000_0000;
             _ppuMask= 0b0000_0000;
             _ppuCtrl = 0b0000_0000;
-            _vram._reg = 0x00;
-            _tram._reg = 0x00;
+            _vram.Reg = 0x00;
+            _tram.Reg = 0x00;
         }
 
 
@@ -520,7 +522,6 @@ namespace NES_Emulator
                 if (_scanline == -1 && _cycle == 1)
                 {
                     _ppuStatus &= (byte)~PPUSTATUS.VERTICAL_BLANK;
-
                 }
 
                 if ((_cycle >= 2 && _cycle < 258) || (_cycle >= 321 && _cycle < 338))
