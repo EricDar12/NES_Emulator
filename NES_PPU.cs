@@ -230,26 +230,15 @@ namespace NES_Emulator
                 case 0x0005: // Scroll
                     if (_addressLatch == 0)
                     {
-
-                        byte oldFineX = _fineX;
-                        byte oldCoarseX = (byte)_tram.CoarseX;
-
                         _fineX = (byte)(data & 0x07);
                         _tram.CoarseX = (byte)(data >> 3);
                         _addressLatch = 1;
-
-                        //Console.WriteLine($"PPUSCROLL X: data=0x{data:X2}, fineX={_fineX}, coarseX={_tram.CoarseX}");
                     }
                     else
                     {
-                        byte oldFineY = _fineX;
-                        byte oldCoarseY = (byte)_tram.CoarseX;
-
                         _tram.FineY = (byte)(data & 0x07);
                         _tram.CoarseY = (byte)(data >> 3);
                         _addressLatch = 0;
-
-                        //Console.WriteLine($"PPUSCROLL Y: data=0x{data:X2}, fineY={_tram.FineY}, coarseY={_tram.CoarseY}");
                     }
                     break;
                 case 0x0006: // PPU Address
@@ -436,10 +425,13 @@ namespace NES_Emulator
 
         public void UpdateShifters()
         {
-            _bgShifterPatternLo <<= 1;
-            _bgShifterPatternHi <<= 1;
-            _bgShifterAttribLo <<= 1;
-            _bgShifterAttribHi <<= 1;
+            if ((_ppuMask & (byte)PPUMASK.RENDER_BG) != 0)
+            {
+                _bgShifterPatternLo <<= 1;
+                _bgShifterPatternHi <<= 1;
+                _bgShifterAttribLo <<= 1;
+                _bgShifterAttribHi <<= 1;
+            }
         }
 
         public uint[] GetPatternTable(byte index, byte palette)
