@@ -230,15 +230,26 @@ namespace NES_Emulator
                 case 0x0005: // Scroll
                     if (_addressLatch == 0)
                     {
+
+                        byte oldFineX = _fineX;
+                        byte oldCoarseX = (byte)_tram.CoarseX;
+
                         _fineX = (byte)(data & 0x07);
                         _tram.CoarseX = (byte)(data >> 3);
                         _addressLatch = 1;
+
+                        //Console.WriteLine($"PPUSCROLL X: data=0x{data:X2}, fineX={_fineX}, coarseX={_tram.CoarseX}");
                     }
                     else
                     {
+                        byte oldFineY = _fineX;
+                        byte oldCoarseY = (byte)_tram.CoarseX;
+
                         _tram.FineY = (byte)(data & 0x07);
                         _tram.CoarseY = (byte)(data >> 3);
                         _addressLatch = 0;
+
+                        //Console.WriteLine($"PPUSCROLL Y: data=0x{data:X2}, fineY={_tram.FineY}, coarseY={_tram.CoarseY}");
                     }
                     break;
                 case 0x0006: // PPU Address
@@ -334,7 +345,6 @@ namespace NES_Emulator
                 byte physicalTable = (_cart != null && _cart._mirror == NES_Cartridge.Mirror.VERTICAL) ?
                     (byte)(tableIndex & 0x01) // 0,1,0,1 
                   : (byte)(tableIndex >> 1); // 0,0,1,1
-
                 _tblName[physicalTable, tableOffset] = data;
             }
             else if (addr >= 0x3F00 && addr <= 0x3FFF)

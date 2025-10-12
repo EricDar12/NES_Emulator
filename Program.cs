@@ -16,15 +16,8 @@ namespace NES_Emulator
 
             // Different paths for both devices I work on
             //NES_Cartridge _cart = new NES_Cartridge("C:\\Users\\eric1\\OneDrive\\Documents\\NES_Emulator\\Test ROMs\\dk.nes");
-            NES_Cartridge _cart = new NES_Cartridge("C:\\Users\\eric1\\Documents\\Visual Studio 2022\\Projects\\Test ROMs\\dk.nes");
+            NES_Cartridge _cart = new NES_Cartridge("C:\\Users\\eric1\\Documents\\Visual Studio 2022\\Projects\\Test ROMs\\smb.nes");
             NES_System _nes = new NES_System(_cart);
-
-            Console.WriteLine("CHR ROM sample at 0x1240:");
-            for (int i = 0; i < 16; i++)
-            {
-                Console.Write($"0x{_cart._chrMemory[0x1240 + i]:X2} ");
-            }
-            Console.WriteLine();
 
             if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO) < 0)
             {
@@ -64,17 +57,27 @@ namespace NES_Emulator
                 do { _nes.Clock(); } while (!_nes._ppu._isFrameComplete);
 
                 _nes._ppu._isFrameComplete = false;
+                _nes._bus._controller[0] |= 0x08;
+                _nes._cpu.LogProcessorStatus();
+
+                Thread.Sleep(100);
+                //_nes._ppu.SetFlag<NES_PPU.PPUMASK>(NES_PPU.PPUMASK.RENDER_BG, ref _nes._ppu._ppuMask, true);
 
                 frameCount++;
-                if (frameCount % 10 == 0)
+                //Console.WriteLine("\nNametable 0 contents (rows 0-7):");
+                //for (int row = 0; row < 8; row++)
+                //{
+                //    Console.Write($"Row {row}: ");
+                //    for (int col = 0; col < 32; col++)
+                //    {
+                //        Console.Write($"{_nes._ppu._tblName[0, row * 32 + col]:X2} ");
+                //    }
+                //    Console.WriteLine();
+                //}
+
+                if (_nes._ppu.IsSet<NES_PPU.PPUMASK>(NES_PPU.PPUMASK.RENDER_BG, _nes._ppu._ppuMask))
                 {
-                    Console.WriteLine($"Frame {frameCount}, MASK: 0x{_nes._ppu._ppuMask:X2}");
-                    Console.WriteLine("Nametable 1:");
-                    for (int i = 0; i < 128; i++)
-                    {
-                        Console.Write($"{_nes._ppu._tblName[0, i]:X2} ");
-                        if ((i + 1) % 16 == 0) Console.WriteLine();
-                    }
+                    Console.WriteLine("Rendering Enabled: " + frameCount);
                 }
 
                 unsafe

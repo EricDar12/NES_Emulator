@@ -11,6 +11,8 @@ namespace NES_Emulator
         private byte[] _cpuRAM = new byte[2048]; // 2 KB Memory
         private NES_PPU _ppu;
         private NES_Cartridge? _cart;
+        public byte[] _controller = new byte[2];
+        public byte[] _controllerState = new byte[2];
 
         public NES_BUS(NES_PPU ppu)
         {
@@ -20,14 +22,8 @@ namespace NES_Emulator
         public byte CPU_Read(ushort addr)
         {
             byte data = 0x00;
-
-            if (addr >= 0x4000 && addr <= 0x4017)
-            {
-                // APU Addressing Range;
-                data = 0;
-            }
         
-            else if (_cart != null && _cart.CPU_Read(addr, out data))
+            if (_cart != null && _cart.CPU_Read(addr, out data))
             {
                 // If the cartridge can handle the read, it will set "data" via out variable
             }
@@ -41,18 +37,19 @@ namespace NES_Emulator
                 data = _ppu.CPU_Read((ushort)(addr & 0x0007));
             }
 
+            else if (addr >= 0x4016 && addr <= 0x4017)
+            { // Controller addressing range
+                data = (_controllerState[addr & 0x0001] & 0x80) > 0 ? (byte)1 : (byte)0;
+                _controllerState[addr & 0x0001] <<= 1;
+            }
+
             return data;
         }
 
         public void CPU_Write(ushort addr, byte data)
         {
 
-            if (addr >= 0x4000 && addr <= 0x4017)
-            {
-                // APU Addressing Range;
-            }
-
-            else if (_cart != null && _cart.CPU_Write(addr, data))
+            if (_cart != null && _cart.CPU_Write(addr, data))
             {
                 
             }
@@ -65,6 +62,11 @@ namespace NES_Emulator
             else if (addr >= 0x2000 && addr <= 0x3FFF)
             {
                 _ppu.CPU_Write((ushort)(addr & 0x0007), data);
+            }
+
+            else if (addr >= 0x4016 && addr <= 0x4017)
+            {
+                _controllerState[addr & 0x0001] = _controller[addr & 0x0001];
             }
         }
 
