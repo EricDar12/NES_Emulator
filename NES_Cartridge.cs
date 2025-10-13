@@ -161,6 +161,7 @@ namespace NES_Emulator
             if (_mapper.PPU_Map_Read(addr, out mappedAddr))
             {
                 data = _chrMemory[mappedAddr];
+                //Console.WriteLine("Read " + _chrMemory[mappedAddr]);
                 return true;
             }
 
@@ -175,6 +176,7 @@ namespace NES_Emulator
             if (_mapper.PPU_Map_Write(addr, out mappedAddr))
             {
                 _chrMemory[mappedAddr] = data;
+                //Console.WriteLine("Write " + _chrMemory[mappedAddr]);
                 return true;
             }
 

@@ -197,14 +197,14 @@ namespace NES_Emulator
                 case 0x0006: // PPU Address
                     break;
                 case 0x0007: // PPU Data
-                    Console.WriteLine("Reading 2007");
+                    //Console.WriteLine("Reading 2007");
                     data = _dataBuffer;
                     _dataBuffer = PPU_Read(_vram._reg);
                     if (_vram._reg >= 0x3F00) // If accessing palette memory, dont wait a clock cycle in the buffer
                     {
                         data = _dataBuffer;
                     }
-                    _vram.Reg += (_ppuCtrl & (byte)PPUCTRL.INCREMENT_MODE) != 0 ? (byte)32 : (byte)1;
+                    _vram.Reg += (byte)((_ppuCtrl & (byte)PPUCTRL.INCREMENT_MODE) != 0 ? 32 : 1);
                     break;
             }
             return data;
@@ -216,10 +216,11 @@ namespace NES_Emulator
             {
                 case 0x0000: // Control
                     _ppuCtrl = data;
-                    _tram.NameTableX = (_ppuCtrl & (byte)PPUCTRL.NAMETABLE_X) != 0 ? (byte)1 : (byte)0;
-                    _tram.NameTableY = (_ppuCtrl & (byte)PPUCTRL.NAMETABLE_Y) != 0 ? (byte)1 : (byte)0;
+                    _tram.NameTableX = (byte)((_ppuCtrl & (byte)PPUCTRL.NAMETABLE_X) != 0 ? 1 : 0);
+                    _tram.NameTableY = (byte)((_ppuCtrl & (byte)PPUCTRL.NAMETABLE_Y) != 0 ? 1 : 0);
                     break;
                 case 0x0001: // Mask
+                    //Console.WriteLine("Mask Written" + Convert.ToString(data, 2).PadLeft(8,'0'));
                     _ppuMask = data;
                     break;
                 case 0x0002: // Status
@@ -251,15 +252,15 @@ namespace NES_Emulator
                     else
                     {
                         _tram.Reg = (ushort)((_tram.Reg & 0xFF00) | data); // Low 8 bits
-                        Console.WriteLine($"TRAM: {_tram._reg} VRAM: {_vram.Reg}");
+                        //Console.WriteLine($"TRAM: {Convert.ToString(_tram._reg,2).PadLeft(16, '0')} VRAM: {Convert.ToString(_vram.Reg,2).PadLeft(16,'0')}");
                         _vram.Reg = _tram.Reg; // Write temporary address into active vram address
                         _addressLatch = 0;
-                        Console.WriteLine($"TRAM After: {_tram.Reg} VRAM After: {_vram.Reg} \n-----------");
+                        //Console.WriteLine($"AFTER TRAM: {Convert.ToString(_tram.Reg, 2).PadLeft(16, '0')} AFTER VRAM: {Convert.ToString(_vram.Reg, 2).PadLeft(16, '0')}\n-----------");
                     }
                     break;
                 case 0x0007: // PPU Data
                     PPU_Write(_vram.Reg, data);
-                    _vram.Reg += (_ppuCtrl & (byte)PPUCTRL.INCREMENT_MODE) != 0 ? (byte)32 : (byte)1;
+                    _vram.Reg += (byte)((_ppuCtrl & (byte)PPUCTRL.INCREMENT_MODE) != 0 ? 32 : 1);
                     break;
             }
         }
@@ -415,14 +416,10 @@ namespace NES_Emulator
 
         public void LoadBGShifters()
         {
-            byte nxtAttribLo = (byte)((_bgNextTileAttrib & 0b01) != 0 ? 0xFF : 0x00);
-            byte nxtAttribHi = (byte)((_bgNextTileAttrib & 0b10) != 0 ? 0xFF : 0x00);
-
             _bgShifterPatternLo = (ushort)((_bgShifterPatternLo & 0xFF00) | _bgNextTileLSB);
             _bgShifterPatternHi = (ushort)((_bgShifterPatternHi & 0xFF00) | _bgNextTileMSB);
-
-            _bgShifterAttribLo = (ushort)((_bgShifterAttribLo & 0xFF00) | nxtAttribLo);
-            _bgShifterAttribHi = (ushort)((_bgShifterAttribHi & 0xFF00) | nxtAttribHi);
+            _bgShifterAttribLo = (ushort)((_bgShifterAttribLo & 0xFF00) | ((_bgNextTileAttrib & 0b01) != 0 ? 0xFF : 0x00));
+            _bgShifterAttribHi = (ushort)((_bgShifterAttribHi & 0xFF00) | ((_bgNextTileAttrib & 0b10) != 0 ? 0xFF : 0x00));
         }
 
         public void UpdateShifters()
@@ -543,10 +540,12 @@ namespace NES_Emulator
                         case 4:
                             ushort nxtTileLsbAddr = (ushort)((((_ppuCtrl & (byte)PPUCTRL.PATTERN_BG) >> 4) << 12) + (ushort)(_bgNextTileID << 4) + (_vram.FineY + 0));
                             _bgNextTileLSB = PPU_Read(nxtTileLsbAddr);
+                            //Console.WriteLine("LSB " + Convert.ToString(_bgNextTileLSB, 2).PadLeft(8,'0'));
                             break;
                         case 6:
                             ushort nxtTileMsbAddr = (ushort)((((_ppuCtrl & (byte)PPUCTRL.PATTERN_BG) >> 4) << 12) + (ushort)(_bgNextTileID << 4) + (_vram.FineY + 8));
                             _bgNextTileMSB = PPU_Read(nxtTileMsbAddr);
+                            //Console.WriteLine("MSB " + Convert.ToString(_bgNextTileMSB, 2).PadLeft(8, '0'));
                             break;
                         case 7:
                             IncrementScrollX();
@@ -591,24 +590,41 @@ namespace NES_Emulator
             byte bg_pixel = 0x00;
             byte bg_palette = 0x00;
 
+            //if (_scanline == 0 && _cycle == 1)
+            //{ // verifying colors
+            //    byte backdropColor = PPU_Read(0x3F00);
+            //    Console.WriteLine($"Backdrop color index: 0x{backdropColor:X2}, ARGB: 0x{_nesMasterPalette[backdropColor]:X8}");
+            //}
+
             if ((_ppuMask & (byte)PPUMASK.RENDER_BG) != 0)
             {
                 ushort bit_mux = (ushort)(0x8000 >> _fineX);
 
-                byte p0_pixel = (_bgShifterPatternLo & bit_mux) > 0 ? (byte)1 : (byte)0;
-                byte p1_pixel = (_bgShifterPatternHi & bit_mux) > 0 ? (byte)1 : (byte)0;
+                byte p0_pixel = (byte)((_bgShifterPatternLo & bit_mux) > 0 ? 1 : 0);
+                byte p1_pixel = (byte)((_bgShifterPatternHi & bit_mux) > 0 ? 1 : 0);
 
                 bg_pixel = (byte)((p1_pixel << 1) | p0_pixel);
 
-                byte p0_pal = (_bgShifterAttribLo & bit_mux) > 0 ? (byte)1 : (byte)0;
-                byte p1_pal = (_bgShifterAttribHi & bit_mux) > 0 ? (byte)1 : (byte)0;
+                byte p0_pal = (byte)((_bgShifterAttribLo & bit_mux) > 0 ? 1 : 0);
+                byte p1_pal = (byte)((_bgShifterAttribHi & bit_mux) > 0 ? 1 : 0);
 
                 bg_palette = (byte)((p1_pal << 1) | p0_pal);
+
+                //Console.WriteLine($"P0: {p0_pixel} P1: {p1_pixel} PAL1: {p0_pal} PAL2: {p1_pal}");
             }
 
             if (_scanline >= 0 && _scanline < 240 && _cycle > 0 && _cycle <= 256)
             {
+                //if (bg_pixel != 0 && bg_palette != 0)
+                //{
+                //    Console.WriteLine($"Pixel: {bg_pixel} Palette: {bg_palette}");
+                //}
+
                 _frameBuffer[_scanline * 256 + (_cycle - 1)] = GetColorFromPaletteRAM(bg_palette, bg_pixel);
+
+                // The below line does correctly generate noise, something is wrong with how pixels are calculated
+                //Random r1 = new Random();
+                //_frameBuffer[_scanline * 256 + (_cycle - 1)] = _nesMasterPalette[r1.Next(0, 63)];
             }
 
             _cycle++;

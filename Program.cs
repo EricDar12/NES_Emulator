@@ -1,5 +1,6 @@
 ﻿using System;
 using SDL2;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace NES_Emulator
 {
@@ -43,26 +44,44 @@ namespace NES_Emulator
 
             IntPtr renderer = SDL.SDL_CreateRenderer(window, -1, SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
 
+            SDL.SDL_RenderSetLogicalSize(renderer, NES_WIDTH, NES_HEIGHT);
+
             IntPtr texture = SDL.SDL_CreateTexture(
                 renderer,
                 SDL.SDL_PIXELFORMAT_ARGB8888,
                 (int)SDL.SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING,
-                256,
-                240
+                NES_WIDTH,
+                NES_HEIGHT
             );
 
             int frameCount = 0;
+            SDL.SDL_Event sdlEvent;
             while (_isRunning)
             {
+
+                while (SDL.SDL_PollEvent(out sdlEvent) != 0)
+                {
+                    if (sdlEvent.type == SDL.SDL_EventType.SDL_QUIT)
+                    {
+                        _isRunning = false;
+                    }
+                }
+
                 do { _nes.Clock(); } while (!_nes._ppu._isFrameComplete);
 
                 _nes._ppu._isFrameComplete = false;
                 //_nes._bus._controller[0] |= 0xFF; // Simulate buttons being pressed every frame
                 //_nes._cpu.LogProcessorStatus();
 
-                Console.WriteLine($"Frame: {frameCount} ");
+                unsafe
+                {
+                    fixed (uint* ptr = _nes._ppu._frameBuffer)
+                    {
+                        SDL.SDL_UpdateTexture(texture, IntPtr.Zero, (IntPtr)ptr, 256 * sizeof(uint));
+                    }
+                }
 
-                Thread.Sleep(100);
+                //Console.WriteLine($"Frame: {frameCount} ");
                 
                 frameCount++;
                 //if (frameCount > 30)
@@ -79,9 +98,25 @@ namespace NES_Emulator
                 //    }
                 //}
 
+                //if (frameCount % 8 == 0)
+                //{
+                //    Console.WriteLine($"TileID={_nes._ppu._bgNextTileID:X2} FineY={_nes._ppu._vram.FineY} Attrib={_nes._ppu._bgNextTileAttrib:X2} LSB={_nes._ppu._bgNextTileLSB:X2} MSB={_nes._ppu._bgNextTileMSB:X2}");
+                //}
+
+                //_nes._ppu.SetFlag<NES_PPU.PPUMASK>(NES_PPU.PPUMASK.RENDER_BG, ref _nes._ppu._ppuMask, true);
+
+                //if (frameCount % 10 == 0)
+                //{
+                //    Console.WriteLine(Convert.ToString(_nes._ppu._ppuMask, 2).PadLeft(8, '0'));
+                //}
+
                 //if (_nes._ppu.IsSet<NES_PPU.PPUMASK>(NES_PPU.PPUMASK.RENDER_BG, _nes._ppu._ppuMask))
                 //{
                 //    Console.WriteLine("Rendering Enabled At Frame: " + frameCount);
+                //}
+                //else
+                //{
+                //    Console.WriteLine("Rendering Disabled At Frame: " + frameCount);
                 //}
 
                 //if (frameCount >= 30 && frameCount <= 40)
@@ -99,19 +134,12 @@ namespace NES_Emulator
                 //    Console.WriteLine($"VRAM: {Convert.ToString(_nes._ppu._vram._reg, 2)} CX:{_nes._ppu._vram.CoarseX} CY:{_nes._ppu._vram.CoarseY} NTX:{_nes._ppu._vram.NameTableX} NTY:{_nes._ppu._vram.NameTableY} FY:{_nes._ppu._vram.FineY} FX:{_nes._ppu._fineX}");
                 //}
 
-                unsafe
-                {
-                    fixed (uint* ptr = _nes._ppu._frameBuffer)
-                    {
-                        SDL.SDL_UpdateTexture(texture, IntPtr.Zero, (IntPtr)ptr, 256 * sizeof(uint));
-                    }
-                }
-
                 SDL.SDL_RenderClear(renderer);
                 SDL.SDL_RenderCopy(renderer, texture, IntPtr.Zero, IntPtr.Zero);
                 SDL.SDL_RenderPresent(renderer);
                 SDL.SDL_Delay(16);
             }
+            SDL.SDL_DestroyTexture(texture);
             SDL.SDL_DestroyRenderer(renderer);
             SDL.SDL_DestroyWindow(window);
             SDL.SDL_Quit();
