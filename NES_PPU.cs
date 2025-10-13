@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Text;
@@ -218,7 +219,7 @@ namespace NES_Emulator
                     _ppuCtrl = data;
                     _tram.NameTableX = (byte)((_ppuCtrl & (byte)PPUCTRL.NAMETABLE_X) != 0 ? 1 : 0);
                     _tram.NameTableY = (byte)((_ppuCtrl & (byte)PPUCTRL.NAMETABLE_Y) != 0 ? 1 : 0);
-                    break;
+                    break;;
                 case 0x0001: // Mask
                     //Console.WriteLine("Mask Written" + Convert.ToString(data, 2).PadLeft(8,'0'));
                     _ppuMask = data;
@@ -506,9 +507,14 @@ namespace NES_Emulator
 
         public void Clock()
         {
-
             if (_scanline >= -1 && _scanline < 240)
             {
+
+                if (_cycle == 0 && _scanline >= 0 && _scanline < 5)
+                {
+                    Console.WriteLine($"[SL:{_scanline}] VRAM at scanline start: 0x{_vram.Reg:X4} (CoarseX={_vram.CoarseX}, CoarseY={_vram.CoarseY}, NT={_vram.NameTableX},{_vram.NameTableY}, FineY={_vram.FineY})");
+                    Console.WriteLine($"[SL:{_scanline}] TRAM: 0x{_tram.Reg:X4} (CoarseX={_tram.CoarseX}, CoarseY={_tram.CoarseY}, NT={_tram.NameTableX},{_tram.NameTableY}, FineY={_tram.FineY})");
+                }
 
                 if (_scanline == 0 && _cycle == 0)
                 {
@@ -540,12 +546,10 @@ namespace NES_Emulator
                         case 4:
                             ushort nxtTileLsbAddr = (ushort)((((_ppuCtrl & (byte)PPUCTRL.PATTERN_BG) >> 4) << 12) + (ushort)(_bgNextTileID << 4) + (_vram.FineY + 0));
                             _bgNextTileLSB = PPU_Read(nxtTileLsbAddr);
-                            //Console.WriteLine("LSB " + Convert.ToString(_bgNextTileLSB, 2).PadLeft(8,'0'));
                             break;
                         case 6:
                             ushort nxtTileMsbAddr = (ushort)((((_ppuCtrl & (byte)PPUCTRL.PATTERN_BG) >> 4) << 12) + (ushort)(_bgNextTileID << 4) + (_vram.FineY + 8));
                             _bgNextTileMSB = PPU_Read(nxtTileMsbAddr);
-                            //Console.WriteLine("MSB " + Convert.ToString(_bgNextTileMSB, 2).PadLeft(8, '0'));
                             break;
                         case 7:
                             IncrementScrollX();

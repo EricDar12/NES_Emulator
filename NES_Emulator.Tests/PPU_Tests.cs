@@ -126,6 +126,17 @@ namespace NES_Emulator.Tests
 
             Assert.Equal(0, ppu._tram._reg);
             Assert.Equal(0, ppu._vram._reg);
+
+            ppu._tram.CoarseX = 0x0003;
+            ppu._tram.CoarseY = 0x0007;
+
+            ppu._vram.CoarseX = 0x0009;
+            ppu._vram.CoarseY = 0x0011;
+
+            ppu._vram.Reg = ppu._tram.Reg;
+
+            Assert.Equal(ppu._tram._reg, ppu._vram._reg);
+
         }
     }
 }
