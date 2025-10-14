@@ -178,6 +178,10 @@ namespace NES_Emulator
 
         public void STA(ushort addr, byte cycles)
         {
+            if (addr == 0x2005)
+            {
+                Console.WriteLine("Scroll Write: " + _accumulator);
+            }
             _bus.CPU_Write(addr, _accumulator);
             _master_cycle += cycles;
         }
@@ -822,7 +826,6 @@ namespace NES_Emulator
         {
             SetFlag(StatusFlags.UNUSED, true);
             byte opcode = _bus.CPU_Read(_program_counter++);
-            //Console.WriteLine(Convert.ToString(opcode, 16));
             switch (opcode)
             {
                 // LDA Instructions

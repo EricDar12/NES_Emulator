@@ -61,6 +61,10 @@ namespace NES_Emulator
 
             else if (addr >= 0x2000 && addr <= 0x3FFF)
             {
+                if ((addr & 0x0007) == 0x0005)
+                {
+                    Console.WriteLine($"Scroll Write: 0x{data:X2} addr=0x{addr:X4}");
+                }
                 _ppu.CPU_Write((ushort)(addr & 0x0007), data);
             }
 

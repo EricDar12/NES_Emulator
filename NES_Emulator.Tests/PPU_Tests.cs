@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -136,7 +137,53 @@ namespace NES_Emulator.Tests
             ppu._vram.Reg = ppu._tram.Reg;
 
             Assert.Equal(ppu._tram._reg, ppu._vram._reg);
+        }
 
+        [Fact]
+        public void TestLoopyAddress()
+        {
+            NES_PPU ppu = new NES_PPU();
+            Assert.Equal(0, ppu._tram._reg);
+            Assert.Equal(0, ppu._vram._reg);
+
+            byte data = 0x24;
+
+            ppu._tram.Reg = (ushort)((ppu._tram.Reg & 0x00FF) | ((data & 0x3F) << 8)); // Mask data to 6 bits, shift to high byte
+            Assert.Equal(0b0010010000000000, ppu._tram.Reg);
+
+            data = 0x00;
+
+            ppu._tram.Reg = (ushort)((ppu._tram.Reg & 0xFF00) | data); // Low 8 bits
+            Assert.Equal(0b0010010000000000, ppu._tram.Reg);
+
+            ppu._vram.Reg = ppu._tram.Reg;
+            Assert.Equal(ppu._vram.Reg, ppu._tram.Reg);
+
+            data = 0x20;
+
+            ppu._tram.Reg = (ushort)((ppu._tram.Reg & 0x00FF) | ((data & 0x3F) << 8)); // Mask data to 6 bits, shift to high byte
+            Assert.Equal(0b0010000000000000, ppu._tram.Reg);
+
+            data = 0x00;
+
+            ppu._tram.Reg = (ushort)((ppu._tram.Reg & 0xFF00) | data); // Low 8 bits
+            Assert.Equal(0b0010000000000000, ppu._tram.Reg);
+
+            ppu._vram.Reg = ppu._tram.Reg;
+            Assert.Equal(ppu._vram.Reg, ppu._tram.Reg);
+
+            data = 0x23;
+
+            ppu._tram.Reg = (ushort)((ppu._tram.Reg & 0x00FF) | ((data & 0x3F) << 8)); // Mask data to 6 bits, shift to high byte
+            Assert.Equal(0b0010001100000000, ppu._tram.Reg);
+
+            data = 0xC2;
+
+            ppu._tram.Reg = (ushort)((ppu._tram.Reg & 0xFF00) | data); // Low 8 bits
+            Assert.Equal(0b0010001111000010, ppu._tram.Reg);
+
+            ppu._vram.Reg = ppu._tram.Reg;
+            Assert.Equal(ppu._vram.Reg, ppu._tram.Reg);
         }
     }
 }

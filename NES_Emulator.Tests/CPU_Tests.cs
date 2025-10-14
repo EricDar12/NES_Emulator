@@ -5,6 +5,15 @@ namespace NES_Emulator.Tests;
 public class CPU_Tests
 {
 
+    //[Fact]
+    //public static void Test2005Write()
+    //{
+    //    NES_System nes = new NES_System();
+
+
+
+    //}
+
     /* TODO Refactor all tests to function with the new system architecture
     [Fact]
     public void TestStatusRegister()

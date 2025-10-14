@@ -36,6 +36,8 @@ namespace NES_Emulator
         public byte _ppuMask = 0b0000_0000;
         public byte _ppuCtrl = 0b0000_0000;
 
+        public Random r1 = new Random();
+
         public PPU_Addr_Reg _tram = new PPU_Addr_Reg();
         public PPU_Addr_Reg _vram = new PPU_Addr_Reg();
 
@@ -230,19 +232,27 @@ namespace NES_Emulator
                     break;
                 case 0x0004: // OAM Data
                     break;
-                case 0x0005: // Scroll
+                case 0x0005: // Scroll 
+                    // LIKELY THE ISSUE
+                    //Console.WriteLine($"[Scanline {_scanline}] PPUSCROLL write: data=0x{data:X2}, latch={_addressLatch}");
                     if (_addressLatch == 0)
                     {
                         _fineX = (byte)(data & 0x07);
                         _tram.CoarseX = (byte)(data >> 3);
+                        //_fineX = (byte)r1.Next(0,5);
+                        //_tram.CoarseX = (byte)r1.Next(0, 5);
                         _addressLatch = 1;
                     }
                     else
                     {
                         _tram.FineY = (byte)(data & 0x07);
                         _tram.CoarseY = (byte)(data >> 3);
+                        //_tram.FineY = (byte)r1.Next(0, 5);
+                        //_tram.CoarseY = (byte)r1.Next(0, 5);
                         _addressLatch = 0;
                     }
+                    //Console.WriteLine($"[Scanline {_scanline}] PPUSCROLL write: data=0x{data:X2}, latch={_addressLatch}");
+                    //Thread.Sleep(500);
                     break;
                 case 0x0006: // PPU Address
                     if (_addressLatch == 0)
@@ -253,10 +263,8 @@ namespace NES_Emulator
                     else
                     {
                         _tram.Reg = (ushort)((_tram.Reg & 0xFF00) | data); // Low 8 bits
-                        //Console.WriteLine($"TRAM: {Convert.ToString(_tram._reg,2).PadLeft(16, '0')} VRAM: {Convert.ToString(_vram.Reg,2).PadLeft(16,'0')}");
                         _vram.Reg = _tram.Reg; // Write temporary address into active vram address
                         _addressLatch = 0;
-                        //Console.WriteLine($"AFTER TRAM: {Convert.ToString(_tram.Reg, 2).PadLeft(16, '0')} AFTER VRAM: {Convert.ToString(_vram.Reg, 2).PadLeft(16, '0')}\n-----------");
                     }
                     break;
                 case 0x0007: // PPU Data
@@ -510,11 +518,12 @@ namespace NES_Emulator
             if (_scanline >= -1 && _scanline < 240)
             {
 
-                if (_cycle == 0 && _scanline >= 0 && _scanline < 5)
-                {
-                    Console.WriteLine($"[SL:{_scanline}] VRAM at scanline start: 0x{_vram.Reg:X4} (CoarseX={_vram.CoarseX}, CoarseY={_vram.CoarseY}, NT={_vram.NameTableX},{_vram.NameTableY}, FineY={_vram.FineY})");
-                    Console.WriteLine($"[SL:{_scanline}] TRAM: 0x{_tram.Reg:X4} (CoarseX={_tram.CoarseX}, CoarseY={_tram.CoarseY}, NT={_tram.NameTableX},{_tram.NameTableY}, FineY={_tram.FineY})");
-                }
+                //if (_cycle == 0 && _scanline >= 0 && _scanline < 5)
+                //{
+                //    Console.WriteLine($"[SL:{_scanline}] VRAM at scanline start: 0x{_vram.Reg:X4} (CoarseX={_vram.CoarseX}, CoarseY={_vram.CoarseY}, NT={_vram.NameTableX},{_vram.NameTableY}, FineY={_vram.FineY})");
+                //    Console.WriteLine($"[SL:{_scanline}] TRAM: 0x{_tram.Reg:X4} (CoarseX={_tram.CoarseX}, CoarseY={_tram.CoarseY}, NT={_tram.NameTableX},{_tram.NameTableY}, FineY={_tram.FineY})");
+                //    Console.WriteLine($"[SL:{_scanline}] FineX: 0x{_fineX:X4}");
+                //}
 
                 if (_scanline == 0 && _cycle == 0)
                 {
@@ -630,6 +639,17 @@ namespace NES_Emulator
                 //Random r1 = new Random();
                 //_frameBuffer[_scanline * 256 + (_cycle - 1)] = _nesMasterPalette[r1.Next(0, 63)];
             }
+
+            //if (_scanline == 0 && _cycle == 340)
+            //{
+            //    Console.WriteLine($"End of scanline 0: VRAM = 0x{_vram.Reg:X4}");
+            //    Console.WriteLine($"End of scanline 0: TRAM = 0x{_tram.Reg:X4}");
+            //}
+            //if (_scanline == 1 && _cycle == 0)
+            //{
+            //    Console.WriteLine($"Start of scanline 1: VRAM = 0x{_vram.Reg:X4}");
+            //    Console.WriteLine($"End of scanline 0: TRAM = 0x{_tram.Reg:X4}");
+            //}
 
             _cycle++;
             if (_cycle >= 341)
