@@ -67,58 +67,6 @@ namespace NES_Emulator
             0xFFA0D6E4, 0xFFA0A2A0, 0xFF000000, 0xFF000000
         };
 
-        // Purely for demonstration, games are responsible for loading their own palette data
-        public void InitializeDefaultPalettes()
-        {
-            // Palette 0 - Grayscale (classic)
-            _tblPalette[0x00] = 0x0F; // Black
-            _tblPalette[0x01] = 0x00; // Dark gray  
-            _tblPalette[0x02] = 0x10; // Light gray
-            _tblPalette[0x03] = 0x30; // White
-
-            // Palette 1 - Blue theme (water/ice)
-            _tblPalette[0x04] = 0x0F; // Black
-            _tblPalette[0x05] = 0x01; // Deep blue
-            _tblPalette[0x06] = 0x11; // Medium blue  
-            _tblPalette[0x07] = 0x21; // Light blue
-
-            // Palette 2 - Warm theme (earth/fire) - This is what you're using with _selectedPalette = 0x02
-            _tblPalette[0x08] = 0x0F; // Black
-            _tblPalette[0x09] = 0x06; // Dark red
-            _tblPalette[0x0A] = 0x16; // Orange
-            _tblPalette[0x0B] = 0x27; // Yellow
-
-            // Palette 3 - Nature theme (grass/forest)
-            _tblPalette[0x0C] = 0x0F; // Black
-            _tblPalette[0x0D] = 0x09; // Dark green
-            _tblPalette[0x0E] = 0x19; // Medium green
-            _tblPalette[0x0F] = 0x29; // Light green
-
-            // Palette 4 - Purple theme (magic/fantasy)
-            _tblPalette[0x10] = 0x0F; // Black
-            _tblPalette[0x11] = 0x04; // Dark purple
-            _tblPalette[0x12] = 0x14; // Medium purple
-            _tblPalette[0x13] = 0x24; // Light purple/pink
-
-            // Palette 5 - Sunset theme
-            _tblPalette[0x14] = 0x0F; // Black
-            _tblPalette[0x15] = 0x08; // Dark orange
-            _tblPalette[0x16] = 0x28; // Bright orange
-            _tblPalette[0x17] = 0x38; // Light orange/yellow
-
-            // Palette 6 - Ocean theme
-            _tblPalette[0x18] = 0x0F; // Black
-            _tblPalette[0x19] = 0x02; // Navy blue
-            _tblPalette[0x1A] = 0x12; // Ocean blue
-            _tblPalette[0x1B] = 0x22; // Sky blue
-
-            // Palette 7 - High contrast (good for detailed sprites)
-            _tblPalette[0x1C] = 0x0F; // Black
-            _tblPalette[0x1D] = 0x06; // Red
-            _tblPalette[0x1E] = 0x2A; // Bright green
-            _tblPalette[0x1F] = 0x30; // White
-        }
-
         #region ##### REGISTERS ENUMS #####
 
         [Flags]
@@ -267,10 +215,8 @@ namespace NES_Emulator
 
         public byte PPU_Read(ushort addr)
         {
-
             byte data = 0;
             addr &= 0x3FFF;
-
 
             if (_cart != null && _cart.PPU_Read(addr, out data))
             {
@@ -286,7 +232,7 @@ namespace NES_Emulator
             else if (addr >= 0x2000 && addr <= 0x3EFF)
             {
                 // Nametable address range / VRAM
-                // TODO: Implement mirroring logic for nametable r/w !!!!! important !!!!! 44:48 OLC tutorial
+                // TODO: Implement mirroring logic for nametable r/w !!!!! important !!!!! 44:48 OLC tutorial pt 4
                 // ^ this is kind of done but not sure how I feel about it
 
                 ushort normalizedAddr = (ushort)(addr & 0x0FFF); // Clamp to 4kib range
@@ -315,7 +261,6 @@ namespace NES_Emulator
 
         public void PPU_Write(ushort addr, byte data)
         {
-
             addr &= 0x3FFF;
 
             if (_cart != null && _cart.PPU_Write(addr, data))
@@ -350,90 +295,6 @@ namespace NES_Emulator
                 _tblPalette[addr] = data;
             }
         }
-
-        public void IncrementScrollX()
-        {
-            if ((_ppuMask & (byte)PPUMASK.RENDER_BG) != 0 || (_ppuMask & (byte)PPUMASK.RENDER_SPRITES) != 0)
-            {
-                if (_vram.CoarseX == 31)
-                {
-                    _vram.CoarseX = 0;
-                    _vram.NameTableX ^= 1;
-                }
-                else
-                {
-                    _vram.CoarseX++;
-                }
-            }
-        }
-
-        public void IncrementScrollY()
-        {
-            if ((_ppuMask & (byte)PPUMASK.RENDER_BG) != 0 || (_ppuMask & (byte)PPUMASK.RENDER_SPRITES) != 0)
-            {
-                if (_vram.FineY < 7)
-                {
-                    _vram.FineY++;
-                }
-                else
-                {
-                    _vram.FineY = 0;
-
-                    if (_vram.CoarseY == 29)
-                    {
-                        _vram.CoarseY = 0;
-                        _vram.NameTableY ^= 1;
-                    }
-                    else if (_vram.CoarseY == 31)
-                    {
-                        _vram.CoarseY = 0;
-                    }
-                    else
-                    {
-                        _vram.CoarseY++;
-                    }
-                }
-            }
-        }
-
-        public void TransferAddressX()
-        {
-            if ((_ppuMask & (byte)PPUMASK.RENDER_BG) != 0 || (_ppuMask & (byte)PPUMASK.RENDER_SPRITES) != 0)
-            {
-                _vram.NameTableX = _tram.NameTableX;
-                _vram.CoarseX = _tram.CoarseX;
-            }
-        }
-
-        public void TransferAddressY()
-        {
-            if ((_ppuMask & (byte)PPUMASK.RENDER_BG) != 0 || (_ppuMask & (byte)PPUMASK.RENDER_SPRITES) != 0)
-            {
-                _vram.FineY = _tram.FineY;
-                _vram.NameTableY = _tram.NameTableY;
-                _vram.CoarseY = _tram.CoarseY;
-            }
-        }
-
-        public void LoadBGShifters()
-        {
-            _bgShifterPatternLo = (ushort)((_bgShifterPatternLo & 0xFF00) | _bgNextTileLSB);
-            _bgShifterPatternHi = (ushort)((_bgShifterPatternHi & 0xFF00) | _bgNextTileMSB);
-            _bgShifterAttribLo = (ushort)((_bgShifterAttribLo & 0xFF00) | ((_bgNextTileAttrib & 0b01) != 0 ? 0xFF : 0x00));
-            _bgShifterAttribHi = (ushort)((_bgShifterAttribHi & 0xFF00) | ((_bgNextTileAttrib & 0b10) != 0 ? 0xFF : 0x00));
-        }
-
-        public void UpdateShifters()
-        {
-            if ((_ppuMask & (byte)PPUMASK.RENDER_BG) != 0)
-            {
-                _bgShifterPatternLo <<= 1;
-                _bgShifterPatternHi <<= 1;
-                _bgShifterAttribLo <<= 1;
-                _bgShifterAttribHi <<= 1;
-            }
-        }
-
         public uint[] GetPatternTable(byte index, byte palette)
         {
             // A Pattern Table is a 16x16 grid, where each cell in the grid is 8x8 pixels
@@ -472,43 +333,8 @@ namespace NES_Emulator
             return buffer;
         }
 
-        public uint GetColorFromPaletteRAM(byte palette, byte pixel)
-        {
-            uint color = _nesMasterPalette[PPU_Read((ushort)(0x3F00 + (palette << 2) + pixel)) & 0x3F];
-            return color;
-        }
-
-        public void ConnectCartridge(NES_Cartridge cart)
-        {
-            _cart = cart;
-        }
-
-        public void Reset()
-        {
-            _fineX = 0x00;
-            _addressLatch = 0x00;
-            _dataBuffer = 0x00;
-            _scanline = 0;
-            _cycle = 0;
-            _bgNextTileID = 0x00;
-            _bgNextTileAttrib = 0x00;
-            _bgNextTileLSB = 0x00;
-            _bgNextTileMSB = 0x00;
-            _bgShifterPatternLo = 0x00;
-            _bgShifterPatternHi = 0x00;
-            _bgShifterAttribLo = 0x00;
-            _bgShifterAttribHi = 0x00;
-            _ppuStatus = 0b0000_0000;
-            _ppuMask= 0b0000_0000;
-            _ppuCtrl = 0b0000_0000;
-            _vram.Reg = 0x00;
-            _tram.Reg = 0x00;
-        }
-
-
         public void Clock()
         {
-
             if (_scanline >= -1 && _scanline < 240)
             {
 
@@ -622,6 +448,122 @@ namespace NES_Emulator
                     _isFrameComplete = true;
                 }
             }
+        }
+
+        public void IncrementScrollX()
+        {
+            if ((_ppuMask & (byte)PPUMASK.RENDER_BG) != 0 || (_ppuMask & (byte)PPUMASK.RENDER_SPRITES) != 0)
+            {
+                if (_vram.CoarseX == 31)
+                {
+                    _vram.CoarseX = 0;
+                    _vram.NameTableX ^= 1;
+                }
+                else
+                {
+                    _vram.CoarseX++;
+                }
+            }
+        }
+
+        public void IncrementScrollY()
+        {
+            if ((_ppuMask & (byte)PPUMASK.RENDER_BG) != 0 || (_ppuMask & (byte)PPUMASK.RENDER_SPRITES) != 0)
+            {
+                if (_vram.FineY < 7)
+                {
+                    _vram.FineY++;
+                }
+                else
+                {
+                    _vram.FineY = 0;
+
+                    if (_vram.CoarseY == 29)
+                    {
+                        _vram.CoarseY = 0;
+                        _vram.NameTableY ^= 1;
+                    }
+                    else if (_vram.CoarseY == 31)
+                    {
+                        _vram.CoarseY = 0;
+                    }
+                    else
+                    {
+                        _vram.CoarseY++;
+                    }
+                }
+            }
+        }
+
+        public void TransferAddressX()
+        {
+            if ((_ppuMask & (byte)PPUMASK.RENDER_BG) != 0 || (_ppuMask & (byte)PPUMASK.RENDER_SPRITES) != 0)
+            {
+                _vram.NameTableX = _tram.NameTableX;
+                _vram.CoarseX = _tram.CoarseX;
+            }
+        }
+
+        public void TransferAddressY()
+        {
+            if ((_ppuMask & (byte)PPUMASK.RENDER_BG) != 0 || (_ppuMask & (byte)PPUMASK.RENDER_SPRITES) != 0)
+            {
+                _vram.FineY = _tram.FineY;
+                _vram.NameTableY = _tram.NameTableY;
+                _vram.CoarseY = _tram.CoarseY;
+            }
+        }
+
+        public void LoadBGShifters()
+        {
+            _bgShifterPatternLo = (ushort)((_bgShifterPatternLo & 0xFF00) | _bgNextTileLSB);
+            _bgShifterPatternHi = (ushort)((_bgShifterPatternHi & 0xFF00) | _bgNextTileMSB);
+            _bgShifterAttribLo = (ushort)((_bgShifterAttribLo & 0xFF00) | ((_bgNextTileAttrib & 0b01) != 0 ? 0xFF : 0x00));
+            _bgShifterAttribHi = (ushort)((_bgShifterAttribHi & 0xFF00) | ((_bgNextTileAttrib & 0b10) != 0 ? 0xFF : 0x00));
+        }
+
+        public void UpdateShifters()
+        {
+            if ((_ppuMask & (byte)PPUMASK.RENDER_BG) != 0)
+            {
+                _bgShifterPatternLo <<= 1;
+                _bgShifterPatternHi <<= 1;
+                _bgShifterAttribLo <<= 1;
+                _bgShifterAttribHi <<= 1;
+            }
+        }
+
+        public uint GetColorFromPaletteRAM(byte palette, byte pixel)
+        {
+            uint color = _nesMasterPalette[PPU_Read((ushort)(0x3F00 + (palette << 2) + pixel)) & 0x3F];
+            return color;
+        }
+
+        public void ConnectCartridge(NES_Cartridge cart)
+        {
+            _cart = cart;
+        }
+
+        public void Reset()
+        {
+            _fineX = 0x00;
+            _addressLatch = 0x00;
+            _dataBuffer = 0x00;
+            _scanline = 0;
+            _cycle = 0;
+            _bgNextTileID = 0x00;
+            _bgNextTileAttrib = 0x00;
+            _bgNextTileLSB = 0x00;
+            _bgNextTileMSB = 0x00;
+            _bgShifterPatternLo = 0x00;
+            _bgShifterPatternHi = 0x00;
+            _bgShifterAttribLo = 0x00;
+            _bgShifterAttribHi = 0x00;
+            _ppuStatus = 0b0000_0000;
+            _ppuMask= 0b0000_0000;
+            _ppuCtrl = 0b0000_0000;
+            _vram.Reg = 0x00;
+            _tram.Reg = 0x00;
         }
     }
 }

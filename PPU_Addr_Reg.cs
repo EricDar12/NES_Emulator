@@ -8,7 +8,6 @@ namespace NES_Emulator
 {
     public class PPU_Addr_Reg 
     {
-
         private ushort _reg = 0x0000;
 
         public ushort Reg
