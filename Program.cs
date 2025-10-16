@@ -17,7 +17,7 @@ namespace NES_Emulator
 
             // Different paths for both devices I work on
             //NES_Cartridge _cart = new NES_Cartridge("C:\\Users\\eric1\\OneDrive\\Documents\\NES_Emulator\\Test ROMs\\dk.nes");
-            NES_Cartridge _cart = new NES_Cartridge("C:\\Users\\eric1\\Documents\\Visual Studio 2022\\Projects\\Test ROMs\\smb.nes");
+            NES_Cartridge _cart = new NES_Cartridge("C:\\Users\\eric1\\Documents\\Visual Studio 2022\\Projects\\Test ROMs\\kic.nes");
             NES_System _nes = new NES_System(_cart);
 
             if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO) < 0)
@@ -78,61 +78,8 @@ namespace NES_Emulator
                 }
 
                 _nes._ppu._isFrameComplete = false;
-                //_nes._bus._controller[0] |= 0xFF; // Simulate buttons being pressed every frame
-                //_nes._cpu.LogProcessorStatus();
+                _nes._bus._controller[0] |= 0xFF; // Simulate buttons being pressed every frame
 
-                //Console.WriteLine($"Frame: {frameCount} ");
-
-                frameCount++;
-                //if (frameCount > 30)
-                //{
-                //    Console.WriteLine("\nNametable 0 contents (rows 0-7):");
-                //    for (int row = 0; row < 8; row++)
-                //    {
-                //        Console.Write($"Row {row}: ");
-                //        for (int col = 0; col < 32; col++)
-                //        {
-                //            Console.Write($"{_nes._ppu._tblName[0, row * 32 + col]:X2} ");
-                //        }
-                //        Console.WriteLine();
-                //    }
-                //}
-
-                //if (frameCount % 8 == 0)
-                //{
-                //    Console.WriteLine($"TileID={_nes._ppu._bgNextTileID:X2} FineY={_nes._ppu._vram.FineY} Attrib={_nes._ppu._bgNextTileAttrib:X2} LSB={_nes._ppu._bgNextTileLSB:X2} MSB={_nes._ppu._bgNextTileMSB:X2}");
-                //}
-
-                //_nes._ppu.SetFlag<NES_PPU.PPUMASK>(NES_PPU.PPUMASK.RENDER_BG, ref _nes._ppu._ppuMask, true);
-
-                //if (frameCount % 10 == 0)
-                //{
-                //    //Console.WriteLine(Convert.ToString(_nes._ppu._ppuMask, 2).PadLeft(8, '0'));
-                //}
-
-                //if (_nes._ppu.IsSet<NES_PPU.PPUMASK>(NES_PPU.PPUMASK.RENDER_BG, _nes._ppu._ppuMask))
-                //{
-                //    Console.WriteLine("Rendering Enabled At Frame: " + frameCount);
-                //}
-                //else
-                //{
-                //    Console.WriteLine("Rendering Disabled At Frame: " + frameCount);
-                //}
-
-                //if (frameCount >= 30 && frameCount <= 40)
-                //{
-                //    Console.WriteLine("Palette memory:");
-                //    for (int i = 0; i < 32; i++)
-                //    {
-                //        Console.Write($"[{i:X2}]={_nes._ppu._tblPalette[i]:X2} ");
-                //        if ((i + 1) % 8 == 0) Console.WriteLine();
-                //    }
-                //}
-                //if (frameCount % 3 == 0)
-                //{
-                //    Console.WriteLine($"TRAM: {_nes._ppu._tram._reg:b16} CX:{_nes._ppu._tram.CoarseX:b5} CY:{_nes._ppu._tram.CoarseY:b5} NTX:{_nes._ppu._tram.NameTableX:b1} NTY:{_nes._ppu._tram.NameTableY:b1} FY:{_nes._ppu._tram.FineY:b3} FX:{_nes._ppu._fineX:b3}");
-                //    Console.WriteLine($"VRAM: {_nes._ppu._vram._reg:b16} CX:{_nes._ppu._vram.CoarseX:b5} CY:{_nes._ppu._vram.CoarseY:b5} NTX:{_nes._ppu._vram.NameTableX:b1} NTY:{_nes._ppu._vram.NameTableY:b1} FY:{_nes._ppu._vram.FineY:b3} FX:{_nes._ppu._fineX:b3}");
-                //}
 
                 SDL.SDL_RenderClear(renderer);
                 SDL.SDL_RenderCopy(renderer, texture, IntPtr.Zero, IntPtr.Zero);

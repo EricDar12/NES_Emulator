@@ -20,7 +20,7 @@ namespace NES_Emulator
         public ushort CoarseX
         {
             get => (ushort)(_reg & 0x1F);
-            set => _reg = (ushort)(((_reg & ~0x1F) | (value & 0x1F)) & 0x3FFF);
+            set => _reg = (ushort)(((_reg & ~0x1F) | (value & 0x1F)));
         }        
 
         public ushort CoarseY

@@ -200,7 +200,6 @@ namespace NES_Emulator
                 case 0x0006: // PPU Address
                     break;
                 case 0x0007: // PPU Data
-                    //Console.WriteLine("Reading 2007");
                     data = _dataBuffer;
                     _dataBuffer = PPU_Read(_vram.Reg);
                     if (_vram.Reg >= 0x3F00) // If accessing palette memory, dont wait a clock cycle in the buffer
@@ -223,7 +222,6 @@ namespace NES_Emulator
                     _tram.NameTableY = (byte)((_ppuCtrl & (byte)PPUCTRL.NAMETABLE_Y) != 0 ? 1 : 0);
                     break;;
                 case 0x0001: // Mask
-                    //Console.WriteLine("Mask Written" + Convert.ToString(data, 2).PadLeft(8,'0'));
                     _ppuMask = data;
                     break;
                 case 0x0002: // Status
@@ -244,23 +242,18 @@ namespace NES_Emulator
                         _tram.FineY = (byte)(data & 0x07);
                         _tram.CoarseY = (byte)(data >> 3);
                         _addressLatch = 0;
-                        //Console.WriteLine($"TRAM {_tram.Reg:x4}");
                     }
                     break;
                 case 0x0006: // PPU Address
                     if (_addressLatch == 0)
                     {
                         _tram.Reg = (ushort)(((data & 0x3F) << 8) | _tram.Reg & 0x00FF);
-                        //Console.WriteLine($"2006 WRITE: T:{_tram.Reg:B16} V:{_vram.Reg:B16} LATCH:{_addressLatch}");
-                        //Thread.Sleep(500);
                         _addressLatch = 1;
                     }
                     else
                     {
                         _tram.Reg = (ushort)((_tram.Reg & 0xFF00) | data); // Low 8 bits
                         _vram.Reg = _tram.Reg;
-                        //Console.WriteLine($"2006 WRITE: T:{_tram.Reg:B16} V:{_vram.Reg:B16} LATCH:{_addressLatch} Match:{_tram.Reg == _vram.Reg}");
-                        //Thread.Sleep(500);
                         _addressLatch = 0;
 
                     }
@@ -316,7 +309,6 @@ namespace NES_Emulator
                 if (addr == 0x0018) addr = 0x0008;
                 if (addr == 0x001C) addr = 0x000C;
                 data = (byte)(_tblPalette[addr] & ((_ppuMask & (byte)PPUMASK.GRAYSCALE) != 0 ? 0x30 : 0x3F));
-                //Console.WriteLine($"PALETTE READ 0x{data:x4} 0x3F{addr:x2}");
             }
             return data;
         }
@@ -333,7 +325,6 @@ namespace NES_Emulator
 
             else if (addr >= 0x0000 && addr <= 0x1FFF)
             {
-                //Console.WriteLine("Pattern Write");
                 _tblPattern[(addr & 0x1000) >> 12, addr & 0x0FFF] = data;
             }
 
@@ -357,7 +348,6 @@ namespace NES_Emulator
                 if (addr == 0x0018) addr = 0x0008;
                 if (addr == 0x001C) addr = 0x000C;
                 _tblPalette[addr] = data;
-                //Console.WriteLine($"PALETTE WRITE 0x{data:x4} TO 0x3F{addr:x2}");
             }
         }
 
@@ -374,7 +364,6 @@ namespace NES_Emulator
                 {
                     _vram.CoarseX++;
                 }
-                //Console.WriteLine($"CX: {_vram.CoarseX} NTX: {_vram.NameTableX}");
             }
         }
 
@@ -432,8 +421,6 @@ namespace NES_Emulator
             _bgShifterPatternHi = (ushort)((_bgShifterPatternHi & 0xFF00) | _bgNextTileMSB);
             _bgShifterAttribLo = (ushort)((_bgShifterAttribLo & 0xFF00) | ((_bgNextTileAttrib & 0b01) != 0 ? 0xFF : 0x00));
             _bgShifterAttribHi = (ushort)((_bgShifterAttribHi & 0xFF00) | ((_bgNextTileAttrib & 0b10) != 0 ? 0xFF : 0x00));
-
-            //Console.WriteLine($"LoadBGShifters: PatternLo={_bgShifterPatternLo:X4}, PatternHi={_bgShifterPatternHi:X4}, AttribLo={_bgShifterAttribLo:X4}, AttribHi={_bgShifterAttribHi:X4}");
         }
 
         public void UpdateShifters()
@@ -444,8 +431,6 @@ namespace NES_Emulator
                 _bgShifterPatternHi <<= 1;
                 _bgShifterAttribLo <<= 1;
                 _bgShifterAttribHi <<= 1;
-
-                //Console.WriteLine($"UpdateShifters: PatternLo={_bgShifterPatternLo:X4}, PatternHi={_bgShifterPatternHi:X4}, AttribLo={_bgShifterAttribLo:X4}, AttribHi={_bgShifterAttribHi:X4}");
             }
         }
 
@@ -490,7 +475,6 @@ namespace NES_Emulator
         public uint GetColorFromPaletteRAM(byte palette, byte pixel)
         {
             uint color = _nesMasterPalette[PPU_Read((ushort)(0x3F00 + (palette << 2) + pixel)) & 0x3F];
-            //Console.WriteLine($"{color:x4}");
             return color;
         }
 
@@ -524,11 +508,6 @@ namespace NES_Emulator
 
         public void Clock()
         {
-
-            //if (_scanline == -1 && _cycle == 257)
-            //{
-            //    LogPPUState();
-            //}
 
             if (_scanline >= -1 && _scanline < 240)
             {
@@ -625,9 +604,6 @@ namespace NES_Emulator
                 byte p1_pal = (byte)((_bgShifterAttribHi & bit_mux) > 0 ? 1 : 0);
 
                 bg_palette = (byte)((p1_pal << 1) | p0_pal);
-
-                //Console.WriteLine($"pal0:{p0_pal} pal1:{p1_pal} p0:{p0_pixel} p1:{p1_pixel}");
-                //Console.WriteLine($"palette:{bg_palette} pixel:{bg_pixel} ");
             }
 
             if (_scanline >= 0 && _scanline < 240 && _cycle > 0 && _cycle <= 256)
@@ -647,32 +623,5 @@ namespace NES_Emulator
                 }
             }
         }
-
-        public void LogPPUState()
-        {
-            var sb = new System.Text.StringBuilder(512);
-
-            sb.AppendLine($"Scanline: {_scanline} Cycle: {_cycle}");
-
-            sb.AppendLine("   REGISTER    RAW(hex)   COARSEX  COARSEY  NTX  NTY  FINEY  FINEX");
-            sb.AppendLine("-------------------------------------------------------------------");
-            sb.AppendLine($"   TRAM      0x{_tram.Reg:X4}      {_tram.CoarseX,2}       {_tram.CoarseY,2}     {_tram.NameTableX}    {_tram.NameTableY}     {_tram.FineY,2}     {_fineX,2}");
-            sb.AppendLine($"   VRAM      0x{_tram.Reg:X4}      {_vram.CoarseX,2}       {_vram.CoarseY,2}     {_vram.NameTableX}    {_vram.NameTableY}     {_vram.FineY,2}     {_fineX,2}");
-            sb.AppendLine("-------------------------------------------------------------------");
-
-            if (_tram.Reg != _vram.Reg)
-            {
-                sb.AppendLine($"⚠ VRAM/TRAM mismatch! Δ = {_vram.Reg - _tram.Reg} (VRAM > TRAM? {_vram.Reg > _tram.Reg})");
-            }
-
-            sb.AppendLine();
-            sb.AppendLine($"PPUCTRL  : 0x{_ppuCtrl:X2}");
-            sb.AppendLine($"PPUMASK  : 0x{_ppuMask:X2}");
-            sb.AppendLine($"PPUSTATUS: 0x{_ppuStatus:X2}");
-            sb.AppendLine("===============================================");
-
-            Console.WriteLine(sb.ToString());
-        }
-
     }
 }

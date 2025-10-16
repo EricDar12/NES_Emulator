@@ -140,7 +140,6 @@ namespace NES_Emulator
         public void PushByte(byte data)
         {
             ushort addr = (ushort)(0x0100 + _stack_pointer);
-            //Console.WriteLine($"PUSH: Writing {data:X2} to {addr:X4}");
             _bus.CPU_Write(addr, data);
             _stack_pointer--;
         }
@@ -150,7 +149,6 @@ namespace NES_Emulator
             _stack_pointer++;
             ushort addr = (ushort)(0x0100 + _stack_pointer);
             byte value = _bus.CPU_Read(addr);
-            //Console.WriteLine($"POP: Reading {value:X2} from {addr:X4}");
             return value;
         }
 
@@ -505,10 +503,7 @@ namespace NES_Emulator
         public void AND(ushort addr, byte cycles)
         {
             byte operand = _bus.CPU_Read(addr);
-            //Console.WriteLine($"-----\nOPERAND {operand:X4}");
-            //Console.WriteLine($"ACC {_accumulator:X4}");
             _accumulator &= operand;
-            //Console.WriteLine($"RESULT {_accumulator:X4}");
             SetNegativeAndZeroFlags(_accumulator);
             _master_cycle += cycles;
         }
@@ -654,8 +649,6 @@ namespace NES_Emulator
         public void BRK()
         {
             PushWord((ushort)(_program_counter + 2));
-
-            //Console.WriteLine($"DEBUG:Addr Pushed To Stack {_program_counter}");
 
             PushByte((byte)(_status | 0b0011_0000));
             SetFlag(StatusFlags.INTERRUPT_DISABLE, true);
@@ -1043,7 +1036,6 @@ namespace NES_Emulator
                 if (_bus.CPU_Read(_program_counter) == 0x00)
                 {
                     BRK(); // This is bad
-                    Console.WriteLine("Break Reached");
                     break;
                 }
                 Step();
