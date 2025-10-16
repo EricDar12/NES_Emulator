@@ -90,9 +90,9 @@ namespace NES_Emulator
             switch (_mapperID)
             {
                 case 0:
-                    _mapper = new Mapper_0000(_prgBanks, _chrBanks); break;
+                    _mapper = new Mapper_0(_prgBanks, _chrBanks); break;
                 default:
-                    _mapper = new Mapper_0000(_prgBanks, _chrBanks); break;
+                    _mapper = new Mapper_0(_prgBanks, _chrBanks); break;
             }
 
             _isImageValid = true;

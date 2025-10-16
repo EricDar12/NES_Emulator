@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace NES_Emulator
 {
-    public class Mapper_0000 : NES_Mapper
+    public class Mapper_0 : NES_Mapper
     {
 
-        public Mapper_0000(byte prgBanks, byte chrBanks) : base(prgBanks, chrBanks)
+        public Mapper_0(byte prgBanks, byte chrBanks) : base(prgBanks, chrBanks)
         {
 
         }

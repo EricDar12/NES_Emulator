@@ -17,7 +17,7 @@ namespace NES_Emulator
 
             // Different paths for both devices I work on
             //NES_Cartridge _cart = new NES_Cartridge("C:\\Users\\eric1\\OneDrive\\Documents\\NES_Emulator\\Test ROMs\\dk.nes");
-            NES_Cartridge _cart = new NES_Cartridge("C:\\Users\\eric1\\Documents\\Visual Studio 2022\\Projects\\Test ROMs\\kic.nes");
+            NES_Cartridge _cart = new NES_Cartridge("C:\\Users\\eric1\\Documents\\Visual Studio 2022\\Projects\\Test ROMs\\icc.nes");
             NES_System _nes = new NES_System(_cart);
 
             if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO) < 0)
@@ -78,8 +78,8 @@ namespace NES_Emulator
                 }
 
                 _nes._ppu._isFrameComplete = false;
-                _nes._bus._controller[0] |= 0xFF; // Simulate buttons being pressed every frame
-
+                frameCount++;
+                //_nes._bus._controller[0] |= (1 << 3); // Simulate buttons being pressed every frame
 
                 SDL.SDL_RenderClear(renderer);
                 SDL.SDL_RenderCopy(renderer, texture, IntPtr.Zero, IntPtr.Zero);

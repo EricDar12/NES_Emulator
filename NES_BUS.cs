@@ -11,6 +11,7 @@ namespace NES_Emulator
         private byte[] _cpuRAM = new byte[2048]; // 2 KB Memory
         private NES_PPU _ppu;
         private NES_Cartridge? _cart;
+        // TODO: Input
         public byte[] _controller = new byte[2];
         public byte[] _controllerState = new byte[2];
 
