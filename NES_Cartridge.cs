@@ -23,6 +23,11 @@ namespace NES_Emulator
         private const int PROGRAM_MEMORY_UNIT = 16384;
         private const int CHARACTER_MEMORY_UNIT = 8192;
 
+        public NES_Cartridge()
+        {
+
+        }
+
         public NES_Cartridge(string filePath)
         {
             INES_Header header = new INES_Header();
@@ -102,6 +107,12 @@ namespace NES_Emulator
                 $"Mirror: {_mirror} | " +
                 $"IsImageValid: {_isImageValid}"
             );
+
+            //foreach (byte b in _chrMemory)
+            //{
+            //    Console.WriteLine($"{b:x4}");
+            //}
+
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -160,8 +171,8 @@ namespace NES_Emulator
 
             if (_mapper.PPU_Map_Read(addr, out mappedAddr))
             {
+                //Console.WriteLine($"Mapped Address: {mappedAddr:X4}");
                 data = _chrMemory[mappedAddr];
-                //Console.WriteLine("Read " + _chrMemory[mappedAddr]);
                 return true;
             }
 

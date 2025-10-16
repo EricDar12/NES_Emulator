@@ -48,7 +48,8 @@ namespace NES_Emulator
         public ushort Addr_Absolute()
         {
             byte lo = _bus.CPU_Read(_program_counter++);
-            return (ushort)((_bus.CPU_Read(_program_counter++) << 8) | lo);
+            byte hi = _bus.CPU_Read((_program_counter++));
+            return (ushort)((hi << 8) | lo);
         }
 
         public ushort Addr_AbsoluteX()
@@ -178,10 +179,6 @@ namespace NES_Emulator
 
         public void STA(ushort addr, byte cycles)
         {
-            if (addr == 0x2005)
-            {
-                Console.WriteLine("Scroll Write: " + _accumulator);
-            }
             _bus.CPU_Write(addr, _accumulator);
             _master_cycle += cycles;
         }
@@ -508,7 +505,10 @@ namespace NES_Emulator
         public void AND(ushort addr, byte cycles)
         {
             byte operand = _bus.CPU_Read(addr);
+            //Console.WriteLine($"-----\nOPERAND {operand:X4}");
+            //Console.WriteLine($"ACC {_accumulator:X4}");
             _accumulator &= operand;
+            //Console.WriteLine($"RESULT {_accumulator:X4}");
             SetNegativeAndZeroFlags(_accumulator);
             _master_cycle += cycles;
         }

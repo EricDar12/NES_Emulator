@@ -61,10 +61,5 @@ namespace NES_Emulator
             // Clear system state after insertion
             Reset();
         }
-
-        public string LogPC()
-        {
-            return Convert.ToString(_cpu._program_counter, 16);
-        }
     }
 }

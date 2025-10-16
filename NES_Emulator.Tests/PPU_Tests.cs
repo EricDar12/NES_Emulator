@@ -4,12 +4,20 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Xunit.Abstractions;
 using static NES_Emulator.NES_PPU;
 
 namespace NES_Emulator.Tests
 {
     public class PPU_Tests
     {
+
+        private readonly ITestOutputHelper _output;
+
+        public PPU_Tests(ITestOutputHelper output)
+        {
+            _output = output;
+        }
 
         [Fact]
         public void TestPPU_Status()
@@ -184,6 +192,59 @@ namespace NES_Emulator.Tests
 
             ppu._vram.Reg = ppu._tram.Reg;
             Assert.Equal(ppu._vram.Reg, ppu._tram.Reg);
+        }
+
+        [Fact]
+        public void TestLoopyRegistersIncrementAndTransfer()
+        {
+            NES_PPU ppu = new NES_PPU();
+
+            // Enable rendering so increments actually work
+            ppu._ppuMask = (byte)(PPUMASK.RENDER_BG | PPUMASK.RENDER_SPRITES);
+
+            // Initialize VRAM and TRAM to zero
+            ppu._vram.Reg = 0x0000;
+            ppu._tram.Reg = 0x0000;
+
+            Console.WriteLine("=== Initial State ===");
+            Console.WriteLine($"VRAM Reg: {ppu._vram.Reg:x4}");
+            Console.WriteLine($"TRAM Reg: {ppu._tram.Reg:x4}");
+            Console.WriteLine($"FineY: {ppu._vram.FineY}, CoarseX: {ppu._vram.CoarseX}, CoarseY: {ppu._vram.CoarseY}, NTX: {ppu._vram.NameTableX}, NTY: {ppu._vram.NameTableY}");
+
+            // Increment FineY 8 times to force a wrap and increment CoarseY
+            for (int i = 0; i < 8; i++)
+            {
+                ppu.IncrementScrollY();
+                Console.WriteLine($"After IncrementScrollY {i + 1}: FineY={ppu._vram.FineY}, CoarseY={ppu._vram.CoarseY}, NTY={ppu._vram.NameTableY}, Reg={ppu._vram.Reg:x4}");
+            }
+
+            // CoarseX increment from 30 → 0 should toggle NameTableX
+            ppu._vram.CoarseX = 30;
+            ppu._vram.NameTableX = 0;
+            ppu.IncrementScrollX();
+            Console.WriteLine($"After IncrementScrollX from 30: CoarseX={ppu._vram.CoarseX}, NTX={ppu._vram.NameTableX}");
+
+            ppu.IncrementScrollX();
+            Console.WriteLine($"After IncrementScrollX wrap: CoarseX={ppu._vram.CoarseX}, NTX={ppu._vram.NameTableX}");
+
+            // Test TransferAddressX
+            ppu._tram.Reg = 0b01010101010101;
+            ppu._vram.Reg = 0;
+            ppu.TransferAddressX();
+            Console.WriteLine($"After TransferAddressX: VRAM Reg={ppu._vram.Reg:x4}, CoarseX={ppu._vram.CoarseX}, NTX={ppu._vram.NameTableX}");
+
+            // Test TransferAddressY
+            ppu._tram.Reg = 0b10101010101010;
+            ppu._vram.Reg = 0;
+            ppu.TransferAddressY();
+            Console.WriteLine($"After TransferAddressY: VRAM Reg={ppu._vram.Reg:x4}, FineY={ppu._vram.FineY}, CoarseY={ppu._vram.CoarseY}, NTY={ppu._vram.NameTableY}");
+
+            // Assertions to catch obvious mistakes
+            Assert.InRange(ppu._vram.FineY, 0, 7);
+            Assert.InRange(ppu._vram.CoarseX, 0, 31);
+            Assert.InRange(ppu._vram.CoarseY, 0, 29);
+            Assert.True(ppu._vram.NameTableX == 0 || ppu._vram.NameTableX == 1);
+            Assert.True(ppu._vram.NameTableY == 0 || ppu._vram.NameTableY == 1);
         }
     }
 }

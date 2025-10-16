@@ -69,10 +69,6 @@ namespace NES_Emulator
 
                 do { _nes.Clock(); } while (!_nes._ppu._isFrameComplete);
 
-                _nes._ppu._isFrameComplete = false;
-                //_nes._bus._controller[0] |= 0xFF; // Simulate buttons being pressed every frame
-                //_nes._cpu.LogProcessorStatus();
-
                 unsafe
                 {
                     fixed (uint* ptr = _nes._ppu._frameBuffer)
@@ -81,8 +77,12 @@ namespace NES_Emulator
                     }
                 }
 
+                _nes._ppu._isFrameComplete = false;
+                //_nes._bus._controller[0] |= 0xFF; // Simulate buttons being pressed every frame
+                //_nes._cpu.LogProcessorStatus();
+
                 //Console.WriteLine($"Frame: {frameCount} ");
-                
+
                 frameCount++;
                 //if (frameCount > 30)
                 //{
@@ -107,7 +107,7 @@ namespace NES_Emulator
 
                 //if (frameCount % 10 == 0)
                 //{
-                //    Console.WriteLine(Convert.ToString(_nes._ppu._ppuMask, 2).PadLeft(8, '0'));
+                //    //Console.WriteLine(Convert.ToString(_nes._ppu._ppuMask, 2).PadLeft(8, '0'));
                 //}
 
                 //if (_nes._ppu.IsSet<NES_PPU.PPUMASK>(NES_PPU.PPUMASK.RENDER_BG, _nes._ppu._ppuMask))
@@ -128,10 +128,10 @@ namespace NES_Emulator
                 //        if ((i + 1) % 8 == 0) Console.WriteLine();
                 //    }
                 //}
-                //else if (frameCount >= 40 && frameCount <= 50)
+                //if (frameCount % 3 == 0)
                 //{
-                //    Console.WriteLine($"TRAM: {Convert.ToString(_nes._ppu._tram._reg, 2)} CX:{_nes._ppu._tram.CoarseX} CY:{_nes._ppu._tram.CoarseY} NTX:{_nes._ppu._tram.NameTableX} NTY:{_nes._ppu._tram.NameTableY} FY:{_nes._ppu._tram.FineY} FX:{_nes._ppu._fineX}");
-                //    Console.WriteLine($"VRAM: {Convert.ToString(_nes._ppu._vram._reg, 2)} CX:{_nes._ppu._vram.CoarseX} CY:{_nes._ppu._vram.CoarseY} NTX:{_nes._ppu._vram.NameTableX} NTY:{_nes._ppu._vram.NameTableY} FY:{_nes._ppu._vram.FineY} FX:{_nes._ppu._fineX}");
+                //    Console.WriteLine($"TRAM: {_nes._ppu._tram._reg:b16} CX:{_nes._ppu._tram.CoarseX:b5} CY:{_nes._ppu._tram.CoarseY:b5} NTX:{_nes._ppu._tram.NameTableX:b1} NTY:{_nes._ppu._tram.NameTableY:b1} FY:{_nes._ppu._tram.FineY:b3} FX:{_nes._ppu._fineX:b3}");
+                //    Console.WriteLine($"VRAM: {_nes._ppu._vram._reg:b16} CX:{_nes._ppu._vram.CoarseX:b5} CY:{_nes._ppu._vram.CoarseY:b5} NTX:{_nes._ppu._vram.NameTableX:b1} NTY:{_nes._ppu._vram.NameTableY:b1} FY:{_nes._ppu._vram.FineY:b3} FX:{_nes._ppu._fineX:b3}");
                 //}
 
                 SDL.SDL_RenderClear(renderer);

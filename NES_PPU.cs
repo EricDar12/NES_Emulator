@@ -10,7 +10,7 @@ namespace NES_Emulator
 {
     public class NES_PPU
     {
-        private NES_Cartridge? _cart;
+        public NES_Cartridge? _cart;
         public byte[,] _tblName = new byte[2, 1024];
         public byte[] _tblPalette = new byte[32];
         public byte[,] _tblPattern = new byte[2, 4096];
@@ -202,8 +202,8 @@ namespace NES_Emulator
                 case 0x0007: // PPU Data
                     //Console.WriteLine("Reading 2007");
                     data = _dataBuffer;
-                    _dataBuffer = PPU_Read(_vram._reg);
-                    if (_vram._reg >= 0x3F00) // If accessing palette memory, dont wait a clock cycle in the buffer
+                    _dataBuffer = PPU_Read(_vram.Reg);
+                    if (_vram.Reg >= 0x3F00) // If accessing palette memory, dont wait a clock cycle in the buffer
                     {
                         data = _dataBuffer;
                     }
@@ -232,39 +232,37 @@ namespace NES_Emulator
                     break;
                 case 0x0004: // OAM Data
                     break;
-                case 0x0005: // Scroll 
-                    // LIKELY THE ISSUE
-                    //Console.WriteLine($"[Scanline {_scanline}] PPUSCROLL write: data=0x{data:X2}, latch={_addressLatch}");
+                case 0x0005: // Scroll
                     if (_addressLatch == 0)
                     {
                         _fineX = (byte)(data & 0x07);
                         _tram.CoarseX = (byte)(data >> 3);
-                        //_fineX = (byte)r1.Next(0,5);
-                        //_tram.CoarseX = (byte)r1.Next(0, 5);
                         _addressLatch = 1;
                     }
                     else
                     {
                         _tram.FineY = (byte)(data & 0x07);
                         _tram.CoarseY = (byte)(data >> 3);
-                        //_tram.FineY = (byte)r1.Next(0, 5);
-                        //_tram.CoarseY = (byte)r1.Next(0, 5);
                         _addressLatch = 0;
+                        //Console.WriteLine($"TRAM {_tram.Reg:x4}");
                     }
-                    //Console.WriteLine($"[Scanline {_scanline}] PPUSCROLL write: data=0x{data:X2}, latch={_addressLatch}");
-                    //Thread.Sleep(500);
                     break;
                 case 0x0006: // PPU Address
                     if (_addressLatch == 0)
                     {
-                        _tram.Reg = (ushort)((_tram.Reg & 0x00FF) | ((data & 0x3F) << 8)); // Mask data to 6 bits, shift to high byte
+                        _tram.Reg = (ushort)(((data & 0x3F) << 8) | _tram.Reg & 0x00FF);
+                        Console.WriteLine($"2006 WRITE: T:{_tram.Reg:B16} V:{_vram.Reg:B16} LATCH:{_addressLatch}");
+                        Thread.Sleep(500);
                         _addressLatch = 1;
                     }
                     else
                     {
                         _tram.Reg = (ushort)((_tram.Reg & 0xFF00) | data); // Low 8 bits
-                        _vram.Reg = _tram.Reg; // Write temporary address into active vram address
+                        _vram.Reg = _tram.Reg;
+                        Console.WriteLine($"2006 WRITE: T:{_tram.Reg:B16} V:{_vram.Reg:B16} LATCH:{_addressLatch} Match:{_tram.Reg == _vram.Reg}");
+                        Thread.Sleep(500);
                         _addressLatch = 0;
+
                     }
                     break;
                 case 0x0007: // PPU Data
@@ -280,6 +278,7 @@ namespace NES_Emulator
             byte data = 0;
             addr &= 0x3FFF;
 
+
             if (_cart != null && _cart.PPU_Read(addr, out data))
             {
                 // Cartridge addressing range
@@ -288,6 +287,7 @@ namespace NES_Emulator
             else if (addr >= 0x0000 && addr <= 0x1FFF)
             {
                 data = _tblPattern[((addr & 0x1000) >> 12), (addr & 0x0FFF)];
+                Console.WriteLine($"Pattern Table Data: {data}");
             }
 
             else if (addr >= 0x2000 && addr <= 0x3EFF)
@@ -316,8 +316,8 @@ namespace NES_Emulator
                 if (addr == 0x0018) addr = 0x0008;
                 if (addr == 0x001C) addr = 0x000C;
                 data = (byte)(_tblPalette[addr] & ((_ppuMask & (byte)PPUMASK.GRAYSCALE) != 0 ? 0x30 : 0x3F));
+                //Console.WriteLine($"PALETTE READ 0x{data:x4} 0x3F{addr:x2}");
             }
-
             return data;
         }
 
@@ -333,21 +333,22 @@ namespace NES_Emulator
 
             else if (addr >= 0x0000 && addr <= 0x1FFF)
             {
+                //Console.WriteLine("Pattern Write");
                 _tblPattern[(addr & 0x1000) >> 12, addr & 0x0FFF] = data;
             }
 
             else if (addr >= 0x2000 && addr <= 0x3EFF)
             {
-                ushort normalizedAddr = (ushort)(addr & 0x0FFF); // Clamp to 4kib range
-                byte tableIndex = (byte)(normalizedAddr / 0x0400); // Logical table (0-3)
-                ushort tableOffset = (ushort)(normalizedAddr & 0x03FF); // Clamp to 1kib , nameetables are only 1kb each
+                ushort normalizedAddr = (ushort)(addr & 0x0FFF);
+                byte tableIndex = (byte)(normalizedAddr / 0x0400); 
+                ushort tableOffset = (ushort)(normalizedAddr & 0x03FF); 
 
-                // This is only going to work for vertical and horizontal mirroring
                 byte physicalTable = (_cart != null && _cart._mirror == NES_Cartridge.Mirror.VERTICAL) ?
                     (byte)(tableIndex & 0x01) // 0,1,0,1 
                   : (byte)(tableIndex >> 1); // 0,0,1,1
                 _tblName[physicalTable, tableOffset] = data;
             }
+
             else if (addr >= 0x3F00 && addr <= 0x3FFF)
             {
                 addr &= 0x001F;
@@ -356,6 +357,7 @@ namespace NES_Emulator
                 if (addr == 0x0018) addr = 0x0008;
                 if (addr == 0x001C) addr = 0x000C;
                 _tblPalette[addr] = data;
+                //Console.WriteLine($"PALETTE WRITE 0x{data:x4} TO 0x3F{addr:x2}");
             }
         }
 
@@ -372,6 +374,7 @@ namespace NES_Emulator
                 {
                     _vram.CoarseX++;
                 }
+                //Console.WriteLine($"CX: {_vram.CoarseX} NTX: {_vram.NameTableX}");
             }
         }
 
@@ -429,6 +432,8 @@ namespace NES_Emulator
             _bgShifterPatternHi = (ushort)((_bgShifterPatternHi & 0xFF00) | _bgNextTileMSB);
             _bgShifterAttribLo = (ushort)((_bgShifterAttribLo & 0xFF00) | ((_bgNextTileAttrib & 0b01) != 0 ? 0xFF : 0x00));
             _bgShifterAttribHi = (ushort)((_bgShifterAttribHi & 0xFF00) | ((_bgNextTileAttrib & 0b10) != 0 ? 0xFF : 0x00));
+
+            //Console.WriteLine($"LoadBGShifters: PatternLo={_bgShifterPatternLo:X4}, PatternHi={_bgShifterPatternHi:X4}, AttribLo={_bgShifterAttribLo:X4}, AttribHi={_bgShifterAttribHi:X4}");
         }
 
         public void UpdateShifters()
@@ -439,6 +444,8 @@ namespace NES_Emulator
                 _bgShifterPatternHi <<= 1;
                 _bgShifterAttribLo <<= 1;
                 _bgShifterAttribHi <<= 1;
+
+                //Console.WriteLine($"UpdateShifters: PatternLo={_bgShifterPatternLo:X4}, PatternHi={_bgShifterPatternHi:X4}, AttribLo={_bgShifterAttribLo:X4}, AttribHi={_bgShifterAttribHi:X4}");
             }
         }
 
@@ -482,7 +489,9 @@ namespace NES_Emulator
 
         public uint GetColorFromPaletteRAM(byte palette, byte pixel)
         {
-            return _nesMasterPalette[PPU_Read((ushort)(0x3F00 + (palette << 2) + pixel))];
+            uint color = _nesMasterPalette[PPU_Read((ushort)(0x3F00 + (palette << 2) + pixel)) & 0x3F];
+            //Console.WriteLine($"{color:x4}");
+            return color;
         }
 
         public void ConnectCartridge(NES_Cartridge cart)
@@ -515,15 +524,14 @@ namespace NES_Emulator
 
         public void Clock()
         {
+
+            //if (_scanline == -1 && _cycle == 257)
+            //{
+            //    LogPPUState();
+            //}
+
             if (_scanline >= -1 && _scanline < 240)
             {
-
-                //if (_cycle == 0 && _scanline >= 0 && _scanline < 5)
-                //{
-                //    Console.WriteLine($"[SL:{_scanline}] VRAM at scanline start: 0x{_vram.Reg:X4} (CoarseX={_vram.CoarseX}, CoarseY={_vram.CoarseY}, NT={_vram.NameTableX},{_vram.NameTableY}, FineY={_vram.FineY})");
-                //    Console.WriteLine($"[SL:{_scanline}] TRAM: 0x{_tram.Reg:X4} (CoarseX={_tram.CoarseX}, CoarseY={_tram.CoarseY}, NT={_tram.NameTableX},{_tram.NameTableY}, FineY={_tram.FineY})");
-                //    Console.WriteLine($"[SL:{_scanline}] FineX: 0x{_fineX:X4}");
-                //}
 
                 if (_scanline == 0 && _cycle == 0)
                 {
@@ -543,7 +551,7 @@ namespace NES_Emulator
                     {
                         case 0:
                             LoadBGShifters();
-                            _bgNextTileID = PPU_Read((ushort)(0x2000 | (_vram._reg & 0x0FFF)));
+                            _bgNextTileID = PPU_Read((ushort)(0x2000 | (_vram.Reg & 0x0FFF)));
                             break;
                         case 2:
                             ushort attribAddr = (ushort)((_vram.NameTableY << 11) | (_vram.NameTableX << 10) | ((_vram.CoarseY >> 2) << 3) | (_vram.CoarseX >> 2));
@@ -579,7 +587,7 @@ namespace NES_Emulator
 
                 if (_cycle == 338 || _cycle == 340)
                 {
-                    _bgNextTileID = PPU_Read((ushort)(0x2000 | (_vram._reg & 0x0FFF)));
+                    _bgNextTileID = PPU_Read((ushort)(0x2000 | (_vram.Reg & 0x0FFF)));
                 }
 
                 if (_scanline == -1 && _cycle >= 280 && _cycle < 305)
@@ -587,6 +595,7 @@ namespace NES_Emulator
                     TransferAddressY();
                 }
             }
+
 
             if (_scanline >= 241 && _scanline < 261)
             {
@@ -603,12 +612,6 @@ namespace NES_Emulator
             byte bg_pixel = 0x00;
             byte bg_palette = 0x00;
 
-            //if (_scanline == 0 && _cycle == 1)
-            //{ // verifying colors
-            //    byte backdropColor = PPU_Read(0x3F00);
-            //    Console.WriteLine($"Backdrop color index: 0x{backdropColor:X2}, ARGB: 0x{_nesMasterPalette[backdropColor]:X8}");
-            //}
-
             if ((_ppuMask & (byte)PPUMASK.RENDER_BG) != 0)
             {
                 ushort bit_mux = (ushort)(0x8000 >> _fineX);
@@ -623,33 +626,14 @@ namespace NES_Emulator
 
                 bg_palette = (byte)((p1_pal << 1) | p0_pal);
 
-                //Console.WriteLine($"P0: {p0_pixel} P1: {p1_pixel} PAL1: {p0_pal} PAL2: {p1_pal}");
+                //Console.WriteLine($"pal0:{p0_pal} pal1:{p1_pal} p0:{p0_pixel} p1:{p1_pixel}");
+                //Console.WriteLine($"palette:{bg_palette} pixel:{bg_pixel} ");
             }
 
             if (_scanline >= 0 && _scanline < 240 && _cycle > 0 && _cycle <= 256)
             {
-                //if (bg_pixel != 0 && bg_palette != 0)
-                //{
-                //    Console.WriteLine($"Pixel: {bg_pixel} Palette: {bg_palette}");
-                //}
-
                 _frameBuffer[_scanline * 256 + (_cycle - 1)] = GetColorFromPaletteRAM(bg_palette, bg_pixel);
-
-                // The below line does correctly generate noise, something is wrong with how pixels are calculated
-                //Random r1 = new Random();
-                //_frameBuffer[_scanline * 256 + (_cycle - 1)] = _nesMasterPalette[r1.Next(0, 63)];
             }
-
-            //if (_scanline == 0 && _cycle == 340)
-            //{
-            //    Console.WriteLine($"End of scanline 0: VRAM = 0x{_vram.Reg:X4}");
-            //    Console.WriteLine($"End of scanline 0: TRAM = 0x{_tram.Reg:X4}");
-            //}
-            //if (_scanline == 1 && _cycle == 0)
-            //{
-            //    Console.WriteLine($"Start of scanline 1: VRAM = 0x{_vram.Reg:X4}");
-            //    Console.WriteLine($"End of scanline 0: TRAM = 0x{_tram.Reg:X4}");
-            //}
 
             _cycle++;
             if (_cycle >= 341)
@@ -663,5 +647,32 @@ namespace NES_Emulator
                 }
             }
         }
+
+        public void LogPPUState()
+        {
+            var sb = new System.Text.StringBuilder(512);
+
+            sb.AppendLine($"Scanline: {_scanline} Cycle: {_cycle}");
+
+            sb.AppendLine("   REGISTER    RAW(hex)   COARSEX  COARSEY  NTX  NTY  FINEY  FINEX");
+            sb.AppendLine("-------------------------------------------------------------------");
+            sb.AppendLine($"   TRAM      0x{_tram.Reg:X4}      {_tram.CoarseX,2}       {_tram.CoarseY,2}     {_tram.NameTableX}    {_tram.NameTableY}     {_tram.FineY,2}     {_fineX,2}");
+            sb.AppendLine($"   VRAM      0x{_tram.Reg:X4}      {_vram.CoarseX,2}       {_vram.CoarseY,2}     {_vram.NameTableX}    {_vram.NameTableY}     {_vram.FineY,2}     {_fineX,2}");
+            sb.AppendLine("-------------------------------------------------------------------");
+
+            if (_tram.Reg != _vram.Reg)
+            {
+                sb.AppendLine($"⚠ VRAM/TRAM mismatch! Δ = {_vram.Reg - _tram.Reg} (VRAM > TRAM? {_vram.Reg > _tram.Reg})");
+            }
+
+            sb.AppendLine();
+            sb.AppendLine($"PPUCTRL  : 0x{_ppuCtrl:X2}");
+            sb.AppendLine($"PPUMASK  : 0x{_ppuMask:X2}");
+            sb.AppendLine($"PPUSTATUS: 0x{_ppuStatus:X2}");
+            sb.AppendLine("===============================================");
+
+            Console.WriteLine(sb.ToString());
+        }
+
     }
 }
