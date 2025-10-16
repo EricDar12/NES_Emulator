@@ -251,16 +251,16 @@ namespace NES_Emulator
                     if (_addressLatch == 0)
                     {
                         _tram.Reg = (ushort)(((data & 0x3F) << 8) | _tram.Reg & 0x00FF);
-                        Console.WriteLine($"2006 WRITE: T:{_tram.Reg:B16} V:{_vram.Reg:B16} LATCH:{_addressLatch}");
-                        Thread.Sleep(500);
+                        //Console.WriteLine($"2006 WRITE: T:{_tram.Reg:B16} V:{_vram.Reg:B16} LATCH:{_addressLatch}");
+                        //Thread.Sleep(500);
                         _addressLatch = 1;
                     }
                     else
                     {
                         _tram.Reg = (ushort)((_tram.Reg & 0xFF00) | data); // Low 8 bits
                         _vram.Reg = _tram.Reg;
-                        Console.WriteLine($"2006 WRITE: T:{_tram.Reg:B16} V:{_vram.Reg:B16} LATCH:{_addressLatch} Match:{_tram.Reg == _vram.Reg}");
-                        Thread.Sleep(500);
+                        //Console.WriteLine($"2006 WRITE: T:{_tram.Reg:B16} V:{_vram.Reg:B16} LATCH:{_addressLatch} Match:{_tram.Reg == _vram.Reg}");
+                        //Thread.Sleep(500);
                         _addressLatch = 0;
 
                     }

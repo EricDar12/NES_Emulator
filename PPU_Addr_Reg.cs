@@ -9,7 +9,7 @@ namespace NES_Emulator
     public class PPU_Addr_Reg
     {
 
-        public ushort _reg { get; private set; } = 0x0000;
+        private ushort _reg = 0x0000;
 
         public ushort Reg
         {
@@ -26,25 +26,25 @@ namespace NES_Emulator
         public ushort CoarseY
         {
             get => (ushort)((_reg >> 5) & 0x1F);
-            set => _reg = (ushort)(((_reg & ~(0x1F << 5)) | ((value & 0x1F) << 5)) & 0x3FFF);
+            set => _reg = (ushort)(((_reg & ~(0x1F << 5)) | ((value & 0x1F) << 5)));
         }
 
         public ushort NameTableX
         {
             get => (ushort)((_reg >> 10) & 0x01);
-            set => _reg = (ushort)(((_reg & ~(0x01 << 10)) | ((value & 0x01) << 10)) & 0x3FFF); 
+            set => _reg = (ushort)(((_reg & ~(0x01 << 10)) | ((value & 0x01) << 10))); 
         }
 
         public ushort NameTableY
         {
             get => (ushort)((_reg >> 11) & 0x01);
-            set => _reg = (ushort)(((_reg & ~(0x01 << 11)) | ((value & 0x01) << 11)) & 0x3FFF); 
+            set => _reg = (ushort)(((_reg & ~(0x01 << 11)) | ((value & 0x01) << 11))); 
         }
 
         public ushort FineY
         {   
             get => (ushort)((_reg >> 12) & 0x07);
-            set => _reg = (ushort)(((_reg & ~(0x07 << 12)) | ((value & 0x07) << 12)) & 0x3FFF);
+            set => _reg = (ushort)(((_reg & ~(0x07 << 12)) | ((value & 0x07) << 12)));
         }
     }
 }

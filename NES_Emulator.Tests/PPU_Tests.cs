@@ -102,8 +102,8 @@ namespace NES_Emulator.Tests
         {
             NES_PPU ppu = new NES_PPU();
 
-            Assert.Equal(0, ppu._tram._reg);
-            Assert.Equal(0, ppu._vram._reg);
+            Assert.Equal(0, ppu._tram.Reg);
+            Assert.Equal(0, ppu._vram.Reg);
 
             // Attempt to overflow all the bit ranges, tests masking
             ppu._tram.CoarseX = 0xFFFF;
@@ -118,8 +118,8 @@ namespace NES_Emulator.Tests
             ppu._vram.NameTableY = 0xFFFF;
             ppu._vram.FineY = 0xFFFF;
 
-            Assert.Equal(0x3FFF, ppu._tram._reg);
-            Assert.Equal(0x3FFF, ppu._vram._reg);
+            Assert.Equal(0x7FFF, ppu._tram.Reg);
+            Assert.Equal(0x7FFF, ppu._vram.Reg);
 
             ppu._tram.CoarseX = 0;
             ppu._tram.CoarseY = 0;
@@ -133,8 +133,8 @@ namespace NES_Emulator.Tests
             ppu._vram.NameTableY = 0;
             ppu._vram.FineY = 0;
 
-            Assert.Equal(0, ppu._tram._reg);
-            Assert.Equal(0, ppu._vram._reg);
+            Assert.Equal(0, ppu._tram.Reg);
+            Assert.Equal(0, ppu._vram.Reg);
 
             ppu._tram.CoarseX = 0x0003;
             ppu._tram.CoarseY = 0x0007;
@@ -144,15 +144,15 @@ namespace NES_Emulator.Tests
 
             ppu._vram.Reg = ppu._tram.Reg;
 
-            Assert.Equal(ppu._tram._reg, ppu._vram._reg);
+            Assert.Equal(ppu._tram.Reg, ppu._vram.Reg);
         }
 
         [Fact]
         public void TestLoopyAddress()
         {
             NES_PPU ppu = new NES_PPU();
-            Assert.Equal(0, ppu._tram._reg);
-            Assert.Equal(0, ppu._vram._reg);
+            Assert.Equal(0, ppu._tram.Reg);
+            Assert.Equal(0, ppu._vram.Reg);
 
             byte data = 0x24;
 
