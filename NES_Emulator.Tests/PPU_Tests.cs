@@ -218,7 +218,7 @@ namespace NES_Emulator.Tests
                 Console.WriteLine($"After IncrementScrollY {i + 1}: FineY={ppu._vram.FineY}, CoarseY={ppu._vram.CoarseY}, NTY={ppu._vram.NameTableY}, Reg={ppu._vram.Reg:x4}");
             }
 
-            // CoarseX increment from 30 → 0 should toggle NameTableX
+            // CoarseX increment from 30 to 0 should toggle NameTableX
             ppu._vram.CoarseX = 30;
             ppu._vram.NameTableX = 0;
             ppu.IncrementScrollX();

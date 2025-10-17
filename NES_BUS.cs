@@ -40,7 +40,7 @@ namespace NES_Emulator
 
             else if (addr >= 0x4016 && addr <= 0x4017)
             { // Controller addressing range
-                data = (_controllerState[addr & 0x0001] & 0x80) > 0 ? (byte)1 : (byte)0;
+                data = (byte)((_controllerState[addr & 0x0001] & 0x80) > 0 ? 1 : 0);
                 _controllerState[addr & 0x0001] <<= 1;
             }
 
