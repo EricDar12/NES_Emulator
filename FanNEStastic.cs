@@ -19,8 +19,18 @@ namespace NES_Emulator
 
             NES_Cartridge _cart = new NES_Cartridge(ROMFilePath);
             NES_System _nes = new NES_System(_cart);
+            Dictionary<SDL.SDL_Scancode, byte> _keyMap = new Dictionary<SDL.SDL_Scancode, byte> {
+                { SDL.SDL_Scancode.SDL_SCANCODE_X, 0x80 },
+                { SDL.SDL_Scancode.SDL_SCANCODE_Z, 0x40 },
+                { SDL.SDL_Scancode.SDL_SCANCODE_A, 0x20 },
+                { SDL.SDL_Scancode.SDL_SCANCODE_S, 0x10 },
+                { SDL.SDL_Scancode.SDL_SCANCODE_UP, 0x08 },
+                { SDL.SDL_Scancode.SDL_SCANCODE_DOWN, 0x04 },
+                { SDL.SDL_Scancode.SDL_SCANCODE_LEFT, 0x02 },
+                { SDL.SDL_Scancode.SDL_SCANCODE_RIGHT, 0x01 },
+            };
 
-            if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO) < 0)
+            if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO | SDL.SDL_INIT_EVENTS) < 0)
             {
                 Console.WriteLine("Failed To Initialize SDL2 " + SDL.SDL_GetError());
                 return;
@@ -58,7 +68,6 @@ namespace NES_Emulator
 
             while (_isRunning)
             {
-
                 while (SDL.SDL_PollEvent(out sdlEvent) != 0)
                 {
                     if (sdlEvent.type == SDL.SDL_EventType.SDL_QUIT)
@@ -67,7 +76,27 @@ namespace NES_Emulator
                     }
                 }
 
+                // Hook input up to SDL // Not working
+                unsafe
+                {
+                    byte* keyboardState = (byte*)SDL.SDL_GetKeyboardState(out _);
+
+                    foreach (var button in _keyMap)
+                    {
+                        if (keyboardState[(int)button.Key] != 0)
+                        {
+                            _nes._bus._controllerState[0] |= (byte)button.Value;
+                        } 
+                    }
+                }
+
                 do { _nes.Clock(); } while (!_nes._ppu._isFrameComplete);
+
+                if (frameCount % 5 == 0)
+                {
+                    Console.WriteLine($"Cont: {_nes._bus._controller[0]:b8}");
+                    Console.WriteLine($"State: {_nes._bus._controllerState[0]:b8}");
+                }
 
                 unsafe
                 {
@@ -90,6 +119,5 @@ namespace NES_Emulator
             SDL.SDL_DestroyWindow(window);
             SDL.SDL_Quit();
         }
-
     }
 }
