@@ -76,7 +76,11 @@ namespace NES_Emulator
                     }
                 }
 
-                // Hook input up to SDL // Not working
+                // Reset controller state on each frame
+                // works well but might be worth looking into better solutions
+                _nes._bus._controller[0] = 0x00;
+                SDL.SDL_PumpEvents();
+                
                 unsafe
                 {
                     byte* keyboardState = (byte*)SDL.SDL_GetKeyboardState(out _);
@@ -85,18 +89,12 @@ namespace NES_Emulator
                     {
                         if (keyboardState[(int)button.Key] != 0)
                         {
-                            _nes._bus._controllerState[0] |= (byte)button.Value;
-                        } 
+                            _nes._bus._controller[0] |= (byte)button.Value; // Currently only supports one controller
+                        }
                     }
                 }
 
                 do { _nes.Clock(); } while (!_nes._ppu._isFrameComplete);
-
-                if (frameCount % 5 == 0)
-                {
-                    Console.WriteLine($"Cont: {_nes._bus._controller[0]:b8}");
-                    Console.WriteLine($"State: {_nes._bus._controllerState[0]:b8}");
-                }
 
                 unsafe
                 {
