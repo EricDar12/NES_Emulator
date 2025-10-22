@@ -424,7 +424,7 @@ namespace NES_Emulator
                 byte p0_pixel = (byte)((_bgShifterPatternLo & bit_mux) > 0 ? 1 : 0);
                 byte p1_pixel = (byte)((_bgShifterPatternHi & bit_mux) > 0 ? 1 : 0);
 
-                bg_pixel = (byte)((p1_pixel << 1) | p0_pixel);
+                bg_pixel = (byte)(((p1_pixel & 0x01) << 1) | (p0_pixel & 0x01));
 
                 byte p0_pal = (byte)((_bgShifterAttribLo & bit_mux) > 0 ? 1 : 0);
                 byte p1_pal = (byte)((_bgShifterAttribHi & bit_mux) > 0 ? 1 : 0);
