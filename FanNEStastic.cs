@@ -16,7 +16,6 @@ namespace NES_Emulator
 
         public static void Run(string ROMFilePath)
         {
-
             NES_Cartridge _cart = new NES_Cartridge(ROMFilePath);
             NES_System _nes = new NES_System(_cart);
             Dictionary<SDL.SDL_Scancode, byte> _keyMap = new Dictionary<SDL.SDL_Scancode, byte> {

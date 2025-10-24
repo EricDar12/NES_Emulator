@@ -38,11 +38,37 @@ namespace NES_Emulator
 
         public void Clock()
         {
+            _systemClockCounter++;
             _ppu.Clock();
             // PPU runs 3x faster than the CPU
             if (_systemClockCounter % 3 == 0)
             {
+                if (_bus.DmaTransfer)
+                {
+                    if (_bus._dummyRead)
+                    {
+                        if (_systemClockCounter % 2 == 1)
+                        {
+                            // Wait for an even CPU cycle for DMA alignment
+                            _bus._dummyRead = false;
+                        }
+                    } 
+                    else
+                    {
+                        if (_systemClockCounter % 2 == 0)
+                        {
+                            _bus.DMA_Read();
+                        }
+                        else
+                        {
+                            _bus.DMA_Write();
+                        }
+                    }
+                } 
+                else
+                {
                 _cpu.Clock();
+                }
             }
 
             if (_ppu._NMI_Enable)
@@ -50,7 +76,6 @@ namespace NES_Emulator
                 _ppu._NMI_Enable = false;
                 _cpu.NMI();
             }
-            _systemClockCounter++;
         }
 
         public void InsertCartridge(NES_Cartridge cart)

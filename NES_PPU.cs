@@ -14,32 +14,33 @@ namespace NES_Emulator
         public byte[,] _tblName = new byte[2, 1024];
         public byte[] _tblPalette = new byte[32];
         public byte[,] _tblPattern = new byte[2, 4096];
+
         public bool _isFrameComplete = false;
         public bool _NMI_Enable = false;
         public int _scanline = 0;
         public int _cycle = 0;
         private byte _addressLatch = 0; // 1 or 0
-        private byte _dataBuffer = 0b0000_0000; // open bus
+        private byte _dataBuffer = 0b0000_0000;
 
-        public byte _fineX = 0b0000_0000;
-        public byte _bgNextTileID = 0b0000_0000;
-        public byte _bgNextTileAttrib = 0b0000_0000;
-        public byte _bgNextTileLSB = 0b0000_0000;
-        public byte _bgNextTileMSB = 0b0000_0000;
+        private byte _fineX = 0b0000_0000;
+        private byte _bgNextTileID = 0b0000_0000;
+        private byte _bgNextTileAttrib = 0b0000_0000;
+        private byte _bgNextTileLSB = 0b0000_0000;
+        private byte _bgNextTileMSB = 0b0000_0000;
 
-        public ushort _bgShifterPatternLo = 0x00;
-        public ushort _bgShifterPatternHi = 0x00;
-        public ushort _bgShifterAttribLo = 0x00;
-        public ushort _bgShifterAttribHi = 0x00;
+        private ushort _bgShifterPatternLo = 0x00;
+        private ushort _bgShifterPatternHi = 0x00;
+        private ushort _bgShifterAttribLo = 0x00;
+        private ushort _bgShifterAttribHi = 0x00;
+
+        public byte[] _ppuOAM = new byte[256];
 
         public byte _ppuStatus = 0b0000_0000;
         public byte _ppuMask = 0b0000_0000;
         public byte _ppuCtrl = 0b0000_0000;
 
-        public Random r1 = new Random();
-
-        public PPU_Addr_Reg _tram = new PPU_Addr_Reg();
-        public PPU_Addr_Reg _vram = new PPU_Addr_Reg();
+        private PPU_Addr_Reg _tram = new PPU_Addr_Reg();
+        private PPU_Addr_Reg _vram = new PPU_Addr_Reg();
 
         public uint[] _frameBuffer = new uint[256 * 240];
 

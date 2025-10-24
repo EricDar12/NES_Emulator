@@ -14,6 +14,13 @@ namespace NES_Emulator
         public byte[] _controller = new byte[2];
         public byte[] _controllerState = new byte[2];
 
+        // Direct Memory Access
+        public bool DmaTransfer { get; private set; } = false;
+        public bool _dummyRead = false;
+        public byte _dmaPage  = 0x00;
+        public byte _dmaData  = 0x00;
+        public byte _dmaAddress = 0x00;
+
         public NES_BUS(NES_PPU ppu)
         {
             _ppu = ppu;
@@ -25,10 +32,11 @@ namespace NES_Emulator
         
             if (_cart != null && _cart.CPU_Read(addr, out data))
             {
-                // If the cartridge can handle the read, it will set "data" via out variable
+                // If the cartridge can handle the operations, it will set "data" via out variable
             }
 
             else if (addr >= 0x0000 && addr <= 0x1FFF) {
+                // 2KiB of RAM is mirrored over an 8KiB space
                 data = _cpuRAM[addr & 0x07FF];
             }
 
@@ -55,7 +63,6 @@ namespace NES_Emulator
             }
 
             else if (addr >= 0x0000 && addr <= 0x1FFF) {
-                // 2KiB of RAM is mirrored over an 8KiB space
                 _cpuRAM[addr & 0x07FF] = data;
             }
 
@@ -64,9 +71,32 @@ namespace NES_Emulator
                 _ppu.CPU_Write((ushort)(addr & 0x0007), data);
             }
 
+            else if (addr == 0x4014) // Writes to this address indicate a DMA will occur
+            {
+                DmaTransfer = true;
+                _dmaAddress = 0x00;
+                _dmaPage = data;
+            }
+
             else if (addr >= 0x4016 && addr <= 0x4017)
             {
                 _controllerState[addr & 0x0001] = _controller[addr & 0x0001];
+            }
+        }
+
+        public void DMA_Read()
+        {
+            _dmaData = CPU_Read((ushort)((_dmaPage << 8) | _dmaAddress));
+        }
+
+        public void DMA_Write()
+        {
+            _ppu._ppuOAM[_dmaAddress] = _dmaData;
+            _dmaAddress++;
+            if (_dmaAddress == 0x00) // A byte incremented past 255 will roll over to zero
+            {
+                DmaTransfer = false;
+                _dummyRead = true;
             }
         }
 
