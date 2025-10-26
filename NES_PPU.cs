@@ -541,6 +541,14 @@ namespace NES_Emulator
             return color;
         }
 
+        public byte ReverseByte(byte b)
+        {
+            b = (byte)(((b & 0xF0) >> 4) | ((b & 0x0F) << 4));
+            b = (byte)(((b & 0xCC) >> 2) | ((b & 0x33) << 2));
+            b = (byte)(((b & 0xAA) >> 1) | ((b & 0x55) << 1));
+            return b;
+        }
+
         public void ConnectCartridge(NES_Cartridge cart)
         {
             _cart = cart;

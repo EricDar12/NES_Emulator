@@ -15,12 +15,11 @@
 
 ## Project Goals  🎯 
 - Deepen understanding of hardware emulation, computer architecture, and CPU design  
-- Implement the Ricoh 6502 CPU with full cycle accuracy and complete instruction set coverage  
+- Implement the Ricoh 6502 CPU with instruction level accuracy and complete instruction set coverage
 - Study and recreate the NES PPU, including accurate background and sprite rendering  
 - Support multiple cartridge mappers to correctly handle ROM banking and memory layout  
 - Implement accurate memory operations, including NES memory mirroring  
-- Build a working emulator capable of running classic NES games reliably  
-
+- Build a working emulator capable of running classic NES games reliably
 
 ---
 
