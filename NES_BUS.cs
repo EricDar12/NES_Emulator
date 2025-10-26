@@ -16,7 +16,7 @@ namespace NES_Emulator
 
         // Direct Memory Access
         public bool DmaTransfer { get; private set; } = false;
-        public bool _dummyRead = false;
+        public bool _dummyCycle = false;
         public byte _dmaPage  = 0x00;
         public byte _dmaData  = 0x00;
         public byte _dmaAddress = 0x00;
@@ -96,7 +96,7 @@ namespace NES_Emulator
             if (_dmaAddress == 0x00) // A byte incremented past 255 will roll over to zero
             {
                 DmaTransfer = false;
-                _dummyRead = true;
+                _dummyCycle = true;
             }
         }
 

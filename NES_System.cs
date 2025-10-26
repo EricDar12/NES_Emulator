@@ -45,12 +45,12 @@ namespace NES_Emulator
             {
                 if (_bus.DmaTransfer)
                 {
-                    if (_bus._dummyRead)
+                    if (_bus._dummyCycle)
                     {
                         if (_systemClockCounter % 2 == 1)
                         {
                             // Wait for an even CPU cycle for DMA alignment
-                            _bus._dummyRead = false;
+                            _bus._dummyCycle = false;
                         }
                     } 
                     else

@@ -30,3 +30,11 @@ Detailed explanations for each component, as well as how I overcame significant 
 - BUS, APU & Input coming soon...  
 
 ---
+
+## Acknowledgment
+
+Portions of this emulator were adapted from the excellent *"NES Emulator From Scratch"* tutorial series by **David Barr (Javidx9 / OneLoneCoder)**.  
+His work provided valuable insight into NES hardware architecture and PPU design.
+Used under the terms of the **OLC-3 License**.  
+
+---

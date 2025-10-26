@@ -334,6 +334,7 @@ namespace NES_Emulator
             return buffer;
         }
 
+        // OLC (Javidx9) was a significant help in understanding and implementing PPU frame timing in this Clock function.
         public void Clock()
         {
             if (_scanline >= -1 && _scanline < 240)
