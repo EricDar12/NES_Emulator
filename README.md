@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/CPU-✅_Complete-brightgreen" />
   <img src="https://img.shields.io/badge/PPU-🚧_In%20Progress-yellow" />
   <img src="https://img.shields.io/badge/BUS-🚧_In%20Progress-yellow" />
-  <img src="https://img.shields.io/badge/Input-⏳_Planned-orange" />
+  <img src="https://img.shields.io/badge/Input-⏳_In%20Progress-yellow" />
   <img src="https://img.shields.io/badge/APU-⏳_Planned-orange" />
 </p>
 
