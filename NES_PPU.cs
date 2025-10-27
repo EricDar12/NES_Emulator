@@ -39,8 +39,8 @@ namespace NES_Emulator
         public byte _ppuMask = 0b0000_0000;
         public byte _ppuCtrl = 0b0000_0000;
 
-        private PPU_Addr_Reg _tram = new PPU_Addr_Reg();
-        private PPU_Addr_Reg _vram = new PPU_Addr_Reg();
+        public PPU_Addr_Reg _tram = new PPU_Addr_Reg();
+        public PPU_Addr_Reg _vram = new PPU_Addr_Reg();
 
         public uint[] _frameBuffer = new uint[256 * 240];
 

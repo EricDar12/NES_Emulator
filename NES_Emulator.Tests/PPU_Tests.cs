@@ -20,6 +20,16 @@ namespace NES_Emulator.Tests
         }
 
         [Fact]
+        public void TestReverseByte()
+        {
+            NES_System nes = new NES_System();
+            byte b = 0b0101_0011;
+            byte expected = 0b1100_1010;
+
+            Assert.Equal(expected, nes._ppu.ReverseByte(b));
+        }
+
+        [Fact]
         public void TestPPU_Status()
         {
 
