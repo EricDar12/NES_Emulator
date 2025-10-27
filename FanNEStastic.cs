@@ -18,6 +18,8 @@ namespace NES_Emulator
         {
             NES_Cartridge _cart = new NES_Cartridge(ROMFilePath);
             NES_System _nes = new NES_System(_cart);
+
+            // TODO: Implement a controller class
             Dictionary<SDL.SDL_Scancode, byte> _keyMap = new Dictionary<SDL.SDL_Scancode, byte> {
                 { SDL.SDL_Scancode.SDL_SCANCODE_X, 0x80 },
                 { SDL.SDL_Scancode.SDL_SCANCODE_Z, 0x40 },
@@ -26,7 +28,7 @@ namespace NES_Emulator
                 { SDL.SDL_Scancode.SDL_SCANCODE_UP, 0x08 },
                 { SDL.SDL_Scancode.SDL_SCANCODE_DOWN, 0x04 },
                 { SDL.SDL_Scancode.SDL_SCANCODE_LEFT, 0x02 },
-                { SDL.SDL_Scancode.SDL_SCANCODE_RIGHT, 0x01 },
+                { SDL.SDL_Scancode.SDL_SCANCODE_RIGHT, 0x01 }
             };
 
             if (SDL.SDL_Init(SDL.SDL_INIT_VIDEO | SDL.SDL_INIT_EVENTS) < 0)

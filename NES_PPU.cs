@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,7 +19,7 @@ namespace NES_Emulator
         public bool _isFrameComplete = false;
         public bool _NMI_Enable = false;
         public int _scanline = 0;
-        public int _cycle = 0;
+        public int _dot = 0;
         private byte _addressLatch = 0; // 1 or 0
         private byte _dataBuffer = 0b0000_0000;
 
@@ -35,6 +36,8 @@ namespace NES_Emulator
 
         public byte[] _ppuOAM = new byte[256];
 
+        public Span<OAMEntry> OAMEntries => MemoryMarshal.Cast<byte, OAMEntry>(_ppuOAM);
+        
         public byte _ppuStatus = 0b0000_0000;
         public byte _ppuMask = 0b0000_0000;
         public byte _ppuCtrl = 0b0000_0000;
@@ -67,6 +70,15 @@ namespace NES_Emulator
             0xFFCCD278, 0xFFB4DE78, 0xFFA8E290, 0xFF98E2B4,
             0xFFA0D6E4, 0xFFA0A2A0, 0xFF000000, 0xFF000000
         };
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        public struct OAMEntry()
+        {
+            public byte y;
+            public byte index;
+            public byte attrib;
+            public byte x;
+        }
 
         #region ##### REGISTERS ENUMS #####
 
@@ -227,7 +239,6 @@ namespace NES_Emulator
             else if (addr >= 0x0000 && addr <= 0x1FFF)
             {
                 data = _tblPattern[((addr & 0x1000) >> 12), (addr & 0x0FFF)];
-                Console.WriteLine($"Pattern Table Data: {data}");
             }
 
             else if (addr >= 0x2000 && addr <= 0x3EFF)
@@ -340,21 +351,21 @@ namespace NES_Emulator
             if (_scanline >= -1 && _scanline < 240)
             {
 
-                if (_scanline == 0 && _cycle == 0)
+                if (_scanline == 0 && _dot == 0)
                 {
-                    _cycle = 1;
+                    _dot = 1;
                 }
 
 
-                if (_scanline == -1 && _cycle == 1)
+                if (_scanline == -1 && _dot == 1)
                 {
                     _ppuStatus &= (byte)~PPUSTATUS.VERTICAL_BLANK;
                 }
 
-                if ((_cycle >= 2 && _cycle < 258) || (_cycle >= 321 && _cycle < 338))
+                if ((_dot >= 2 && _dot < 258) || (_dot >= 321 && _dot < 338))
                 {
                     UpdateShifters();
-                    switch ((_cycle - 1) % 8)
+                    switch ((_dot - 1) % 8)
                     {
                         case 0:
                             LoadBGShifters();
@@ -381,23 +392,23 @@ namespace NES_Emulator
                     }
                 }
 
-                if (_cycle == 256)
+                if (_dot == 256)
                 {
                     IncrementScrollY();
                 }
 
-                if (_cycle == 257)
+                if (_dot == 257)
                 {
                     LoadBGShifters();
                     TransferAddressX();
                 }
 
-                if (_cycle == 338 || _cycle == 340)
+                if (_dot == 338 || _dot == 340)
                 {
                     _bgNextTileID = PPU_Read((ushort)(0x2000 | (_vram.Reg & 0x0FFF)));
                 }
 
-                if (_scanline == -1 && _cycle >= 280 && _cycle < 305)
+                if (_scanline == -1 && _dot >= 280 && _dot < 305)
                 {
                     TransferAddressY();
                 }
@@ -406,7 +417,7 @@ namespace NES_Emulator
 
             if (_scanline >= 241 && _scanline < 261)
             {
-                if (_scanline == 241 && _cycle == 1)
+                if (_scanline == 241 && _dot == 1)
                 {
                     _ppuStatus |= (byte)PPUSTATUS.VERTICAL_BLANK;
                     if ((_ppuCtrl & (byte)PPUCTRL.ENABLE_NMI) != 0)
@@ -434,15 +445,15 @@ namespace NES_Emulator
                 bg_palette = (byte)((p1_pal << 1) | p0_pal);
             }
 
-            if (_scanline >= 0 && _scanline < 240 && _cycle > 0 && _cycle <= 256)
+            if (_scanline >= 0 && _scanline < 240 && _dot > 0 && _dot <= 256)
             {
-                _frameBuffer[_scanline * 256 + (_cycle - 1)] = GetColorFromPaletteRAM(bg_palette, bg_pixel);
+                _frameBuffer[_scanline * 256 + (_dot - 1)] = GetColorFromPaletteRAM(bg_palette, bg_pixel);
             }
 
-            _cycle++;
-            if (_cycle >= 341)
+            _dot++;
+            if (_dot >= 341)
             {
-                _cycle = 0;
+                _dot = 0;
                 _scanline++;
                 if (_scanline >= 261)
                 {
@@ -560,7 +571,7 @@ namespace NES_Emulator
             _addressLatch = 0x00;
             _dataBuffer = 0x00;
             _scanline = 0;
-            _cycle = 0;
+            _dot = 0;
             _bgNextTileID = 0x00;
             _bgNextTileAttrib = 0x00;
             _bgNextTileLSB = 0x00;
