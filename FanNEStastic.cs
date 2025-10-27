@@ -11,8 +11,9 @@ namespace NES_Emulator
     {
         static readonly ushort NES_WIDTH = 256;
         static readonly ushort NES_HEIGHT = 240;
-        static bool _isRunning = true;
+        static bool _isRunning = false;
         static int frameCount = 0;
+        static readonly uint FRAME_DELAY_MS = 17;
 
         public static void Run(string ROMFilePath)
         {
@@ -65,6 +66,8 @@ namespace NES_Emulator
                 NES_HEIGHT
             );
 
+            _isRunning = true;
+
             SDL.SDL_Event sdlEvent;
 
             while (_isRunning)
@@ -105,12 +108,12 @@ namespace NES_Emulator
                     }
                 }
 
-                _nes._ppu._isFrameComplete = false;
 
                 SDL.SDL_RenderClear(renderer);
                 SDL.SDL_RenderCopy(renderer, texture, IntPtr.Zero, IntPtr.Zero);
                 SDL.SDL_RenderPresent(renderer);
-                SDL.SDL_Delay(16);
+                _nes._ppu._isFrameComplete = false;
+                SDL.SDL_Delay(FRAME_DELAY_MS);
                 frameCount++;
             }
             SDL.SDL_DestroyTexture(texture);
