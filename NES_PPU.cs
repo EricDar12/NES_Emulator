@@ -34,9 +34,13 @@ namespace NES_Emulator
         private ushort _bgShifterAttribLo = 0x00;
         private ushort _bgShifterAttribHi = 0x00;
 
-        public byte[] _ppuOAM = new byte[256];
-
+        public byte[] _ppuOAM = new byte[256]; // 64 four byte entries
+        public byte[] _scanlineOAM = new byte[32]; // A maximum of 8 sprites to be rendered this scanline
+        private byte _oamIndex = 0;
+        private bool _spriteZeroHitPossible = false;
+        private byte _spriteCount = 0;
         public Span<OAMEntry> OAMEntries => MemoryMarshal.Cast<byte, OAMEntry>(_ppuOAM);
+        public Span<OAMEntry> ScanlineOAM => MemoryMarshal.Cast<byte, OAMEntry>(_scanlineOAM);
         
         public byte _ppuStatus = 0b0000_0000;
         public byte _ppuMask = 0b0000_0000;
@@ -350,12 +354,11 @@ namespace NES_Emulator
         {
             if (_scanline >= -1 && _scanline < 240)
             {
-
+                // Background Rendering //
                 if (_scanline == 0 && _dot == 0)
                 {
                     _dot = 1;
                 }
-
 
                 if (_scanline == -1 && _dot == 1)
                 {
@@ -411,6 +414,42 @@ namespace NES_Emulator
                 if (_scanline == -1 && _dot >= 280 && _dot < 305)
                 {
                     TransferAddressY();
+                }
+
+                // Foreground Rendering //
+                if (_scanline >= 0 && _dot == 257)
+                {
+                    Array.Fill<byte>(_scanlineOAM, 0xFF); // Set secondary OAM to default value
+                    _spriteCount = 0;
+
+                    //TODO Clear sprite shifters here
+
+                    _oamIndex = 0;
+                    _spriteZeroHitPossible = false;
+
+                    while (_oamIndex < 64 && _spriteCount < 9) // Loop until 9 sprites to detect overflow
+                    {
+                        // Result may be negative, cast to signed short
+                        short offset = (short)(_scanline - OAMEntries[_oamIndex].y); 
+                        byte spriteHeight = (byte)((_ppuCtrl & (byte)PPUCTRL.SPRITE_SIZE) != 0 ? 16 : 8);
+
+                        if (offset >= 0 && offset < spriteHeight)
+                        {
+                            if (_spriteCount < 8)
+                            {
+                                if (_oamIndex == 0)
+                                {
+                                    _spriteZeroHitPossible = true;
+                                }
+                                ScanlineOAM[_spriteCount++] = OAMEntries[_oamIndex];
+                            }
+                        }
+                        _oamIndex++;
+                    }
+                    if (_spriteCount > 8)
+                    {
+                        _ppuStatus |= (byte)PPUSTATUS.SPRITE_OVERFLOW;
+                    }
                 }
             }
 
