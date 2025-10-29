@@ -38,9 +38,13 @@ namespace NES_Emulator
         public byte[] _scanlineOAM = new byte[32]; // A maximum of 8 sprites to be rendered this scanline
         private byte _oamIndex = 0;
         private bool _spriteZeroHitPossible = false;
+        private bool _spriteZeroRendering = false;  
         private byte _spriteCount = 0;
         public Span<OAMEntry> OAMEntries => MemoryMarshal.Cast<byte, OAMEntry>(_ppuOAM);
         public Span<OAMEntry> ScanlineOAM => MemoryMarshal.Cast<byte, OAMEntry>(_scanlineOAM);
+
+        private byte[] _spriteShifterPatternLo = new byte[8];
+        private byte[] _spriteShifterPatternHi = new byte[8];
         
         public byte _ppuStatus = 0b0000_0000;
         public byte _ppuMask = 0b0000_0000;
@@ -362,7 +366,16 @@ namespace NES_Emulator
 
                 if (_scanline == -1 && _dot == 1)
                 {
+                    // New frame, unset vertical blank, sprite overflow, and zero hit flags
                     _ppuStatus &= (byte)~PPUSTATUS.VERTICAL_BLANK;
+                    _ppuStatus &= (byte)~PPUSTATUS.SPRITE_OVERFLOW;
+                    _ppuStatus &= (byte)~PPUSTATUS.SPRITE_ZERO_HIT;
+
+                    for (byte i = 0; i < 8; i++)
+                    {
+                        _spriteShifterPatternLo[i] = 0;
+                        _spriteShifterPatternHi[i] = 0;
+                    }
                 }
 
                 if ((_dot >= 2 && _dot < 258) || (_dot >= 321 && _dot < 338))
@@ -420,10 +433,8 @@ namespace NES_Emulator
                 if (_scanline >= 0 && _dot == 257)
                 {
                     Array.Fill<byte>(_scanlineOAM, 0xFF); // Set secondary OAM to default value
+                    // there may be a faster way of doing this ^
                     _spriteCount = 0;
-
-                    //TODO Clear sprite shifters here
-
                     _oamIndex = 0;
                     _spriteZeroHitPossible = false;
 
@@ -451,6 +462,12 @@ namespace NES_Emulator
                         _ppuStatus |= (byte)PPUSTATUS.SPRITE_OVERFLOW;
                     }
                 }
+
+                if (_dot == 340)
+                {
+                    
+                }
+
             }
 
 
@@ -466,6 +483,7 @@ namespace NES_Emulator
                 }
             }
 
+            // Background + Foreground Composition //
             byte bg_pixel = 0x00;
             byte bg_palette = 0x00;
 
@@ -476,7 +494,7 @@ namespace NES_Emulator
                 byte p0_pixel = (byte)((_bgShifterPatternLo & bit_mux) > 0 ? 1 : 0);
                 byte p1_pixel = (byte)((_bgShifterPatternHi & bit_mux) > 0 ? 1 : 0);
 
-                bg_pixel = (byte)(((p1_pixel & 0x01) << 1) | (p0_pixel & 0x01));
+                bg_pixel = (byte)(((p1_pixel) << 1) | (p0_pixel));
 
                 byte p0_pal = (byte)((_bgShifterAttribLo & bit_mux) > 0 ? 1 : 0);
                 byte p1_pal = (byte)((_bgShifterAttribHi & bit_mux) > 0 ? 1 : 0);
@@ -484,6 +502,8 @@ namespace NES_Emulator
                 bg_palette = (byte)((p1_pal << 1) | p0_pal);
             }
 
+
+            // Drawing //
             if (_scanline >= 0 && _scanline < 240 && _dot > 0 && _dot <= 256)
             {
                 _frameBuffer[_scanline * 256 + (_dot - 1)] = GetColorFromPaletteRAM(bg_palette, bg_pixel);
