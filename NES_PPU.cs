@@ -370,12 +370,7 @@ namespace NES_Emulator
                     _ppuStatus &= (byte)~PPUSTATUS.VERTICAL_BLANK;
                     _ppuStatus &= (byte)~PPUSTATUS.SPRITE_OVERFLOW;
                     _ppuStatus &= (byte)~PPUSTATUS.SPRITE_ZERO_HIT;
-
-                    for (byte i = 0; i < 8; i++)
-                    {
-                        _spriteShifterPatternLo[i] = 0;
-                        _spriteShifterPatternHi[i] = 0;
-                    }
+                    ClearSpriteShifters();
                 }
 
                 if ((_dot >= 2 && _dot < 258) || (_dot >= 321 && _dot < 338))
@@ -433,7 +428,7 @@ namespace NES_Emulator
                 if (_scanline >= 0 && _dot == 257)
                 {
                     Array.Fill<byte>(_scanlineOAM, 0xFF); // Set secondary OAM to default value
-                    // there may be a faster way of doing this ^
+                    ClearSpriteShifters();
                     _spriteCount = 0;
                     _oamIndex = 0;
                     _spriteZeroHitPossible = false;
@@ -622,6 +617,15 @@ namespace NES_Emulator
         public void ConnectCartridge(NES_Cartridge cart)
         {
             _cart = cart;
+        }
+        
+        public void ClearSpriteShifters()
+        {
+            for (byte i = 0; i < 8; i++)
+            {
+                _spriteShifterPatternLo[i] = 0;
+                _spriteShifterPatternHi[i] = 0;
+            }
         }
 
         public void Reset()
