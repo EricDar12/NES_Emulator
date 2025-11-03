@@ -20,6 +20,7 @@ namespace NES_Emulator
         public byte _dmaPage  = 0x00;
         public byte _dmaData  = 0x00;
         public byte _dmaAddress = 0x00;
+        public ushort _dmaBytesTransferred = 0;
 
         public NES_BUS(NES_PPU ppu)
         {
@@ -93,10 +94,12 @@ namespace NES_Emulator
         {
             _ppu._ppuOAM[_dmaAddress] = _dmaData;
             _dmaAddress++;
-            if (_dmaAddress == 0x00) // A byte incremented past 255 will roll over to zero
+            _dmaBytesTransferred++;
+            if (_dmaBytesTransferred >= 256)
             {
                 DmaTransfer = false;
                 _dummyCycle = true;
+                _dmaBytesTransferred = 0;
             }
         }
 

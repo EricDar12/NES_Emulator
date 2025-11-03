@@ -447,8 +447,9 @@ namespace NES_Emulator
                                 {
                                     _spriteZeroHitPossible = true;
                                 }
-                                ScanlineOAM[_spriteCount++] = OAMEntries[_oamIndex];
+                                ScanlineOAM[_spriteCount] = OAMEntries[_oamIndex];
                             }
+                            _spriteCount++;
                         }
                         _oamIndex++;
                     }
