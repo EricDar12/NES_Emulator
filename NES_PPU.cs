@@ -461,11 +461,38 @@ namespace NES_Emulator
 
                 if (_dot == 340)
                 {
-                    
+                    // I hope this works
+                    for (int i = 0; i < _spriteCount; i++)
+                    {
+                        byte sprPatternBitsLo, sprPatternBitsHi;
+                        ushort sprPatternAddrLo, sprPatternAddrHi;
+
+                        bool verticallyFlipped = ((ScanlineOAM[i].attrib & 0x80) != 0);
+                        bool topHalf = (_scanline - ScanlineOAM[i].y < 8);
+
+                        if ((_ppuCtrl & (byte)PPUCTRL.SPRITE_SIZE) == 0) { // 8x8 Sprite Mode
+                            sprPatternAddrLo = GetPatternAddressLo8x8(verticallyFlipped, i);
+                        }
+                        else // 8x16 Sprite Mode
+                        {
+                            sprPatternAddrLo = GetPatternAddressLo8x16(verticallyFlipped, topHalf, i);
+                        }
+
+                        sprPatternAddrHi = (ushort)(sprPatternAddrLo + 8); // The Hi address is always exactly 8 bits away
+                        sprPatternBitsLo = PPU_Read(sprPatternAddrLo);
+                        sprPatternBitsHi = PPU_Read(sprPatternAddrHi);
+
+                        if ((ScanlineOAM[i].attrib & 0x40) != 0) // Sprite is flipped horizontally
+                        {
+                            sprPatternBitsLo = ReverseByte(sprPatternBitsLo);
+                            sprPatternBitsHi = ReverseByte(sprPatternBitsHi);
+                        }
+
+                        _spriteShifterPatternLo[i] = sprPatternBitsLo;
+                        _spriteShifterPatternHi[i] = sprPatternBitsHi;
+                    }
                 }
-
             }
-
 
             if (_scanline >= 241 && _scanline < 261)
             {
@@ -590,7 +617,7 @@ namespace NES_Emulator
             _bgShifterAttribHi = (ushort)((_bgShifterAttribHi & 0xFF00) | ((_bgNextTileAttrib & 0b10) != 0 ? 0xFF : 0x00));
         }
 
-        public ushort GetPatternAddressLo8x8(bool flippedVertically, byte oamIndex)
+        public ushort GetPatternAddressLo8x8(bool flippedVertically, int oamIndex)
         {
             ushort sprPatternAddrLo = 0;
             ushort baseAddress = (ushort)(((_ppuCtrl & (byte)PPUCTRL.PATTERN_SPRITE) >> 3) << 12);
@@ -607,7 +634,7 @@ namespace NES_Emulator
             return sprPatternAddrLo;
         }
 
-        public ushort GetPatternAddressLo8x16(bool flippedVertically, bool topHalf, byte oamIndex)
+        public ushort GetPatternAddressLo8x16(bool flippedVertically, bool topHalf, int oamIndex)
         {
             ushort sprPatternAddrLo = 0;
             byte verticalOffset = (byte)(topHalf ? 0 : 1);
