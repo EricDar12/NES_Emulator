@@ -100,7 +100,7 @@ namespace NES_Emulator
 
                 do { _nes.Clock(); } while (!_nes._ppu._isFrameComplete);
 
-                Console.WriteLine($"{_nes._ppu.OAMEntries[0].x} {_nes._ppu.OAMEntries[0].y} {_nes._ppu.OAMEntries[0].index} {_nes._ppu.OAMEntries[0].attrib}");
+                Console.WriteLine($"{_nes._ppu.OAMEntries[0].x} {_nes._ppu.OAMEntries[0].y} {_nes._ppu.OAMEntries[0].id} {_nes._ppu.OAMEntries[0].attrib}");
 
                 unsafe
                 {

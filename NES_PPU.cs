@@ -83,7 +83,7 @@ namespace NES_Emulator
         public struct OAMEntry()
         {
             public byte y;
-            public byte index;
+            public byte id;
             public byte attrib;
             public byte x;
         }
@@ -588,6 +588,41 @@ namespace NES_Emulator
             _bgShifterPatternHi = (ushort)((_bgShifterPatternHi & 0xFF00) | _bgNextTileMSB);
             _bgShifterAttribLo = (ushort)((_bgShifterAttribLo & 0xFF00) | ((_bgNextTileAttrib & 0b01) != 0 ? 0xFF : 0x00));
             _bgShifterAttribHi = (ushort)((_bgShifterAttribHi & 0xFF00) | ((_bgNextTileAttrib & 0b10) != 0 ? 0xFF : 0x00));
+        }
+
+        public ushort GetPatternAddressLo8x8(bool flippedVertically, byte oamIndex)
+        {
+            ushort sprPatternAddrLo = 0;
+            ushort baseAddress = (ushort)(((_ppuCtrl & (byte)PPUCTRL.PATTERN_SPRITE) >> 3) << 12);
+            byte row = (byte)(_scanline - ScanlineOAM[oamIndex].y);
+
+            if (!flippedVertically)
+            {
+                sprPatternAddrLo = (ushort)((baseAddress | (ScanlineOAM[oamIndex].id << 4) | row));
+            } 
+            else
+            {
+                sprPatternAddrLo = (ushort)((baseAddress | (ScanlineOAM[oamIndex].id << 4) | (7 - row)));
+            }
+            return sprPatternAddrLo;
+        }
+
+        public ushort GetPatternAddressLo8x16(bool flippedVertically, bool topHalf, byte oamIndex)
+        {
+            ushort sprPatternAddrLo = 0;
+            byte verticalOffset = (byte)(topHalf ? 0 : 1);
+            byte row = (byte)((_scanline - ScanlineOAM[oamIndex].y) & 0x07);
+            byte tileID = ScanlineOAM[oamIndex].id;
+
+            if (!flippedVertically)
+            {
+                sprPatternAddrLo = (ushort)(((tileID & 1) << 12) | (((tileID & 0xFE) + verticalOffset) << 4) | row);
+            } 
+            else
+            {
+                sprPatternAddrLo = (ushort)(((tileID & 0x01) << 12) | (((tileID & 0xFE) + (1 - verticalOffset)) << 4) | (7 - row));
+            }
+            return sprPatternAddrLo;
         }
 
         public void UpdateShifters()
