@@ -456,6 +456,7 @@ namespace NES_Emulator
                     if (_spriteCount > 8)
                     {
                         _ppuStatus |= (byte)PPUSTATUS.SPRITE_OVERFLOW;
+                        _spriteCount = 8; // Prevent index out of bounds exceptions when spritecount exceeds 8
                     }
                 }
 
@@ -490,6 +491,9 @@ namespace NES_Emulator
 
                         _spriteShifterPatternLo[i] = sprPatternBitsLo;
                         _spriteShifterPatternHi[i] = sprPatternBitsHi;
+
+                        Console.WriteLine($"{_spriteShifterPatternLo[i]:b8}");
+                        Console.WriteLine($"{_spriteShifterPatternHi[i]:b8}");
                     }
                 }
             }
@@ -661,6 +665,7 @@ namespace NES_Emulator
                 _bgShifterAttribLo <<= 1;
                 _bgShifterAttribHi <<= 1;
             }
+            // TODO: Update Sprite Shifters!!!
         }
 
         public uint GetColorFromPaletteRAM(byte palette, byte pixel)
