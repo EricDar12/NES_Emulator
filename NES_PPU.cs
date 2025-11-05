@@ -491,9 +491,6 @@ namespace NES_Emulator
 
                         _spriteShifterPatternLo[i] = sprPatternBitsLo;
                         _spriteShifterPatternHi[i] = sprPatternBitsHi;
-
-                        Console.WriteLine($"{_spriteShifterPatternLo[i]:b8}");
-                        Console.WriteLine($"{_spriteShifterPatternHi[i]:b8}");
                     }
                 }
             }
@@ -510,7 +507,7 @@ namespace NES_Emulator
                 }
             }
 
-            // Background + Foreground Composition //
+            // Background Composition //
             byte bg_pixel = 0x00;
             byte bg_palette = 0x00;
 
@@ -529,11 +526,49 @@ namespace NES_Emulator
                 bg_palette = (byte)((p1_pal << 1) | p0_pal);
             }
 
+            // Foreground Composition //
+            byte fg_pixel = 0x00;
+            byte fg_palette = 0x00;
+            byte fg_prio = 0x00;
+
+            if ((_ppuMask & (byte)PPUMASK.RENDER_SPRITES) != 0)
+            {
+                _spriteZeroRendering = false;
+                // Huge credit to OLC here
+                for (int i = 0; i < _spriteCount; i++)
+                {
+                    if (ScanlineOAM[i].x == 0)
+                    {
+                        // The relevant data to be rendered is at the high bit of the shifters
+                        byte fg_pixel_lo = (byte)((_spriteShifterPatternLo[i] & 0x80) > 0 ? 1 : 0);
+                        byte fg_pixel_hi = (byte)((_spriteShifterPatternHi[i] & 0x80) > 0 ? 1 : 0);
+                        fg_pixel = (byte)((fg_pixel_hi << 1) | fg_pixel_lo);
+
+                        fg_palette = (byte)((ScanlineOAM[i].attrib & 0x03) + 0x04);
+                        fg_prio = (byte)((ScanlineOAM[i].attrib & 0x20) == 0  ? 1 : 0);
+
+                        // As soon as we find a non-transparent pixel, we can exit and draw it
+                        if (fg_pixel != 0)
+                        {
+                            if (i == 0)
+                            {
+                                _spriteZeroRendering = true;
+                            }
+                            break;
+                        }
+
+                    }
+                }
+            }
+
+            // Background + Foreground Composition //  
+
+            //TODO: Determine fg/bg priority to select which pixel gets drawn, right now im just drawing the fg
 
             // Drawing //
             if (_scanline >= 0 && _scanline < 240 && _dot > 0 && _dot <= 256)
             {
-                _frameBuffer[_scanline * 256 + (_dot - 1)] = GetColorFromPaletteRAM(bg_palette, bg_pixel);
+                _frameBuffer[_scanline * 256 + (_dot - 1)] = GetColorFromPaletteRAM(fg_palette, fg_pixel);
             }
 
             _dot++;
@@ -651,7 +686,7 @@ namespace NES_Emulator
             } 
             else
             {
-                sprPatternAddrLo = (ushort)(((tileID & 0x01) << 12) | (((tileID & 0xFE) + (1 - verticalOffset)) << 4) | (7 - row));
+                sprPatternAddrLo = (ushort)(((tileID & 1) << 12) | (((tileID & 0xFE) + (1 - verticalOffset)) << 4) | (7 - row));
             }
             return sprPatternAddrLo;
         }
@@ -665,7 +700,23 @@ namespace NES_Emulator
                 _bgShifterAttribLo <<= 1;
                 _bgShifterAttribHi <<= 1;
             }
-            // TODO: Update Sprite Shifters!!!
+
+            // Update Sprite Shifters
+            if ((_ppuMask & (byte)PPUMASK.RENDER_SPRITES) != 0 && _dot >= 1 && _dot < 258)
+            {
+                for (int i = 0; i < _spriteCount; i++)
+                {
+                    if (ScanlineOAM[i].x > 0)
+                    {
+                        ScanlineOAM[i].x--;
+                    }
+                    else
+                    {
+                        _spriteShifterPatternLo[i] <<= 1;
+                        _spriteShifterPatternHi[i] <<= 1;
+                    }
+                }
+            }
         }
 
         public uint GetColorFromPaletteRAM(byte palette, byte pixel)
