@@ -108,7 +108,6 @@ namespace NES_Emulator
                     }
                 }
 
-
                 SDL.SDL_RenderClear(renderer);
                 SDL.SDL_RenderCopy(renderer, texture, IntPtr.Zero, IntPtr.Zero);
                 SDL.SDL_RenderPresent(renderer);

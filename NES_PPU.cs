@@ -556,19 +556,18 @@ namespace NES_Emulator
                             }
                             break;
                         }
-
                     }
                 }
             }
 
             // Background + Foreground Composition //  
-
-            //TODO: Determine fg/bg priority to select which pixel gets drawn, right now im just drawing the fg
+            byte pixel = 0x00, palette = 0x00;
+            SelectPixelsForRendering(bg_pixel, bg_palette, fg_pixel, fg_palette, fg_prio, out pixel, out palette);
 
             // Drawing //
             if (_scanline >= 0 && _scanline < 240 && _dot > 0 && _dot <= 256)
             {
-                _frameBuffer[_scanline * 256 + (_dot - 1)] = GetColorFromPaletteRAM(fg_palette, fg_pixel);
+                _frameBuffer[_scanline * 256 + (_dot - 1)] = GetColorFromPaletteRAM(palette, pixel);
             }
 
             _dot++;
@@ -723,6 +722,44 @@ namespace NES_Emulator
         {
             uint color = _nesMasterPalette[PPU_Read((ushort)(0x3F00 + (palette << 2) + pixel)) & 0x3F];
             return color;
+        }
+
+        public void SelectPixelsForRendering(byte bg_pixel, byte bg_palette, byte fg_pixel, byte fg_palette, byte fg_prio, out byte pixel, out byte palette)
+        {
+            pixel = 0x00;
+            palette = 0x00;
+
+            // Both transparent, no winner
+            if (bg_pixel == 0 && fg_pixel == 0)
+            {
+                return;
+            }
+            // Foreground wins
+            else if (bg_pixel == 0 && fg_pixel > 0)
+            {
+                pixel = fg_pixel;
+                palette = fg_palette;
+            }
+            // Background wins
+            else if (bg_pixel > 0 && fg_pixel == 0)
+            {
+                pixel = bg_pixel;
+                palette = bg_palette;
+            }
+            // Tie, priority decides
+            else if (bg_pixel > 0 && fg_pixel > 0)
+            {
+                if (fg_prio > 0)
+                {
+                    pixel = fg_pixel;
+                    palette = fg_palette;
+                }
+                else
+                {
+                    pixel = bg_pixel;
+                    palette = bg_palette;
+                }
+            }
         }
 
         public byte ReverseByte(byte b)
