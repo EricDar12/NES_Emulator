@@ -759,6 +759,30 @@ namespace NES_Emulator
                     pixel = bg_pixel;
                     palette = bg_palette;
                 }
+                // Since opaque pixels have collided, a sprite zero hit is possible
+                if (_spriteZeroHitPossible && _spriteZeroRendering)
+                {
+                    if ((_ppuMask & (byte)PPUMASK.RENDER_BG) != 0 && (_ppuMask & (byte)PPUMASK.RENDER_SPRITES) != 0)
+                    {
+                        byte renderBGLeft = (byte)((_ppuMask & (byte)PPUMASK.RENDER_BG_LEFT) != 0 ? 1 : 0);
+                        byte renderSpriteLeft = (byte)((_ppuMask & (byte)PPUMASK.RENDER_SPRITES_LEFT) != 0 ? 1 : 0);
+
+                        if (!(renderBGLeft == 1 | renderSpriteLeft == 1))
+                        {
+                            if (_dot >= 9 && _dot < 258)
+                            {
+                                _ppuStatus |= (byte)PPUSTATUS.SPRITE_ZERO_HIT;
+                            }
+                        }
+                        else
+                        {
+                            if (_dot >= 1 && _dot < 258)
+                            {
+                                _ppuStatus |= (byte)PPUSTATUS.SPRITE_ZERO_HIT;
+                            }
+                        }
+                    }
+                }
             }
         }
 

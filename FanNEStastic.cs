@@ -13,7 +13,9 @@ namespace NES_Emulator
         static readonly ushort NES_HEIGHT = 240;
         static bool _isRunning = false;
         static int frameCount = 0;
-        static readonly uint FRAME_DELAY_MS = 17;
+        // TODO: Frame timing is currently NOT WORKING, figure something out with deltatime
+        static readonly uint FRAME_DELAY_MS = 17; 
+
 
         public static void Run(string ROMFilePath)
         {
@@ -112,7 +114,7 @@ namespace NES_Emulator
                 SDL.SDL_RenderCopy(renderer, texture, IntPtr.Zero, IntPtr.Zero);
                 SDL.SDL_RenderPresent(renderer);
                 _nes._ppu._isFrameComplete = false;
-                SDL.SDL_Delay(FRAME_DELAY_MS);
+                //SDL.SDL_Delay(FRAME_DELAY_MS);
                 frameCount++;
             }
             SDL.SDL_DestroyTexture(texture);

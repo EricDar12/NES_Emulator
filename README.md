@@ -6,7 +6,7 @@
 <p align="left">
   <img src="https://img.shields.io/badge/CPU-✅_Complete-brightgreen" />
   <img src="https://img.shields.io/badge/PPU-🚧_In%20Progress-yellow" />
-  <img src="https://img.shields.io/badge/BUS-🚧_In%20Progress-yellow" />
+  <img src="https://img.shields.io/badge/BUS-✅_Complete-brightgreen" />
   <img src="https://img.shields.io/badge/Input-⏳_In%20Progress-yellow" />
   <img src="https://img.shields.io/badge/APU-⏳_Planned-orange" />
 </p>
@@ -19,6 +19,8 @@
 - Study and recreate the NES PPU, including accurate background and sprite rendering  
 - Support multiple cartridge mappers to correctly handle ROM banking and memory layout  
 - Implement accurate memory operations, including NES memory mirroring  
+- Build a basic frontend/GUI
+- Implement save states and other fun peripherial features
 - Build a working emulator capable of running classic NES games reliably
 
 ---
