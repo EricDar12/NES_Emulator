@@ -760,6 +760,7 @@ namespace NES_Emulator
                     palette = bg_palette;
                 }
                 // Since opaque pixels have collided, a sprite zero hit is possible
+                // this is horrific, fix this
                 if (_spriteZeroHitPossible && _spriteZeroRendering)
                 {
                     if ((_ppuMask & (byte)PPUMASK.RENDER_BG) != 0 && (_ppuMask & (byte)PPUMASK.RENDER_SPRITES) != 0)
