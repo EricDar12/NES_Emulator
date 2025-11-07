@@ -12,9 +12,12 @@ namespace NES_Emulator
         static readonly ushort NES_WIDTH = 256;
         static readonly ushort NES_HEIGHT = 240;
         static bool _isRunning = false;
-        static int frameCount = 0;
-        // TODO: Frame timing is currently NOT WORKING, figure something out with deltatime
-        static readonly uint FRAME_DELAY_MS = 17; 
+        static int _frameCount = 0;
+
+        static float _residualTime = 0.0f;
+        static float _elapsedTime = 0.0f;
+        static uint _previousFrameTime = SDL.SDL_GetTicks();
+        static uint _newFrameTime = 0;
 
 
         public static void Run(string ROMFilePath)
@@ -56,7 +59,7 @@ namespace NES_Emulator
                 return;
             }
 
-            IntPtr renderer = SDL.SDL_CreateRenderer(window, -1, SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED);
+            IntPtr renderer = SDL.SDL_CreateRenderer(window, -1, SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
 
             SDL.SDL_RenderSetLogicalSize(renderer, NES_WIDTH, NES_HEIGHT);
 
@@ -74,6 +77,11 @@ namespace NES_Emulator
 
             while (_isRunning)
             {
+
+                _newFrameTime = SDL.SDL_GetTicks();
+                _elapsedTime = (_newFrameTime - _previousFrameTime) / 1000f;
+                _previousFrameTime = _newFrameTime;
+
                 while (SDL.SDL_PollEvent(out sdlEvent) != 0)
                 {
                     if (sdlEvent.type == SDL.SDL_EventType.SDL_QUIT)
@@ -100,7 +108,17 @@ namespace NES_Emulator
                     }
                 }
 
-                do { _nes.Clock(); } while (!_nes._ppu._isFrameComplete);
+                // Run the NES
+                if (_residualTime > 0.0f)
+                {
+                    _residualTime -= _elapsedTime;
+                }
+                else
+                {
+                    _residualTime += (1.0f / 60.0f) - _elapsedTime;
+                    do { _nes.Clock(); } while (!_nes._ppu._isFrameComplete);
+                    _nes._ppu._isFrameComplete = false;
+                }
 
                 unsafe
                 {
@@ -113,9 +131,8 @@ namespace NES_Emulator
                 SDL.SDL_RenderClear(renderer);
                 SDL.SDL_RenderCopy(renderer, texture, IntPtr.Zero, IntPtr.Zero);
                 SDL.SDL_RenderPresent(renderer);
-                _nes._ppu._isFrameComplete = false;
-                //SDL.SDL_Delay(FRAME_DELAY_MS);
-                frameCount++;
+                SDL.SDL_Delay(1);
+                _frameCount++;
             }
             SDL.SDL_DestroyTexture(texture);
             SDL.SDL_DestroyRenderer(renderer);
