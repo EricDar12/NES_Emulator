@@ -432,12 +432,13 @@ namespace NES_Emulator
                     _spriteCount = 0;
                     _oamIndex = 0;
                     _spriteZeroHitPossible = false;
+                    // Calculuate sprite height once per scanline
+                    byte spriteHeight = (byte)((_ppuCtrl & (byte)PPUCTRL.SPRITE_SIZE) != 0 ? 16 : 8); 
 
                     while (_oamIndex < 64 && _spriteCount < 9) // Loop until 9 sprites to detect overflow
                     {
                         // Result may be negative, cast to signed short
                         short offset = (short)(_scanline - OAMEntries[_oamIndex].y); 
-                        byte spriteHeight = (byte)((_ppuCtrl & (byte)PPUCTRL.SPRITE_SIZE) != 0 ? 16 : 8);
 
                         if (offset >= 0 && offset < spriteHeight)
                         {
@@ -701,7 +702,7 @@ namespace NES_Emulator
             }
 
             // Update Sprite Shifters
-            if ((_ppuMask & (byte)PPUMASK.RENDER_SPRITES) != 0 && _dot >= 1 && _dot < 258)
+            if ((_ppuMask & (byte)PPUMASK.RENDER_SPRITES) != 0 && (_dot >= 1 && _dot < 258))
             {
                 for (int i = 0; i < _spriteCount; i++)
                 {
@@ -760,28 +761,15 @@ namespace NES_Emulator
                     palette = bg_palette;
                 }
                 // Since opaque pixels have collided, a sprite zero hit is possible
-                // this is horrific, fix this
-                if (_spriteZeroHitPossible && _spriteZeroRendering)
+                if ((_spriteZeroHitPossible && _spriteZeroRendering)
+                    && (_ppuMask & (byte)(PPUMASK.RENDER_SPRITES | PPUMASK.RENDER_BG)) == 0b0001_1000) // Both render sprites and render bg is enabled
                 {
-                    if ((_ppuMask & (byte)PPUMASK.RENDER_BG) != 0 && (_ppuMask & (byte)PPUMASK.RENDER_SPRITES) != 0)
+                    byte startDot;
+                    // If left rendering is disabled, skip the leftmost 8 pixels
+                    startDot = (byte)(((_ppuMask & (byte)(PPUMASK.RENDER_BG_LEFT | PPUMASK.RENDER_SPRITES_LEFT)) == 0) ? 9 : 1);
+                    if (_dot >= startDot && _dot < 258)
                     {
-                        byte renderBGLeft = (byte)((_ppuMask & (byte)PPUMASK.RENDER_BG_LEFT) != 0 ? 1 : 0);
-                        byte renderSpriteLeft = (byte)((_ppuMask & (byte)PPUMASK.RENDER_SPRITES_LEFT) != 0 ? 1 : 0);
-
-                        if (!(renderBGLeft == 1 | renderSpriteLeft == 1))
-                        {
-                            if (_dot >= 9 && _dot < 258)
-                            {
-                                _ppuStatus |= (byte)PPUSTATUS.SPRITE_ZERO_HIT;
-                            }
-                        }
-                        else
-                        {
-                            if (_dot >= 1 && _dot < 258)
-                            {
-                                _ppuStatus |= (byte)PPUSTATUS.SPRITE_ZERO_HIT;
-                            }
-                        }
+                        _ppuStatus |= (byte)PPUSTATUS.SPRITE_ZERO_HIT;
                     }
                 }
             }
