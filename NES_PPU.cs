@@ -252,14 +252,10 @@ namespace NES_Emulator
             else if (addr >= 0x2000 && addr <= 0x3EFF)
             {
                 // Nametable address range / VRAM
-                // TODO: Implement mirroring logic for nametable r/w !!!!! important !!!!! 44:48 OLC tutorial pt 4
-                // ^ this is kind of done but not sure how I feel about it
-
                 ushort normalizedAddr = (ushort)(addr & 0x0FFF); // Clamp to 4kib range
                 byte tableIndex = (byte)(normalizedAddr / 0x0400); // Logical table (0-3)
                 ushort tableOffset = (ushort)(normalizedAddr & 0x03FF); // Clamp to 1kib , nameetables are only 1kb each
-
-                // This is only going to work for vertical and horizontal mirroring
+                // This is only going to work for vertical and horizontal scrolling
                 byte physicalTable = (_cart != null && _cart._mirror == NES_Cartridge.Mirror.VERTICAL) ?
                     (byte)(tableIndex & 0x01) // 0,1,0,1 
                   : (byte)(tableIndex >> 1); // 0,0,1,1
@@ -760,7 +756,7 @@ namespace NES_Emulator
                     pixel = bg_pixel;
                     palette = bg_palette;
                 }
-                // Since opaque pixels have collided, a sprite zero hit is possible
+                // Since opaque pixels have collided, a sprite zero hit may have happened
                 if ((_spriteZeroHitPossible && _spriteZeroRendering)
                     && (_ppuMask & (byte)(PPUMASK.RENDER_SPRITES | PPUMASK.RENDER_BG)) == 0b0001_1000) // Both render sprites and render bg is enabled
                 {
