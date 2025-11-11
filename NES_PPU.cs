@@ -40,7 +40,7 @@ namespace NES_Emulator
         private bool _spriteZeroHitPossible = false;
         private bool _spriteZeroRendering = false;  
         private byte _spriteCount = 0;
-        public Span<OAMEntry> OAMEntries => MemoryMarshal.Cast<byte, OAMEntry>(_ppuOAM);
+        public Span<OAMEntry> OAM => MemoryMarshal.Cast<byte, OAMEntry>(_ppuOAM);
         public Span<OAMEntry> ScanlineOAM => MemoryMarshal.Cast<byte, OAMEntry>(_scanlineOAM);
         public OAMEntry _spriteZero = new OAMEntry();
 
@@ -436,7 +436,7 @@ namespace NES_Emulator
                     while (_oamIndex < 64 && _spriteCount < 9) // Loop until 9 sprites to detect overflow
                     {
                         // Result may be negative, cast to signed short
-                        short offset = (short)(_scanline - OAMEntries[_oamIndex].y); 
+                        short offset = (short)(_scanline - OAM[_oamIndex].y); 
 
                         if (offset >= 0 && offset < spriteHeight)
                         {
@@ -445,9 +445,9 @@ namespace NES_Emulator
                                 if (_oamIndex == 0)
                                 {
                                     _spriteZeroHitPossible = true;
-                                    _spriteZero = OAMEntries[0];
+                                    _spriteZero = OAM[0];
                                 }
-                                ScanlineOAM[_spriteCount] = OAMEntries[_oamIndex];
+                                ScanlineOAM[_spriteCount] = OAM[_oamIndex];
                             }
                             _spriteCount++;
                         }
@@ -645,10 +645,7 @@ namespace NES_Emulator
                 return;
             }
 
-            int screenX = _dot - 1;
-            int screenY = _scanline;
-
-            if (screenX > 254)
+            if ((_dot - 1) > 254)
             {
                 return;
             }
