@@ -580,6 +580,59 @@ namespace NES_Emulator
             }
         }
 
+        public void SelectPixelsForRendering(byte bg_pixel, byte bg_palette, byte fg_pixel, byte fg_palette, byte fg_prio, out byte pixel, out byte palette)
+        {
+            pixel = 0x00;
+            palette = 0x00;
+
+            // Both transparent, no winner
+            if (bg_pixel == 0 && fg_pixel == 0)
+            {
+                return;
+            }
+            // Foreground wins
+            else if (bg_pixel == 0 && fg_pixel > 0)
+            {
+                pixel = fg_pixel;
+                palette = fg_palette;
+            }
+            // Background wins
+            else if (bg_pixel > 0 && fg_pixel == 0)
+            {
+                pixel = bg_pixel;
+                palette = bg_palette;
+            }
+            // Tie, priority decides
+            else if (bg_pixel > 0 && fg_pixel > 0)
+            {
+                if (fg_prio > 0)
+                {
+                    pixel = fg_pixel;
+                    palette = fg_palette;
+                }
+                else
+                {
+                    pixel = bg_pixel;
+                    palette = bg_palette;
+                }
+                // Since opaque pixels have collided, a sprite zero hit may have happened
+
+                // Sprite zero hit detection is a lot more nuanced than this. This works, but not well
+                // TODO: refactor this because it is bad
+                if ((_spriteZeroHitPossible && _spriteZeroRendering)
+                    && (_ppuMask & (byte)(PPUMASK.RENDER_SPRITES | PPUMASK.RENDER_BG)) == 0b0001_1000) // Both render sprites and render bg is enabled
+                {
+                    byte startDot;
+                    // If left rendering is disabled, skip the leftmost 8 pixels
+                    startDot = (byte)(((_ppuMask & (byte)(PPUMASK.RENDER_BG_LEFT | PPUMASK.RENDER_SPRITES_LEFT)) == 0) ? 9 : 1);
+                    if (_dot >= startDot && _dot < 258)
+                    {
+                        _ppuStatus |= (byte)PPUSTATUS.SPRITE_ZERO_HIT;
+                    }
+                }
+            }
+        }
+
         public void IncrementScrollX()
         {
             if ((_ppuMask & (byte)PPUMASK.RENDER_BG) != 0 || (_ppuMask & (byte)PPUMASK.RENDER_SPRITES) != 0)
@@ -721,56 +774,6 @@ namespace NES_Emulator
             return color;
         }
 
-        public void SelectPixelsForRendering(byte bg_pixel, byte bg_palette, byte fg_pixel, byte fg_palette, byte fg_prio, out byte pixel, out byte palette)
-        {
-            pixel = 0x00;
-            palette = 0x00;
-
-            // Both transparent, no winner
-            if (bg_pixel == 0 && fg_pixel == 0)
-            {
-                return;
-            }
-            // Foreground wins
-            else if (bg_pixel == 0 && fg_pixel > 0)
-            {
-                pixel = fg_pixel;
-                palette = fg_palette;
-            }
-            // Background wins
-            else if (bg_pixel > 0 && fg_pixel == 0)
-            {
-                pixel = bg_pixel;
-                palette = bg_palette;
-            }
-            // Tie, priority decides
-            else if (bg_pixel > 0 && fg_pixel > 0)
-            {
-                if (fg_prio > 0)
-                {
-                    pixel = fg_pixel;
-                    palette = fg_palette;
-                }
-                else
-                {
-                    pixel = bg_pixel;
-                    palette = bg_palette;
-                }
-                // Since opaque pixels have collided, a sprite zero hit may have happened
-                // This works, but not very well
-                if ((_spriteZeroHitPossible && _spriteZeroRendering)
-                    && (_ppuMask & (byte)(PPUMASK.RENDER_SPRITES | PPUMASK.RENDER_BG)) == 0b0001_1000) // Both render sprites and render bg is enabled
-                {
-                    byte startDot;
-                    // If left rendering is disabled, skip the leftmost 8 pixels
-                    startDot = (byte)(((_ppuMask & (byte)(PPUMASK.RENDER_BG_LEFT | PPUMASK.RENDER_SPRITES_LEFT)) == 0) ? 9 : 1);
-                    if (_dot >= startDot && _dot < 258)
-                    {
-                        _ppuStatus |= (byte)PPUSTATUS.SPRITE_ZERO_HIT;
-                    }
-                }
-            }
-        }
 
         public byte ReverseByte(byte b)
         {
