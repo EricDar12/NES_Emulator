@@ -42,6 +42,7 @@ namespace NES_Emulator
         private byte _spriteCount = 0;
         public Span<OAMEntry> OAMEntries => MemoryMarshal.Cast<byte, OAMEntry>(_ppuOAM);
         public Span<OAMEntry> ScanlineOAM => MemoryMarshal.Cast<byte, OAMEntry>(_scanlineOAM);
+        public OAMEntry _spriteZero = new OAMEntry();
 
         private byte[] _spriteShifterPatternLo = new byte[8];
         private byte[] _spriteShifterPatternHi = new byte[8];
@@ -428,6 +429,7 @@ namespace NES_Emulator
                     _spriteCount = 0;
                     _oamIndex = 0;
                     _spriteZeroHitPossible = false;
+                    _spriteZero = new OAMEntry();
                     // Calculuate sprite height once per scanline
                     byte spriteHeight = (byte)((_ppuCtrl & (byte)PPUCTRL.SPRITE_SIZE) != 0 ? 16 : 8); 
 
@@ -443,6 +445,7 @@ namespace NES_Emulator
                                 if (_oamIndex == 0)
                                 {
                                     _spriteZeroHitPossible = true;
+                                    _spriteZero = OAMEntries[0];
                                 }
                                 ScanlineOAM[_spriteCount] = OAMEntries[_oamIndex];
                             }
@@ -547,7 +550,7 @@ namespace NES_Emulator
                         // As soon as we find a non-transparent pixel, we can exit and draw it
                         if (fg_pixel != 0)
                         {
-                            if (i == 0)
+                            if (i == 0 && _spriteZeroHitPossible)  
                             {
                                 _spriteZeroRendering = true;
                             }
@@ -560,6 +563,12 @@ namespace NES_Emulator
             // Background + Foreground Composition //  
             byte pixel = 0x00, palette = 0x00;
             SelectPixelsForRendering(bg_pixel, bg_palette, fg_pixel, fg_palette, fg_prio, out pixel, out palette);
+
+            // If two opaque pixels have collided and sprite zero is being drawn 
+            if ((_spriteZeroHitPossible && _spriteZeroRendering) && (bg_pixel > 0 && fg_pixel > 0))
+            {
+                DetectSpriteZeroHit();
+            }
 
             // Drawing //
             if (_scanline >= 0 && _scanline < 240 && _dot > 0 && _dot <= 256)
@@ -615,22 +624,36 @@ namespace NES_Emulator
                     pixel = bg_pixel;
                     palette = bg_palette;
                 }
-                // Since opaque pixels have collided, a sprite zero hit may have happened
-
-                // Sprite zero hit detection is a lot more nuanced than this. This works, but not well
-                // TODO: refactor this because it is bad
-                if ((_spriteZeroHitPossible && _spriteZeroRendering)
-                    && (_ppuMask & (byte)(PPUMASK.RENDER_SPRITES | PPUMASK.RENDER_BG)) == 0b0001_1000) // Both render sprites and render bg is enabled
-                {
-                    byte startDot;
-                    // If left rendering is disabled, skip the leftmost 8 pixels
-                    startDot = (byte)(((_ppuMask & (byte)(PPUMASK.RENDER_BG_LEFT | PPUMASK.RENDER_SPRITES_LEFT)) == 0) ? 9 : 1);
-                    if (_dot >= startDot && _dot < 258)
-                    {
-                        _ppuStatus |= (byte)PPUSTATUS.SPRITE_ZERO_HIT;
-                    }
-                }
             }
+        }
+
+        public void DetectSpriteZeroHit()
+        {
+            bool bgEnable = (_ppuMask & (byte)PPUMASK.RENDER_BG) != 0;
+            bool spriteEnable = (_ppuMask & (byte)PPUMASK.RENDER_SPRITES) != 0;
+
+            if (!bgEnable || !spriteEnable)
+            {
+                return;
+            }
+
+            bool bgLeft = (_ppuMask & (byte)PPUMASK.RENDER_BG_LEFT) != 0;
+            bool spriteLeft = (_ppuMask & (byte)PPUMASK.RENDER_SPRITES_LEFT) != 0;
+
+            if ((!bgLeft || !spriteLeft) && (_spriteZero.x == 0 || _spriteZero.y >= 239))
+            {
+                return;
+            }
+
+            int screenX = _dot - 1;
+            int screenY = _scanline;
+
+            if (screenX > 254)
+            {
+                return;
+            }
+
+            _ppuStatus |= (byte)PPUSTATUS.SPRITE_ZERO_HIT;
         }
 
         public void IncrementScrollX()
