@@ -12,9 +12,9 @@ namespace NES_Emulator
     public class NES_PPU
     {
         public NES_Cartridge? _cart;
-        public byte[,] _tblName = new byte[2, 1024];
+        public byte[][] _tblName = { new byte[1024], new byte[1024] };
         public byte[] _tblPalette = new byte[32];
-        public byte[,] _tblPattern = new byte[2, 4096];
+        public byte[][] _tblPattern = { new byte[4096], new byte[4096] };
 
         public bool _isFrameComplete = false;
         public bool _NMI_Enable = false;
@@ -247,7 +247,7 @@ namespace NES_Emulator
 
             else if (addr >= 0x0000 && addr <= 0x1FFF)
             {
-                data = _tblPattern[((addr & 0x1000) >> 12), (addr & 0x0FFF)];
+                data = _tblPattern[((addr & 0x1000) >> 12)][(addr & 0x0FFF)];
             }
 
             else if (addr >= 0x2000 && addr <= 0x3EFF)
@@ -261,7 +261,7 @@ namespace NES_Emulator
                     (byte)(tableIndex & 0x01) // 0,1,0,1 
                   : (byte)(tableIndex >> 1); // 0,0,1,1
 
-                data = _tblName[physicalTable, tableOffset];
+                data = _tblName[physicalTable][tableOffset];
             }
 
             else if (addr >= 0x3F00 && addr <= 0x3FFF)
@@ -287,7 +287,7 @@ namespace NES_Emulator
 
             else if (addr >= 0x0000 && addr <= 0x1FFF)
             {
-                _tblPattern[(addr & 0x1000) >> 12, addr & 0x0FFF] = data;
+                _tblPattern[(addr & 0x1000) >> 12][addr & 0x0FFF] = data;
             }
 
             else if (addr >= 0x2000 && addr <= 0x3EFF)
@@ -299,7 +299,7 @@ namespace NES_Emulator
                 byte physicalTable = (_cart != null && _cart._mirror == NES_Cartridge.Mirror.VERTICAL) ?
                     (byte)(tableIndex & 0x01) // 0,1,0,1 
                   : (byte)(tableIndex >> 1); // 0,0,1,1
-                _tblName[physicalTable, tableOffset] = data;
+                _tblName[physicalTable][tableOffset] = data;
             }
 
             else if (addr >= 0x3F00 && addr <= 0x3FFF)
@@ -431,12 +431,15 @@ namespace NES_Emulator
                     _spriteZeroHitPossible = false;
                     _spriteZero = new OAMEntry();
                     // Calculuate sprite height once per scanline
-                    byte spriteHeight = (byte)((_ppuCtrl & (byte)PPUCTRL.SPRITE_SIZE) != 0 ? 16 : 8); 
+                    byte spriteHeight = (byte)((_ppuCtrl & (byte)PPUCTRL.SPRITE_SIZE) != 0 ? 16 : 8);
+
+                    var oamCache = OAM;
+                    var scanlineOamCache = ScanlineOAM;
 
                     while (_oamIndex < 64 && _spriteCount < 9) // Loop until 9 sprites to detect overflow
                     {
                         // Result may be negative, cast to signed short
-                        short offset = (short)(_scanline - OAM[_oamIndex].y); 
+                        short offset = (short)(_scanline - oamCache[_oamIndex].y); 
 
                         if (offset >= 0 && offset < spriteHeight)
                         {
@@ -445,9 +448,9 @@ namespace NES_Emulator
                                 if (_oamIndex == 0)
                                 {
                                     _spriteZeroHitPossible = true;
-                                    _spriteZero = OAM[0];
+                                    _spriteZero = oamCache[0];
                                 }
-                                ScanlineOAM[_spriteCount] = OAM[_oamIndex];
+                                scanlineOamCache[_spriteCount] = oamCache[_oamIndex];
                             }
                             _spriteCount++;
                         }
@@ -462,14 +465,15 @@ namespace NES_Emulator
 
                 if (_dot == 340)
                 {
+                    var scanlineOamCache = ScanlineOAM;
                     // I hope this works
                     for (int i = 0; i < _spriteCount; i++)
                     {
                         byte sprPatternBitsLo, sprPatternBitsHi;
                         ushort sprPatternAddrLo, sprPatternAddrHi;
 
-                        bool verticallyFlipped = ((ScanlineOAM[i].attrib & 0x80) != 0);
-                        bool topHalf = (_scanline - ScanlineOAM[i].y < 8);
+                        bool verticallyFlipped = ((scanlineOamCache[i].attrib & 0x80) != 0);
+                        bool topHalf = (_scanline - scanlineOamCache[i].y < 8);
 
                         if ((_ppuCtrl & (byte)PPUCTRL.SPRITE_SIZE) == 0) { // 8x8 Sprite Mode
                             sprPatternAddrLo = GetPatternAddressLo8x8(verticallyFlipped, i);
@@ -483,7 +487,7 @@ namespace NES_Emulator
                         sprPatternBitsLo = PPU_Read(sprPatternAddrLo);
                         sprPatternBitsHi = PPU_Read(sprPatternAddrHi);
 
-                        if ((ScanlineOAM[i].attrib & 0x40) != 0) // Sprite is flipped horizontally
+                        if ((scanlineOamCache[i].attrib & 0x40) != 0) // Sprite is flipped horizontally
                         {
                             sprPatternBitsLo = ReverseByte(sprPatternBitsLo);
                             sprPatternBitsHi = ReverseByte(sprPatternBitsHi);
@@ -534,18 +538,19 @@ namespace NES_Emulator
             if ((_ppuMask & (byte)PPUMASK.RENDER_SPRITES) != 0)
             {
                 _spriteZeroRendering = false;
+                var scanlineOamCache = ScanlineOAM;
                 // Huge credit to OLC here
                 for (int i = 0; i < _spriteCount; i++)
                 {
-                    if (ScanlineOAM[i].x == 0)
+                    if (scanlineOamCache[i].x == 0)
                     {
                         // The relevant data to be rendered is at the high bit of the shifters
                         byte fg_pixel_lo = (byte)((_spriteShifterPatternLo[i] & 0x80) > 0 ? 1 : 0);
                         byte fg_pixel_hi = (byte)((_spriteShifterPatternHi[i] & 0x80) > 0 ? 1 : 0);
                         fg_pixel = (byte)((fg_pixel_hi << 1) | fg_pixel_lo);
 
-                        fg_palette = (byte)((ScanlineOAM[i].attrib & 0x03) + 0x04);
-                        fg_prio = (byte)((ScanlineOAM[i].attrib & 0x20) == 0  ? 1 : 0);
+                        fg_palette = (byte)((scanlineOamCache[i].attrib & 0x03) + 0x04);
+                        fg_prio = (byte)((scanlineOamCache[i].attrib & 0x20) == 0  ? 1 : 0);
 
                         // As soon as we find a non-transparent pixel, we can exit and draw it
                         if (fg_pixel != 0)
@@ -729,15 +734,16 @@ namespace NES_Emulator
         {
             ushort sprPatternAddrLo = 0;
             ushort baseAddress = (ushort)(((_ppuCtrl & (byte)PPUCTRL.PATTERN_SPRITE) >> 3) << 12);
-            byte row = (byte)(_scanline - ScanlineOAM[oamIndex].y);
+            var sprite = ScanlineOAM[oamIndex];
+            byte row = (byte)(_scanline - sprite.y);
 
             if (!flippedVertically)
             {
-                sprPatternAddrLo = (ushort)((baseAddress | (ScanlineOAM[oamIndex].id << 4) | row));
+                sprPatternAddrLo = (ushort)((baseAddress | (sprite.id << 4) | row));
             } 
             else
             {
-                sprPatternAddrLo = (ushort)((baseAddress | (ScanlineOAM[oamIndex].id << 4) | (7 - row)));
+                sprPatternAddrLo = (ushort)((baseAddress | (sprite.id << 4) | (7 - row)));
             }
             return sprPatternAddrLo;
         }
@@ -773,11 +779,12 @@ namespace NES_Emulator
             // Update Sprite Shifters
             if ((_ppuMask & (byte)PPUMASK.RENDER_SPRITES) != 0 && (_dot >= 1 && _dot < 258))
             {
+                var scanlineOamCache = ScanlineOAM; // Cache the span
                 for (int i = 0; i < _spriteCount; i++)
                 {
-                    if (ScanlineOAM[i].x > 0)
+                    if (scanlineOamCache[i].x > 0)
                     {
-                        ScanlineOAM[i].x--;
+                        scanlineOamCache[i].x--;
                     }
                     else
                     {
