@@ -14,7 +14,7 @@
 
 ---
 
-## Project Goals  🎯 
+## Project Goals 
 - Deepen understanding of hardware emulation, computer architecture, and CPU design  
 - Implement the Ricoh 6502 CPU with instruction level accuracy and complete instruction set coverage
 - Study and recreate the NES PPU, including accurate background and sprite rendering  
@@ -26,7 +26,7 @@
 
 ---
 
-## Documentation 🖉
+## Documentation
 Detailed explanations for each component, as well as how I overcame significant engineering challenges can be found below:
 - [CPU](./docs/The-6502-CPU.md)    
 - BUS, APU & Input coming soon...  
