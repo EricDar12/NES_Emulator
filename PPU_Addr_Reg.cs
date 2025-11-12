@@ -13,7 +13,7 @@ namespace NES_Emulator
         public ushort Reg
         {
             get => _reg;
-            set => _reg = (ushort)(value & 0x3FFF);
+            set => _reg = value;
         }
 
         public ushort CoarseX
