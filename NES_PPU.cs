@@ -18,6 +18,7 @@ namespace NES_Emulator
 
         public bool _isFrameComplete = false;
         public bool _NMI_Enable = false;
+        public sbyte _NMI_Delay = -1;
         public int _scanline = 0;
         public int _dot = 0;
         private byte _addressLatch = 0; // 1 or 0
@@ -56,7 +57,6 @@ namespace NES_Emulator
 
         public uint[] _frameBuffer = new uint[256 * 240];
 
-        // All of the colors the NES is capable of presenting
         static readonly uint[] _nesMasterPalette = new uint[64]
         {
             0xFF545454, 0xFF001E74, 0xFF081090, 0xFF300088,
@@ -78,9 +78,10 @@ namespace NES_Emulator
             0xFFECAEEC, 0xFFECAED4, 0xFFECAAA8, 0xFFE4C490,
             0xFFCCD278, 0xFFB4DE78, 0xFFA8E290, 0xFF98E2B4,
             0xFFA0D6E4, 0xFFA0A2A0, 0xFF000000, 0xFF000000
-        };
-        // The color palette used this frame
-        private uint[] _paletteCache = new uint[32];
+        }; // All of the colors the NES is capable of presenting
+
+        private uint[] _paletteCache = new uint[32]; // The color palette used this frame
+
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public struct OAMEntry()
@@ -513,6 +514,7 @@ namespace NES_Emulator
                     if ((_ppuCtrl & (byte)PPUCTRL.ENABLE_NMI) != 0)
                     {
                         _NMI_Enable = true;
+                        _NMI_Delay = 2;
                     }
                 }
             }
