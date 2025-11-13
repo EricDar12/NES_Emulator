@@ -231,7 +231,7 @@ namespace NES_Emulator
                     }
                     break;
                 case 0x0007: // PPU Data
-                    PPU_Write((ushort)(_vram.Reg & 0x3FFF), data);
+                    PPU_Write(_vram.Reg, data);
                     _vram.Reg += (byte)((_ppuCtrl & (byte)PPUCTRL.INCREMENT_MODE) != 0 ? 32 : 1);
                     break;
             }

@@ -12,7 +12,7 @@ namespace NES_Emulator
 
         public ushort Reg
         {
-            get => _reg;
+            get => ((ushort)(_reg & 0x3FFF));
             set => _reg = value;
         }
 
