@@ -312,6 +312,8 @@ namespace NES_Emulator
                 if (addr == 0x0018) addr = 0x0008;
                 if (addr == 0x001C) addr = 0x000C;
                 _tblPalette[addr] = data;
+                // If a palette write occurs mid frame, immediately update its cached entry
+                _paletteCache[addr] = _nesMasterPalette[addr & 0x3F];
             }
         }
         public uint[] GetPatternTable(byte index, byte palette)
@@ -366,11 +368,11 @@ namespace NES_Emulator
                 if (_scanline == -1 && _dot == 1)
                 {
                     // New frame, unset vertical blank, sprite overflow, and zero hit flags
+                    UpdatePaletteCache();
+                    ClearSpriteShifters();
                     _ppuStatus &= (byte)~PPUSTATUS.VERTICAL_BLANK;
                     _ppuStatus &= (byte)~PPUSTATUS.SPRITE_OVERFLOW;
                     _ppuStatus &= (byte)~PPUSTATUS.SPRITE_ZERO_HIT;
-                    ClearSpriteShifters();
-                    UpdatePaletteCache();
                 }
 
                 if ((_dot >= 2 && _dot < 258) || (_dot >= 321 && _dot < 338))
