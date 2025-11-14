@@ -16,6 +16,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="startup\faNEStastic_logo.bmp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="startup\faNEStastic_logo.bmp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Ryujinx.SDL2-CS" Version="2.0.14" />
     <PackageReference Include="sdl2.nuget" Version="2.32.8" />
     <PackageReference Include="xunit.extensibility.core" Version="2.9.3" />

@@ -71,10 +71,16 @@ namespace NES_Emulator
                 NES_HEIGHT
             );
 
-            _isRunning = true;
+            PlayStartupSequence(renderer);
+
+            // Force a black frame after the startup sequence ends
+            SDL.SDL_RenderClear(renderer);
+            SDL.SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL.SDL_RenderPresent(renderer);
 
             SDL.SDL_Event sdlEvent;
 
+            _isRunning = true;
             while (_isRunning)
             {
 
@@ -138,6 +144,39 @@ namespace NES_Emulator
             SDL.SDL_DestroyRenderer(renderer);
             SDL.SDL_DestroyWindow(window);
             SDL.SDL_Quit();
+        }
+
+        private static void PlayStartupSequence(nint renderer)
+        {
+            IntPtr surf = SDL.SDL_LoadBMP("startup/faNEStastic_logo.bmp");
+
+            if (surf == IntPtr.Zero)
+            {
+                Console.WriteLine("Failed to Load Startup BMP " + SDL.SDL_GetError());
+            }
+
+            IntPtr imageTexture = SDL.SDL_CreateTextureFromSurface(renderer, surf);
+
+            if (imageTexture == IntPtr.Zero)
+            {
+                Console.WriteLine("Failed to Create Startup Texture " + SDL.SDL_GetError());
+            }
+
+            SDL.SDL_FreeSurface(surf);
+            SDL.SDL_RenderClear(renderer);
+
+            SDL.SDL_Rect dst = new SDL.SDL_Rect {
+                x = 0,
+                y = 0,
+                w = NES_WIDTH,
+                h = NES_HEIGHT
+            };
+
+            // Display the startup sequence for 2 seconds
+            SDL.SDL_RenderCopy(renderer, imageTexture, IntPtr.Zero, ref dst);
+            SDL.SDL_RenderPresent(renderer);
+            SDL.SDL_Delay(2000);
+            SDL.SDL_DestroyTexture(imageTexture);
         }
     }
 }
