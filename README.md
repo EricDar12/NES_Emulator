@@ -13,6 +13,7 @@
 </p>
 
 ---
+
 <table align="center">
   <tr>
     <td>
@@ -23,6 +24,7 @@
     </td>
   </tr>
 </table>
+
 ---
 
 ## Project Goals 
@@ -43,6 +45,7 @@ Detailed explanations for each component, as well as how I overcame significant 
 - BUS, APU & Input coming soon...  
 
 ---
+
 <table align="center">
   <tr>
     <td>
