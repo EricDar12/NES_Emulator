@@ -13,6 +13,17 @@
 </p>
 
 ---
+<table align="center">
+  <tr>
+    <td>
+      <img src="https://github.com/user-attachments/assets/a76067e6-5a0c-4d4a-9eb6-25536a06b450" alt="video1">
+    </td>
+    <td>
+      <img src="https://github.com/user-attachments/assets/59e69c79-e42c-4189-9b06-778f0faf790e" alt="video2">
+    </td>
+  </tr>
+</table>
+---
 
 ## Project Goals 
 - Deepen understanding of hardware emulation, computer architecture, and CPU design  
@@ -30,6 +41,18 @@
 Detailed explanations for each component, as well as how I overcame significant engineering challenges can be found below:
 - [CPU](./docs/The-6502-CPU.md)    
 - BUS, APU & Input coming soon...  
+
+---
+<table align="center">
+  <tr>
+    <td>
+      <img src="https://github.com/user-attachments/assets/9220f716-3077-4f98-9d2d-7daabd6505d4" alt="video2">
+    </td>
+    <td>
+      <img src="https://github.com/user-attachments/assets/3ad41ee6-e7d7-4715-9025-1876e5829bac" alt="video2">
+    </td>
+  </tr>
+</table>
 
 ---
 
