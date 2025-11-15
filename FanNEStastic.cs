@@ -73,9 +73,8 @@ namespace NES_Emulator
 
             PlayStartupSequence(renderer);
 
-            // Force a black frame after the startup sequence ends
-            SDL.SDL_RenderClear(renderer);
             SDL.SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL.SDL_RenderClear(renderer);
             SDL.SDL_RenderPresent(renderer);
 
             SDL.SDL_Event sdlEvent;

@@ -9,7 +9,7 @@ namespace NES_Emulator
         {
             // Different file paths for both devices I work on
             //FanNEStastic.Run("C:\\Users\\eric1\\OneDrive\\Documents\\NES_Emulator\\Test ROMs\\gal.nes");
-            FanNEStastic.Run("C:\\Users\\eric1\\Documents\\Visual Studio 2022\\Projects\\Test ROMs\\icc.nes");
+            FanNEStastic.Run("C:\\Users\\eric1\\Documents\\Visual Studio 2022\\Projects\\Test ROMs\\gal.nes");
         }
     }
 }
