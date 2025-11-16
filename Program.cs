@@ -7,7 +7,7 @@ namespace NES_Emulator
     {
         static void Main(string[] args)
         {
-            // Different file paths for both devices I work on
+            // TODO: File selctor for ROM loading, oot hardcoded paths
             FanNEStastic.Run("C:\\Users\\eric1\\Documents\\Projects\\Test ROMs\\gal.nes");
         }
     }
