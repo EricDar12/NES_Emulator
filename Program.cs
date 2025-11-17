@@ -9,6 +9,7 @@ namespace NES_Emulator
         [STAThread]
         static void Main(string[] args)
         {
+            string filePath;
             using (OpenFileDialog ofd = new OpenFileDialog())
             {
                 ofd.Filter = "NES ROM files (*.nes)|*.nes|All files (*.*)|*.*";
@@ -17,9 +18,8 @@ namespace NES_Emulator
 
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
-                    string filePath = ofd.FileName;
+                    filePath = ofd.FileName;
                     Console.WriteLine($"Loading ROM: {filePath}");
-                    FanNEStastic.Run(filePath);
                 }
                 else
                 {
@@ -27,6 +27,17 @@ namespace NES_Emulator
                     return;
                 }
             }
+
+            try
+            {
+                FanNEStastic.Run(filePath);
+            }
+            catch (InvalidDataException ex)
+            {
+                MessageBox.Show($"Invalid ROM file:\n{ex.Message}\n\nPlease select a valid .nes file.", "Invalid ROM", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Console.WriteLine($"Invalid ROM: {ex.Message}");
+            }
+
         }
     }
 }

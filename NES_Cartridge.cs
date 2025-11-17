@@ -45,6 +45,11 @@ namespace NES_Emulator
                 }
             }
 
+            if (buffer[0] != 'N' || buffer[1] != 'E' || buffer[2] != 'S' || buffer[3] != 0x1A)
+            {
+                throw new InvalidDataException("Incorrect File Format");
+            }
+
             // If Trainer data is present (512 bytes), skip it
             if ((header.mapper1 & 0x04) != 0)
             {

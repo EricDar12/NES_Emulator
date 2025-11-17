@@ -77,7 +77,7 @@ namespace NES_Emulator
                 {
                     _ppu._NMI_Delay--;
                 }
-                if (_ppu._NMI_Delay == 0)
+                else if (_ppu._NMI_Delay == 0)
                 {
                     _cpu.NMI();
                     _ppu._NMI_Enable = false;
