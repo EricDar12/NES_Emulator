@@ -59,6 +59,10 @@ namespace NES_Emulator
                 return;
             }
 
+            IntPtr iconSurf = SDL.SDL_LoadBMP("startup/faNEStastic_icon.bmp");
+            SDL.SDL_SetWindowIcon(window, iconSurf);
+            SDL.SDL_FreeSurface(iconSurf);
+
             IntPtr renderer = SDL.SDL_CreateRenderer(window, -1, SDL.SDL_RendererFlags.SDL_RENDERER_ACCELERATED | SDL.SDL_RendererFlags.SDL_RENDERER_PRESENTVSYNC);
 
             SDL.SDL_RenderSetLogicalSize(renderer, NES_WIDTH, NES_HEIGHT);
@@ -71,6 +75,8 @@ namespace NES_Emulator
                 NES_HEIGHT
             );
 
+            // Focus the SDL window
+            SDL.SDL_RaiseWindow(window);
             PlayStartupSequence(renderer);
 
             SDL.SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -82,7 +88,6 @@ namespace NES_Emulator
             _isRunning = true;
             while (_isRunning)
             {
-
                 _newFrameTime = SDL.SDL_GetTicks();
                 _elapsedTime = (_newFrameTime - _previousFrameTime) / 1000f;
                 _previousFrameTime = _newFrameTime;
@@ -96,7 +101,6 @@ namespace NES_Emulator
                 }
 
                 // Reset controller state on each frame
-                // works well but might be worth looking into better solutions
                 _nes._bus._controller[0] = 0x00;
                 SDL.SDL_PumpEvents();
                 
