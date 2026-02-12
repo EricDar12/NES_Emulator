@@ -817,7 +817,8 @@ namespace NES_Emulator
         #region ##### Execution #####
         public void Step()
         {
-            SetFlag(StatusFlags.UNUSED, true);
+            _status |= (byte)StatusFlags.UNUSED;
+
             byte opcode = _bus.CPU_Read(_program_counter++);
             switch (opcode)
             {
@@ -1020,8 +1021,9 @@ namespace NES_Emulator
 
         public void Clock()
         {
-            // Each instruction consumes cycles, stored in _master_cycle at execution
-            // before executing the next instruction, count down that many cycles
+            // Each instruction costs cpu cycles, stored in _master_cycle during execution
+            // before executing the next instruction, count down the current instructions cycles
+            // when we reach 0, the instruction has completed and the next can begin
             if (_master_cycle == 0)
             {
                 Step();
