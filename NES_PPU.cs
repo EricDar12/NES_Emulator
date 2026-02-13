@@ -37,7 +37,7 @@ namespace NES_Emulator
 
         public byte[] _ppuOAM = new byte[256]; // 64 four byte entries
         public byte[] _scanlineOAM = new byte[32]; // A maximum of 8 sprites to be rendered this scanline
-        public byte[] _spriteZero = new byte[4];
+        public byte[] _spriteZero = new byte[4]; //[0] = Y pos, [1] = ID, [2] = Attribute, [3] = X pos
 
         private byte _oamIndex = 0;
         private bool _spriteZeroHitPossible = false;
@@ -257,7 +257,7 @@ namespace NES_Emulator
                 // Nametable address range / VRAM
                 ushort normalizedAddr = (ushort)(addr & 0x0FFF); // Clamp to 4kib range
                 byte tableIndex = (byte)(normalizedAddr / 0x0400); // Logical table (0-3)
-                ushort tableOffset = (ushort)(normalizedAddr & 0x03FF); // Clamp to 1kib , nameetables are only 1kb each
+                ushort tableOffset = (ushort)(normalizedAddr & 0x03FF); // Clamp to 1kib, nameetables are only 1kb each
                 // This is only going to work for vertical and horizontal scrolling
                 byte physicalTable = (_cart != null && _cart._mirror == NES_Cartridge.Mirror.VERTICAL) ?
                     (byte)(tableIndex & 0x01) // 0,1,0,1 
@@ -793,7 +793,7 @@ namespace NES_Emulator
             return sprPatternAddrLo;
         }
 
-        public void UpdateShifters()
+        public void UpdateShifters() // TODO: Very hot, needs optimization
         {
             if ((_ppuMask & (byte)PPUMASK.RENDER_BG) != 0)
             {
